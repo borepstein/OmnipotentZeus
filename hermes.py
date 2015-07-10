@@ -150,8 +150,17 @@ for x in range(iterations):
             scores[z]   = str(data['sections'][y]['multicore_score'])
             y           = y + 1
         y = 0
+        for x in range(0,3,1):
+            z           = str(data['sections'][y]['name'])+" Singlecore"
+            scores[z]   = str(data['sections'][y]['score'])
+            y           = y + 1
+        y = 0
         for x in range(0,1):
             z           = "Total"
+            scores[z]   = str(data['multicore_score'])
+            y           = y + 1
+        for x in range(0,1):
+            z           = "Total Single"
             scores[z]   = str(data['multicore_score'])
             y           = y + 1
         for x in range(0,1):
@@ -376,7 +385,11 @@ for x in range(iterations):
             intmulti            = values['Integer Multicore'],
             floatmulti          = values['Floating Point Multicore'],
             memmulti            = values['Memory Multicore'],
+            intsingle           = values['Integer Singlecore'],
+            floatsingle         = values['Floating Point Singlecore'],
+            memsingle           = values['Memory Singlecore'],
             totalmulti          = values['Total'],
+            totalsingle         = values['Total Single']
             aes                 = values['AES'],
             twofish             = values['Twofish'],
             sha1                = values['SHA1'],
