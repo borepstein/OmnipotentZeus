@@ -389,7 +389,7 @@ for x in range(iterations):
             floatsingle         = values['Floating Point Singlecore'],
             memsingle           = values['Memory Singlecore'],
             totalmulti          = values['Total'],
-            totalsingle         = values['Total Single']
+            totalsingle         = values['Total Single'],
             aes                 = values['AES'],
             twofish             = values['Twofish'],
             sha1                = values['SHA1'],
