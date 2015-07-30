@@ -80,17 +80,15 @@ for x in memoutput_list:
 provider_input   = raw_input("Please enter the provider's name (No spaces; e.g., 'Digital Ocean' should be 'digitalocean'): ")
 provider_input   = provider_input.lower()
 while True:
-    if provider_input == 'digitalocean':
-        provider_region = 'nyc3'
-        break
-    elif provider_input == 'liquidweb':
-        provider_region = 'C'
-        break
-    elif provider_input == 'aws':
-        provider_region = 'us-east'
+    if provider_input == 'edgehosting':
+        provider_region = 'phoenix'
         break
     elif provider_input == 'rackspace':
         provider_region = 'DFW'
+        break
+    elif provider_input == 'aws':
+        provider_region = 'us-west'
+        break
         break
     else:
         provider_input   = raw_input("Please enter the provider's name (No spaces; e.g., 'Digital Ocean' should be 'digitalocean'): ")
