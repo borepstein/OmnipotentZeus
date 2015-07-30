@@ -33,23 +33,35 @@ print ""
 print ""
 
 #====================GLOBAL INSTALLER====================#
-#Check to see if all programs are installed
-sleep(1)
-#Install fio for disk testing
-os.system('apt-get install fio --yes')
-#Install screen
-os.system('apt-get install screen')
-#Install iperf for network testing
-os.system('apt-get install iperf')
-#Install Geekbench - Download & Unpackage
-os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-os.chdir('dist/Geekbench-3.1.2-Linux')
-sub.call(['./geekbench_x86_64','-r',email,key])
-#Install Phoronix 
-os.system('apt-get install phoronix-test-suite --yes')
-os.system('y | phoronix-test-suite')
-os.system('mv ~/OmnipotentZeus/user-config.xml ~/.phoronix-test-suite/user-config.xml')
+if os =='centos' or os == 'redhat':
+    os.system('yum install libaio* gcc wget make libibverbs.x86_64 epel-release -y') #Install dependencies
+    os.system('yum install screen -y') #Install screen
+    if disk_rand == 'y' or disk_seq == 'y': #Install fio for disk testing if to be tested
+        os.systme('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
+        os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
+    if internal_net_tests == 'y': #Install iperf for network testing if to be tested
+        os.system('yum install iperf -y')
+    if system_tests == 'y': #Install Geekbench - Download & Unpackage if to be tested
+        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
+        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
+        os.chdir('dist/Geekbench-3.1.2-Linux')
+        sub.call(['./geekbench_x86_64','-r',email,key])
+
+if os == 'ubuntu' or os == 'debian': 
+    os.system('apt-get install screen') #Install screen
+    if disk_rand == 'y' or disk_seq =='y':  #Install fio for disk testing if to be tested
+        os.system('apt-get install fio --yes')
+    if internal_net_tests == 'y': #Install iperf for network testing if to be tested
+        os.system('apt-get install iperf') 
+    if system_tests == 'y': #Install Geekbench - Download & Unpackage if to be tested
+    os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz") 
+    os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
+    os.chdir('dist/Geekbench-3.1.2-Linux')
+    sub.call(['./geekbench_x86_64','-r',email,key])
+    if pts_tests == 'y': #Install Phoronix if to be tested
+        os.system('apt-get install phoronix-test-suite --yes')
+        os.system('y | phoronix-test-suite')
+        os.system('mv ~/OmnipotentZeus/user-config.xml ~/.phoronix-test-suite/user-config.xml')
 
 #Getting CPU Amount
 v1               = sub.Popen(['cat','/proc/cpuinfo'],stdout=sub.PIPE)
