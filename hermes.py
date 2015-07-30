@@ -33,9 +33,7 @@ print ""
 print ""
 
 #====================GLOBAL INSTALLER====================#
-if os =='centos' or os == 'redhat':
-    os.system('yum install libaio* gcc wget make libibverbs.x86_64 epel-release -y') #Install dependencies
-    os.system('yum install screen -y') #Install screen
+if operating_system =='centos' or operating_system == 'redhat':
     if disk_rand == 'y' or disk_seq == 'y': #Install fio for disk testing if to be tested
         os.systme('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
         os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
@@ -47,17 +45,16 @@ if os =='centos' or os == 'redhat':
         os.chdir('dist/Geekbench-3.1.2-Linux')
         sub.call(['./geekbench_x86_64','-r',email,key])
 
-if os == 'ubuntu' or os == 'debian': 
-    os.system('apt-get install screen') #Install screen
+if operating_system == 'ubuntu' or operating_system == 'debian': 
     if disk_rand == 'y' or disk_seq =='y':  #Install fio for disk testing if to be tested
         os.system('apt-get install fio --yes')
     if internal_net_tests == 'y': #Install iperf for network testing if to be tested
         os.system('apt-get install iperf') 
     if system_tests == 'y': #Install Geekbench - Download & Unpackage if to be tested
-    os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz") 
-    os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-    os.chdir('dist/Geekbench-3.1.2-Linux')
-    sub.call(['./geekbench_x86_64','-r',email,key])
+        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz") 
+        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
+        os.chdir('dist/Geekbench-3.1.2-Linux')
+        sub.call(['./geekbench_x86_64','-r',email,key])
     if pts_tests == 'y': #Install Phoronix if to be tested
         os.system('apt-get install phoronix-test-suite --yes')
         os.system('y | phoronix-test-suite')
