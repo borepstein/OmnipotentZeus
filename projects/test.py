@@ -10,7 +10,7 @@ system_tests = 'y' #Geekbench 3 suite
 pts_tests = 'n' #Phoronix Test Suite
 disk_rand = 'y' #fio random read and random write
 disk_seq = 'y' #fio sequential read and sequential write
-internal_net_tests = 'n' #iperf internal network tests
+internal_net_tests = 'y' #iperf internal network tests
 
 #DISK INFORMATION
 #If you selected yes for disk_rand or disk_seq, then you have to fill out this information
