@@ -35,7 +35,7 @@ print ""
 #====================GLOBAL INSTALLER====================#
 if operating_system =='centos' or operating_system == 'redhat':
     if disk_rand == 'y' or disk_seq == 'y': #Install fio for disk testing if to be tested
-        os.systme('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
+        os.system('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
         os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
     if internal_net_tests == 'y': #Install iperf for network testing if to be tested
         os.system('yum install iperf -y')
@@ -260,8 +260,6 @@ for x in range(iterations):
         spider_egg_exterminator()
 
         if fio_async =='y':
-            if iterator == 1:
-                os.system('apt-get install libaio1')
             sub.call(fio_async_command_generator(disk_options[0]))
             #OPEN the file
             fio_json = open(fio_json_file)

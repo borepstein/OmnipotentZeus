@@ -1,8 +1,8 @@
 #TESTS TO RUN
 #CONFIGURATION INFORMATION
 #Start date is to specify when the test began
-project_id = 'c-liquidweb-20150607'
-startdate_input = '20150607' #Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
+project_id = 'c-edgehosting-20150730'
+startdate_input = '20150730' #Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
 operating_system = 'centos' #debian, ubuntu, redhat, or centos
 
 #Please mark with a y (indicating yes) for each test you want to run
