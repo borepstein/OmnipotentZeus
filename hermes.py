@@ -77,7 +77,7 @@ for x in memoutput_list:
         ram_input = "%.2f" % mem_count
 
 #Collect information on the provider and VM environment
-provider_input   = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS or Azure): ")
+provider_input   = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS , SunGard , Peak10, Dimension Data or Azure): ")
 provider_input   = provider_input.lower()
 while True:
     if provider_input == 'netelligent':
@@ -91,6 +91,15 @@ while True:
         break
     elif provider_input == 'azure':
         provider_region = 'us-central'
+        break
+    elif provider_input == 'sungard':
+        provider_region = 'N/A'
+        break
+    elif provider_input == 'Peak10':
+        provider_region = 'N/A'
+        break
+    elif provider_input == 'dimensiondata':
+        provider_region = 'N/A'
         break
     else:
         provider_input   = raw_input("Please enter the provider's name (No spaces; e.g., 'Digital Ocean' should be 'digitalocean'): ")
