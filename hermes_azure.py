@@ -1,6 +1,3 @@
-#To-do list:
-#Soon: Do the same for iperf
-
 import json
 import os
 import csv

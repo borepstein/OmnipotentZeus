@@ -302,8 +302,6 @@ for x in range(iterations):
 
         spider_egg_exterminator()
         if fio_async =='y':
-            if iterator == 1:
-                os.system('apt-get install libaio1')
             sub.call(fio_async_command_generator(disk_options[1]))
             #OPEN the file
             fio_json = open(fio_json_file)
