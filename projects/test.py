@@ -1,8 +1,8 @@
 #TESTS TO RUN
 #CONFIGURATION INFORMATION
 #Start date is to specify when the test began
-project_id = 'c-netelligent-20150807'
-startdate_input = '20150807' #Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
+project_id = 'c-netelligent-20150821'
+startdate_input = '20150821' #Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
 operating_system = 'ubuntu' #debian, ubuntu, redhat, or centos
 
 #Please mark with a y (indicating yes) for each test you want to run
@@ -10,16 +10,16 @@ system_tests = 'y' #Geekbench 3 suite
 pts_tests = 'n' #Phoronix Test Suite
 disk_rand = 'y' #fio random read and random write
 disk_seq = 'y' #fio sequential read and sequential write
-internal_net_tests = 'y' #iperf internal network tests
+internal_net_tests = 'n' #iperf internal network tests
 
 #DISK INFORMATION
 #If you selected yes for disk_rand or disk_seq, then you have to fill out this information
 fio_blocksize = '4' #please enter the block size in kilobytes
-fio_filesize = '256' #please enter the file size in megabytes
-fio_numjobs = '5' #please enter the number of copies of the test that you would like to run
+fio_filesize = '1024' #please enter the file size in megabytes
+fio_numjobs = '8' #please enter the number of copies of the test that you would like to run
 fio_runtime = '60' #how long would you like this test to run for in seconds
 fio_direct = 'y' #if direct I/O is required (bypass cache), please mark y
-fio_async = 'y'
+fio_async = 'n'
 
 fio_rand_rw = 'randrw' #Please say randread for random read, randwrite for random write, and randrw to do both operations
 fio_rand_rw = '-rw=' + fio_rand_rw
@@ -51,8 +51,8 @@ internal_net_time = '60' #please enter the time, in seconds, that you want iperf
 #Duration and duration value will limit the time the suite will be running for. 
 #Either duration or number of iterations must complete in order for the testing to stop.
 sleeptime = 0
-iterations = 5000000
-duration        = 24
+iterations = 500
+duration        = 1
 duration_value  = "hours" #please enter seconds, minutes, hours, or days
 if duration_value.lower()   == "seconds":
     duration = duration
