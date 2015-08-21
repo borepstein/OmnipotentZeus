@@ -25,12 +25,6 @@ class Olympus(Base):
 	ram					= Column(Float(30),  nullable=False)
 	local 				= Column(Integer,    nullable=False)
 	block				= Column(Integer,    nullable=False)
-	disk_rand           = Column(String(10), nullable=True)
-	disk_seq            = Column(String(10), nullable=True)
-	disk_blocksize      = Column(String(10), nullable=True)
-	disk_filesize       = Column(String(10), nullable=True)
-	disk_numjobs        = Column(String(10), nullable=True)
-	disk_direct         = Column(String(10), nullable=True)
 
 class Hermes_System(Base):
 	__tablename__ = 'system'
@@ -59,7 +53,7 @@ class Hermes_System(Base):
 	sobel 				= Column(Float(30),  nullable=True)
 	lua 				= Column(Float(30),  nullable=True)
 	dijkstra			= Column(Float(30),  nullable=True)
-	blackscholes		= Column(Float(30),  nullable=True)
+	blackscholes		= Column(String(50), nullable=True)
 	mandelbrot			= Column(Float(30),  nullable=True)
 	sharpenimage		= Column(Float(30),  nullable=True)
 	blurimage			= Column(Float(30),  nullable=True)
@@ -79,66 +73,20 @@ class HermesRand(Base):
 	id                  = Column(Integer,    primary_key=True)
 	uid                 = Column(String(50), nullable=True)
 	iteration           = Column(Integer,    nullable=True)
-	read_runtime        = Column(Float(30),  nullable=True)
-	write_runtime       = Column(Float(30),  nullable=True)
-	read_iops           = Column(Float(30),  nullable=True)
-	read_io             = Column(Float(30),  nullable=True)
-	read_bw             = Column(Float(30),  nullable=True)
-	read_ticks          = Column(Float(30),  nullable=True)
-	write_iops          = Column(Float(30),  nullable=True)
-	write_io            = Column(Float(30),  nullable=True)
-	write_bw            = Column(Float(30),  nullable=True)
-	write_ticks         = Column(Float(30),  nullable=True)
+	write_mbps_rand     = Column(Float(30),  nullable=True)
+	read_mbps_rand      = Column(Float(30),  nullable=True)
+	write_iops_rand     = Column(Float(30),  nullable=True)
+	read_iops_rand      = Column(Float(30),  nullable=True)
 
 class HermesSeq(Base):
 	__tablename__ = 'sequential_disk'
 	id                  = Column(Integer,    primary_key=True)
 	uid                 = Column(String(50), nullable=True)
 	iteration           = Column(Integer,    nullable=True)
-	read_runtime        = Column(Float(30),  nullable=True)
-	write_runtime       = Column(Float(30),  nullable=True)
-	read_iops           = Column(Float(30),  nullable=True)
-	read_io             = Column(Float(30),  nullable=True)
-	read_bw             = Column(Float(30),  nullable=True)
-	read_ticks          = Column(Float(30),  nullable=True)
-	write_iops          = Column(Float(30),  nullable=True)
-	write_io            = Column(Float(30),  nullable=True)
-	write_bw            = Column(Float(30),  nullable=True)
-	write_ticks         = Column(Float(30),  nullable=True)
-
-class HermesRandasync(Base):
-	__tablename__ = 'random_disk_async'
-	extend_existing=True
-	id                  = Column(Integer,    primary_key=True)
-	uid                 = Column(String(50), nullable=True)
-	iteration           = Column(Integer,    nullable=True)
-	read_runtime        = Column(Float(30),  nullable=True)
-	write_runtime       = Column(Float(30),  nullable=True)
-	read_iops           = Column(Float(30),  nullable=True)
-	read_io             = Column(Float(30),  nullable=True)
-	read_bw             = Column(Float(30),  nullable=True)
-	read_ticks          = Column(Float(30),  nullable=True)
-	write_iops          = Column(Float(30),  nullable=True)
-	write_io            = Column(Float(30),  nullable=True)
-	write_bw            = Column(Float(30),  nullable=True)
-	write_ticks         = Column(Float(30),  nullable=True)
-
-class HermesSeqasync(Base):
-	__tablename__ = 'sequential_disk_async'
-	extend_existing=True
-	id                  = Column(Integer,    primary_key=True)
-	uid                 = Column(String(50), nullable=True)
-	iteration           = Column(Integer,    nullable=True)
-	read_runtime        = Column(Float(30),  nullable=True)
-	write_runtime       = Column(Float(30),  nullable=True)
-	read_iops           = Column(Float(30),  nullable=True)
-	read_io             = Column(Float(30),  nullable=True)
-	read_bw             = Column(Float(30),  nullable=True)
-	read_ticks          = Column(Float(30),  nullable=True)
-	write_iops          = Column(Float(30),  nullable=True)
-	write_io            = Column(Float(30),  nullable=True)
-	write_bw            = Column(Float(30),  nullable=True)
-	write_ticks         = Column(Float(30),  nullable=True)
+	write_mbps_seq      = Column(Float(30),  nullable=True)
+	read_mbps_seq       = Column(Float(30),  nullable=True)
+	write_iops_seq      = Column(Float(30),  nullable=True)
+	read_iops_seq       = Column(Float(30),  nullable=True)
 
 class HermesNet(Base):
 	__tablename__ = 'internal_network'
@@ -148,20 +96,11 @@ class HermesNet(Base):
 	transfer_mb			= Column(Float(30),  nullable=True)
 	bandwidth_mb		= Column(Float(30),  nullable=True) 
 
-class HermesPTS(Base):
-	__tablename__ = 'pts'
-	id                  = Column(Integer,    primary_key=True)
-	uid                 = Column(String(50), nullable=True)
-	iteration           = Column(Integer,    nullable=True)
-	compress7zip		= Column(Float(30),	 nullable=True)
-	phpbench			= Column(Float(30),    nullable=True)
-	mp3encode			= Column(Float(30),    nullable=True)
-	x264				= Column(Float(30),    nullable=True)
+# Create an object, db, to act as the connect to the database.
+# The SQLEngine object is used to open the connection, which is what is being used in the db variable. 
+# Format for create_engine is "engine://user:password@host:port/database"
+Ignition = create_engine("mysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/DATABASENAME")
+# Ignition = create_engine("mysql+pymysql://root:inapp@localhost:3306/omnipotentzeus")
 
-#Create an object, db, to act as the connect to the database.
-#The SQLEngine object is used to open the connection, which is what is being used in the db variable. 
-#Format for create_engine is "engine://user:password@host:port/database"
-Ignition = create_engine("mysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeus2")
-
-#Holds all the database metadata.
+# Holds all the database metadata.
 Base.metadata.create_all(Ignition)

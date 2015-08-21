@@ -8,13 +8,17 @@ import os
 import csv
 import subprocess as sub
 import smtplib as smtp
+import multiprocessing
+import urllib2
+import zipfile
 from time import sleep, time
 from bs4 import BeautifulSoup as bs
 from collections import OrderedDict as od
-from prometheus import Base, Olympus, Hermes_System, HermesRand, HermesRandasync, HermesSeq, HermesSeqasync, HermesNet, HermesPTS
+from prometheus import Base, Olympus, Hermes_System, HermesRand, HermesSeq, HermesNet, HermesPTS
 from prometheus import Ignition
 from sqlalchemy.orm import sessionmaker
 from random import randint
+from psutil import virtual_memory
 
 #Bind Ignition to the metadata of the Base class
 Base.metadata.bind = Ignition
@@ -22,7 +26,7 @@ DBSession          = sessionmaker(bind=Ignition)
 session            = DBSession()
 
 #====================GLOBAL INTRODUCTION====================#
-os.system('clear')
+os.system('cls')
 print "|------------------------|"
 print "|    Project Olympus     |"
 print "|         v1.5           |"
@@ -32,49 +36,29 @@ print "Project Olympus is designed to be a testbed for measuring virtual machine
 print ""
 print ""
 
-#====================GLOBAL INSTALLER====================#
-if operating_system =='centos' or operating_system == 'redhat':
-    if disk_rand == 'y' or disk_seq == 'y': #Install fio for disk testing if to be tested
-        os.system('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
-        os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
-    if internal_net_tests == 'y': #Install iperf for network testing if to be tested
-        os.system('yum install iperf -y')
-    if system_tests == 'y': #Install Geekbench - Download & Unpackage if to be tested
-        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-        os.chdir('dist/Geekbench-3.1.2-Linux')
-        sub.call(['./geekbench_x86_64','-r',email,key])
+processor_info = ''
 
-if operating_system == 'ubuntu' or operating_system == 'debian': 
-    if disk_rand == 'y' or disk_seq =='y':  #Install fio for disk testing if to be tested
-        os.system('apt-get install fio --yes')
-    if internal_net_tests == 'y': #Install iperf for network testing if to be tested
-        os.system('apt-get install iperf') 
+if operating_system == 'windows': 
     if system_tests == 'y': #Install Geekbench - Download & Unpackage if to be tested
-        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz") 
-        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-        os.chdir('dist/Geekbench-3.1.2-Linux')
-        sub.call(['./geekbench_x86_64','-r',email,key])
-    if pts_tests == 'y': #Install Phoronix if to be tested
-        os.system('apt-get install phoronix-test-suite --yes')
-        os.system('y | phoronix-test-suite')
-        os.system('mv ~/OmnipotentZeus/user-config.xml ~/.phoronix-test-suite/user-config.xml')
+        if not os.path.isfile('Geekbench-3.3.2-WindowsSetup.exe'):
+            os.system('wget --no-check-certificate https://s3.amazonaws.com/internal-downloads/Geekbench-3.3.2-WindowsSetup.exe')
+            sub.call(['Geekbench-3.3.2-WindowsSetup.exe','-r',email,key], shell=True)
+    if disk_rand == 'y' or disk_seq =='y':  #Install fio for disk testing if to be tested
+        if not os.path.isfile('SQLIO.msi'):
+            os.system('wget http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi')
+            sub.call(['SQLIO.msi'], shell=True)
+    if internal_net_tests == 'y': #Install iperf for network testing if to be tested
+        if not os.path.isfile('iperf-3.0.11-win64.zip'):
+            os.system('wget --no-check-certificate https://iperf.fr/download/iperf_3.0/iperf-3.0.11-win64.zip')
+            with zipfile.ZipFile('iperf-3.0.11-win64.zip', "r") as z:
+                z.extractall()
 
 #Getting CPU Amount
-v1               = sub.Popen(['cat','/proc/cpuinfo'],stdout=sub.PIPE)
-v2               = sub.Popen(['grep','processor'], stdin=v1.stdout, stdout=sub.PIPE)
-v3               = sub.Popen(['wc','-l'], stdin=v2.stdout, stdout=sub.PIPE)
-vcpu_input       = v3.communicate()[0]
+vcpu_input = multiprocessing.cpu_count()
+
 #RAM Amount
-r1 = sub.Popen(['cat','/proc/meminfo'],stdout=sub.PIPE)
-r2 = sub.Popen(['grep','MemTotal'], stdin=r1.stdout, stdout=sub.PIPE)
-memoutput        = r2.communicate()[0]
-memoutput_list   = memoutput.split(' ')
-for x in memoutput_list:
-    if x.isalnum(): #Converting from bytes to GB
-        mem_count = int(x)
-        mem_count = (mem_count / 1024.0 / 1024.0)
-        ram_input = "%.2f" % mem_count
+mem = virtual_memory()
+ram_input = (float(mem.total) / 1024.0 / 1024.0 / 1024.0)
 
 #Collect information on the provider and VM environment
 provider_input   = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS , SunGard , Peak10, Dimension Data or Azure): ")
@@ -112,422 +96,279 @@ local_input      = raw_input("Local Disk (in GB). Put 0 if none: ")
 block_input      = raw_input("Block Disk (in GB). Put 0 if none: ")
 
 #Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
-random_uid    = randint(0,1000000)
+random_uid    = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
-
-if disk_rand =='y':
-    fio_rw = "Yes"
-
-if disk_seq =='y':
-    fio_seq = "Yes"
 
 if internal_net_tests == 'y':
     internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
     internal_net_csv = "C"
 
 #====================GLOBAL TESTING====================#
-iterator = 1
-start = time()
-for x in range(iterations):
-    stop = time() - start
-    if stop >= duration:
-        break
-    if system_tests == 'y':
-        #Run Geekbench
-        sub.call(['./geekbench_x86_64','--no-upload','--export-json', 'gb.json'])
 
-        #OPEN the file
-        geekbench_json = open('gb.json')
+if system_tests == 'y':
+    #Run Geekbench
+    #sub.call(['./geekbench_x86_64','--no-upload','--export-json', 'gb.json'])
+    sub.call(['C:\Program Files (x86)\Geekbench 3\geekbench_x86_64.exe','--no-upload','--export-json', 'gb.json'], shell=True)
+    
+    #OPEN the file
+    geekbench_json = open('gb.json')
 
-        #Load the JSON file
-        data = json.load(geekbench_json)
-        if iterator == 1:
-            processor_info = str(data['metrics'][6]['value'])
+    #Load the JSON file
+    data = json.load(geekbench_json)
+    processor_info = str(data['metrics'][6]['value'])
 
-        #Parse the Variables
-        #Integer multi-core numbers
-        y = 0
-        scores = {}
-        for x in range(0,13,1):
-            z           = str(data['sections'][0]['workloads'][y]['name'])
-            scores[z]   = str(data['sections'][0]['workloads'][y]['results'][1]['rate_string'])
-            y           = y + 1
-        y = 0
-        for x in range(0,10,1):
-            z           = str(data['sections'][1]['workloads'][y]['name'])
-            scores[z]   = str(data['sections'][1]['workloads'][y]['results'][1]['rate_string'])
-            y           = y + 1
-        y = 0
-        for x in range(0,4,1):
-            z           = str(data['sections'][2]['workloads'][y]['name'])
-            scores[z]   = str(data['sections'][2]['workloads'][y]['results'][1]['rate_string'])
-            y           = y + 1
-        y = 0
-        for x in range(0,3,1):
-            z           = str(data['sections'][y]['name'])+" Multicore"
-            scores[z]   = str(data['sections'][y]['multicore_score'])
-            y           = y + 1
-        y = 0
-        for x in range(0,3,1):
-            z           = str(data['sections'][y]['name'])+" Singlecore"
-            scores[z]   = str(data['sections'][y]['score'])
-            y           = y + 1
-        y = 0
-        for x in range(0,1):
-            z           = "Total"
-            scores[z]   = str(data['multicore_score'])
-            y           = y + 1
-        for x in range(0,1):
-            z           = "Total Single"
-            scores[z]   = str(data['multicore_score'])
-            y           = y + 1
-        for x in range(0,1):
-            z           = "Runtime"
-            scores[z]   = str(data['runtime'])
-        
-        scores = od(scores)
-        y = 0
-        values = {}
-        for key,val in scores.items():
-            if "GB/sec" in val or "Gflops" in val:
-                values[key] = float(val[:-7]) * 1024
-            elif "MB/sec" in val or "Mflops" in val:
-                values[key] = float(val[:-7])
-            elif "Gpixels/sec" in val:
-                values[key] = float(val[:-12]) * 1024
-            elif "Mpixels/sec" in val:
-                values[key] = float(val[:-12])
-            elif "Gpairs/sec" in val:
-                values[key] = float(val[:-11]) * 1024
-            elif "Mpairs/sec" in val:
-                values[key] = float(val[:-11])
-            else:
-                values[key] = val
-            y = y + 1
-        values = od(values)
+    #Parse the Variables
+    #Integer multi-core numbers
+    y = 0
+    scores = {}
+    for x in range(0,13,1):
+        z           = str(data['sections'][0]['workloads'][y]['name'])
+        scores[z]   = str(data['sections'][0]['workloads'][y]['results'][1]['rate_string'])
+        y           = y + 1
+    y = 0
+    for x in range(0,10,1):
+        z           = str(data['sections'][1]['workloads'][y]['name'])
+        scores[z]   = str(data['sections'][1]['workloads'][y]['results'][1]['rate_string'])
+        y           = y + 1
+    y = 0
+    for x in range(0,4,1):
+        z           = str(data['sections'][2]['workloads'][y]['name'])
+        scores[z]   = str(data['sections'][2]['workloads'][y]['results'][1]['rate_string'])
+        y           = y + 1
+    y = 0
+    for x in range(0,3,1):
+        z           = str(data['sections'][y]['name'])+" Multicore"
+        scores[z]   = str(data['sections'][y]['multicore_score'])
+        y           = y + 1
+    y = 0
+    for x in range(0,3,1):
+        z           = str(data['sections'][y]['name'])+" Singlecore"
+        scores[z]   = str(data['sections'][y]['score'])
+        y           = y + 1
+    y = 0
+    for x in range(0,1):
+        z           = "Total"
+        scores[z]   = str(data['multicore_score'])
+        y           = y + 1
+    for x in range(0,1):
+        z           = "Total Single"
+        scores[z]   = str(data['multicore_score'])
+        y           = y + 1
+    for x in range(0,1):
+        z           = "Runtime"
+        scores[z]   = str(data['runtime'])
+    
+    scores = od(scores)
+    y = 0
+    values = {}
+    for key,val in scores.items():
+        if "GB/sec" in val or "Gflops" in val:
+            values[key] = float(val[:-7]) * 1024
+        elif "MB/sec" in val or "Mflops" in val:
+            values[key] = float(val[:-7])
+        elif "Gpixels/sec" in val:
+            values[key] = float(val[:-12]) * 1024
+        elif "Mpixels/sec" in val:
+            values[key] = float(val[:-12])
+        elif "Gpairs/sec" in val:
+            values[key] = float(val[:-11]) * 1024
+        elif "Mpairs/sec" in val:
+            values[key] = float(val[:-11])
+        else:
+            values[key] = val
+        y = y + 1
+    values = od(values)
 
-    if pts_tests == 'y':
-        #Run Phoronix Test Suite
-        for test in pts_available_tests:
-            x = 'TEST_RESULTS_NAME=' + test + ' phoronix-test-suite batch-benchmark ' + test
-            print x
-            os.system(x)
+if disk_rand == 'y':
+    output_file = 'diskrand.txt'
 
-        #Open the result output
-        pts_results_iteration = 'test-' + str(iterator) + '.xml'
-        for test in pts_available_tests:
-            xml = open(str(os.getenv('HOME')) + '/.phoronix-test-suite/test-results/' + test +'/' + pts_results_iteration).read()
-            xml = bs(xml, 'xml')
-            pts_available_tests[test] = float(str(xml.PhoronixTestSuite.Result.Data.Value.string))
+    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kR', '-s10', '-frandom', '-b8'], stdout=open(output_file, "w"))
+    for row in open(output_file):
+        line = row.rstrip()
+        if "IOs/sec" in line:
+            item = line.split(":")
+            read_iops_rand = float(item[1].strip())
+            break
 
+    for row in open(output_file):
+        line = row.rstrip()
+        if "MBs/sec" in line:
+            item = line.split(":")
+            read_mbps_rand = float(item[1].strip())
+            break
 
-    #Run Disk Tests if disk tests are enabled   
-    #List of disk parameters
-    disk_options = [fio_seq_rw,fio_rand_rw]
+    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kW', '-s10', '-frandom', '-b8'], stdout=open(output_file, "w"))
+    for row in open(output_file):
+        line = row.rstrip()
+        if "IOs/sec" in line:
+            item = line.split(":")
+            write_iops_rand = float(item[1].strip())
+            break
 
-    def fio_command_generator(option):
-        global fio_command
-        fio_command = ['fio',option,fio_filename,fio_blocksize,fio_filesize,fio_numjobs,fio_runtime,fio_direct,'-iodepth=32','-time_based','--output-format=json','--output=fio.json','-time_based' ,'-group_reporting','-exitall']
-        return fio_command
+    for row in open(output_file):
+        line = row.rstrip()
+        if "MBs/sec" in line:
+            item = line.split(":")
+            write_mbps_rand = float(item[1].strip())
+            break
 
-    def fio_async_command_generator(option):
-        global fio_command
-        fio_command = ['fio',option,fio_filename,fio_blocksize,fio_filesize,fio_numjobs,fio_runtime,fio_direct,'-iodepth=32','-ioengine=libaio','-time_based','--output-format=json','--output=fio.json','-time_based' ,'-group_reporting','-exitall']
-        return fio_command
+    print "finished transferring"
+    os.remove(output_file)
+    print "finished deleting the file"
 
-    def spider_egg_exterminator():
-        fio_json.close()
-        os.remove(fio_json_file)
-        #Remove the spider eggs I laid.
-        for baby_spiders in range(0,spider_hatchlings):
-            spideregg_file = "spider_eggs." + str(baby_spiders) + ".0"
-            try:
-		    os.remove(spideregg_file)
-            except:
-                print 'no file'
+if disk_seq == 'y':
+    output_file = 'diskseq.txt'
 
-    if disk_rand == 'y':
-        sub.call(fio_command_generator(disk_options[0]))
-        #OPEN the file
-        fio_json = open(fio_json_file)
-        #Load the JSON file
-        fio_data = json.load(fio_json)
+    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kR', '-s10', '-fsequential', '-b64'], stdout=open(output_file, "w"))
+    for row in open(output_file):
+        line = row.rstrip()
+        if "IOs/sec" in line:
+            item = line.split(":")
+            read_iops_seq = float(item[1].strip())
+            break
 
-        runtime_read_rand  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-        runtime_write_rand = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-        ops_read_rand      = str(fio_data['disk_util'][0]   ['read_ios'])
-        ops_write_rand     = str(fio_data['disk_util'][0]   ['write_ios'])
-        io_read_rand       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-        io_write_rand      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-        iops_read_rand     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-        iops_write_rand    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-        bw_read_rand       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-        bw_write_rand      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-        ticks_read_rand    = str(fio_data['disk_util'][0]   ['read_ticks'])
-        ticks_write_rand   = str(fio_data['disk_util'][0]   ['write_ticks'])
+    for row in open(output_file):
+        line = row.rstrip()
+        if "MBs/sec" in line:
+            item = line.split(":")
+            read_mbps_seq = float(item[1].strip())
+            break
 
-        spider_egg_exterminator()
+    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kW', '-s10', '-fsequential', '-b64'], stdout=open(output_file, "w"))
+    for row in open(output_file):
+        line = row.rstrip()
+        if "IOs/sec" in line:
+            item = line.split(":")
+            write_iops_seq = float(item[1].strip())
+            break
 
-        if fio_async =='y':
-            sub.call(fio_async_command_generator(disk_options[0]))
-            #OPEN the file
-            fio_json = open(fio_json_file)
-            #Load the JSON file
-            fio_data = json.load(fio_json)
+    for row in open(output_file):
+        line = row.rstrip()
+        if "MBs/sec" in line:
+            item = line.split(":")
+            write_mbps_seq = float(item[1].strip())
+            break
 
-            runtime_read_rand_async  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-            runtime_write_rand_async = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-            ops_read_rand_async      = str(fio_data['disk_util'][0]   ['read_ios'])
-            ops_write_rand_async     = str(fio_data['disk_util'][0]   ['write_ios'])
-            io_read_rand_async       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-            io_write_rand_async      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-            iops_read_rand_async     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-            iops_write_rand_async    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-            bw_read_rand_async       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-            bw_write_rand_async      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-            ticks_read_rand_async    = str(fio_data['disk_util'][0]   ['read_ticks'])
-            ticks_write_rand_async   = str(fio_data['disk_util'][0]   ['write_ticks'])
+    print "finished transferring"
+    os.remove(output_file)
+    print "finished deleting the file"
 
-            spider_egg_exterminator()
+if internal_net_tests == 'y':
+    # iperf -c IP_ADDRESS -t TIME -f m -y C >> iperf_results.csv
+    sub.call(['iperf3.exe', '-c', internal_net_ip, '-t', internal_net_time, '-y', 'C'], stdout=open("iperf_results.csv","w"))
 
-
-    if disk_seq == 'y':
-        sub.call(fio_command_generator(disk_options[1]))
-        #OPEN the file
-        fio_json = open(fio_json_file)
-        #Load the JSON file
-        fio_data = json.load(fio_json)
-
-        runtime_read_seq  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-        runtime_write_seq = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-        ops_read_seq      = str(fio_data['disk_util'][0]   ['read_ios'])
-        ops_write_seq     = str(fio_data['disk_util'][0]   ['write_ios'])
-        io_read_seq       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-        io_write_seq      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-        iops_read_seq     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-        iops_write_seq    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-        bw_read_seq       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-        bw_write_seq      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-        ticks_read_seq    = str(fio_data['disk_util'][0]   ['read_ticks'])
-        ticks_write_seq   = str(fio_data['disk_util'][0]   ['write_ticks'])
-
-        spider_egg_exterminator()
-        if fio_async =='y':
-            sub.call(fio_async_command_generator(disk_options[1]))
-            #OPEN the file
-            fio_json = open(fio_json_file)
-            #Load the JSON file
-            fio_data = json.load(fio_json)
-
-            runtime_read_seq_async  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-            runtime_write_seq_async = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-            ops_read_seq_async      = str(fio_data['disk_util'][0]   ['read_ios'])
-            ops_write_seq_async     = str(fio_data['disk_util'][0]   ['write_ios'])
-            io_read_seq_async       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-            io_write_seq_async      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-            iops_read_seq_async     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-            iops_write_seq_async    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-            bw_read_seq_async       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-            bw_write_seq_async      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-            ticks_read_seq_async    = str(fio_data['disk_util'][0]   ['read_ticks'])
-            ticks_write_seq_async   = str(fio_data['disk_util'][0]   ['write_ticks'])
-
-            spider_egg_exterminator()
-
-    if internal_net_tests == 'y':
-        #iperf -c IP_ADDRESS -t TIME -f m -y C >> iperf_results.csv
-        sub.call(['iperf','-c',internal_net_ip,'-t',internal_net_time,'-y',internal_net_csv],stdout=open("iperf_results.csv","w"))
-
-        internal_net_csv_file = 'iperf_results.csv'
-        opener = open(internal_net_csv_file)
-        csv_open = csv.reader(opener)
-        for row in csv_open:
-            internal_network_data = int(row[7])
-            internal_network_data = (internal_network_data / 1024) / 1024
-            print internal_network_data
-            internal_network_bandwidth = int(row[8])
-            internal_network_bandwidth = (internal_network_bandwidth / 1024) / 1024
-            print internal_network_bandwidth
-        print "finished transferring"
-        os.remove(internal_net_csv_file)
-        print "finished deleting the file"
-
-    if disk_rand =='n' and disk_seq =='n':
-        fio_rw = "n/a"
-        fio_seq = "n/a"
-        fio_blocksize = 0
-        fio_filesize = 0
-        fio_numjobs = 0
-        fio_direct_val = 0
+    internal_net_csv_file = 'iperf_results.csv'
+    opener = open(internal_net_csv_file)
+    csv_open = csv.reader(opener)
+    for row in csv_open:
+        internal_network_data = int(row[7])
+        internal_network_data = (internal_network_data / 1024) / 1024
+        print internal_network_data
+        internal_network_bandwidth = int(row[8])
+        internal_network_bandwidth = (internal_network_bandwidth / 1024) / 1024
+        print internal_network_bandwidth
+    print "finished transferring"
+    os.remove(internal_net_csv_file)
+    print "finished deleting the file"
 
 #====================GLOBAL TRANSMITTING====================#
-    #Transmit data back to Olympuss
-    print "Transmitting to Olympus"
-    if iterator == 1:
-        print "Transfer..."
-        Open_Olympus       = Olympus(
-            project        = project_id,
-            provider       = provider_input,
-            region         = provider_region,
-            startdate      = startdate_input,
-            processor      = processor_info,
-            uid            = generated_uid,
-            vm             = vm_input,
-            vmcount        = vmcount_input,
-            vcpu           = vcpu_input,
-            ram            = ram_input,
-            local          = local_input,
-            block          = block_input,
-            disk_rand      = fio_rw,
-            disk_seq       = fio_seq,
-            disk_blocksize = fio_blocksize,
-            disk_filesize  = fio_filesize,
-            disk_numjobs   = fio_numjobs,
-            disk_direct    = fio_direct_val)
-        print "Transfer 1"
-        session.add(Open_Olympus)
-        print "Transfer 2"
-        session.commit()
-        print "Transfer Complete"
+#Transmit data back to Olympus
+print "Transmitting to Olympus"
+print "Transfer..."
+Open_Olympus       = Olympus(
+    project        = project_id,
+    provider       = provider_input,
+    region         = provider_region,
+    startdate      = startdate_input,
+    processor      = processor_info,
+    uid            = generated_uid,
+    vm             = vm_input,
+    vmcount        = vmcount_input,
+    vcpu           = vcpu_input,
+    ram            = ram_input,
+    local          = local_input,
+    block          = block_input)
+print "Transfer 1"
+session.add(Open_Olympus)
+print "Transfer 2"
+session.commit()
+print "Transfer Complete"
 
-    #Parse data into System Results if processor & memory tests were requested
-    if system_tests == 'y':
-        Hermes_System_Results   = Hermes_System(
-            uid                 = generated_uid,
-            iteration           = iterator,
-            runtime             = values['Runtime'],
-            intmulti            = values['Integer Multicore'],
-            floatmulti          = values['Floating Point Multicore'],
-            memmulti            = values['Memory Multicore'],
-            intsingle           = values['Integer Singlecore'],
-            floatsingle         = values['Floating Point Singlecore'],
-            memsingle           = values['Memory Singlecore'],
-            totalmulti          = values['Total'],
-            totalsingle         = values['Total Single'],
-            aes                 = values['AES'],
-            twofish             = values['Twofish'],
-            sha1                = values['SHA1'],
-            sha2                = values['SHA2'],
-            bzipcompression     = values['BZip2 Compress'],
-            bzipdecompression   = values['BZip2 Decompress'],
-            jpegcompression     = values['JPEG Compress'],
-            jpegdecompression   = values['JPEG Decompress'],
-            pngcompression      = values['PNG Compress'],
-            pngdecompression    = values['PNG Decompress'],
-            sobel               = values['Sobel'],
-            lua                 = values['Lua'],
-            dijkstra            = values['Dijkstra'],
-            blackscholes        = values['BlackScholes'],
-            mandelbrot          = values['Mandelbrot'],
-            sharpenimage        = values['Sharpen Filter'],
-            blurimage           = values['Blur Filter'],
-            sgemm               = values['SGEMM'],
-            dgemm               = values['DGEMM'],
-            sfft                = values['SFFT'],
-            dfft                = values['DFFT'],
-            nbody               = values['N-Body'],
-            raytrace            = values['Ray Trace'],
-            copy                = values['Stream Copy'],
-            scale               = values['Stream Scale'],
-            add                 = values['Stream Add'],
-            triad               = values['Stream Triad'])
-        session.add(Hermes_System_Results)
-        session.commit()
-        #Remove the geekbench file
-        os.remove('gb.json')
-        #Close the Geekbench file when you're done with it
-        geekbench_json.close()
+#Parse data into System Results if processor & memory tests were requested
+if system_tests == 'y':
+    Hermes_System_Results   = Hermes_System(
+        uid                 = generated_uid,
+        runtime             = values['Runtime'],
+        intmulti            = values['Integer Multicore'],
+        floatmulti          = values['Floating Point Multicore'],
+        memmulti            = values['Memory Multicore'],
+        intsingle           = values['Integer Singlecore'],
+        floatsingle         = values['Floating Point Singlecore'],
+        memsingle           = values['Memory Singlecore'],
+        totalmulti          = values['Total'],
+        totalsingle         = values['Total Single'],
+        aes                 = values['AES'],
+        twofish             = values['Twofish'],
+        sha1                = values['SHA1'],
+        sha2                = values['SHA2'],
+        bzipcompression     = values['BZip2 Compress'],
+        bzipdecompression   = values['BZip2 Decompress'],
+        jpegcompression     = values['JPEG Compress'],
+        jpegdecompression   = values['JPEG Decompress'],
+        pngcompression      = values['PNG Compress'],
+        pngdecompression    = values['PNG Decompress'],
+        sobel               = values['Sobel'],
+        lua                 = values['Lua'],
+        dijkstra            = values['Dijkstra'],
+        blackscholes        = values['BlackScholes'],
+        mandelbrot          = values['Mandelbrot'],
+        sharpenimage        = values['Sharpen Filter'],
+        blurimage           = values['Blur Filter'],
+        sgemm               = values['SGEMM'],
+        dgemm               = values['DGEMM'],
+        sfft                = values['SFFT'],
+        dfft                = values['DFFT'],
+        nbody               = values['N-Body'],
+        raytrace            = values['Ray Trace'],
+        copy                = values['Stream Copy'],
+        scale               = values['Stream Scale'],
+        add                 = values['Stream Add'],
+        triad               = values['Stream Triad'])
+    session.add(Hermes_System_Results)
+    session.commit()
+    #Remove the geekbench file
+    #os.remove('gb.json')
+    #Close the Geekbench file when you're done with it
+    geekbench_json.close()
 
-    if pts_tests == 'y':
-        Hermes_pts              = HermesPTS(
-            uid                 = generated_uid,
-            iteration           = iterator,
-            compress7zip        = pts_available_tests['compress-7zip'],
-            phpbench            = pts_available_tests['phpbench'],
-            mp3encode           = pts_available_tests['encode-mp3'],
-            x264                = pts_available_tests['x264'])
-        session.add(Hermes_pts)
-        session.commit()
+#parse data into Disk Results if disk tests were requested
+if disk_rand == 'y':
+    Hermes_Rand             = HermesRand(
+        uid                 = generated_uid,
+        write_mbps_rand     = write_mbps_rand,
+        read_mbps_rand      = read_mbps_rand,
+        write_iops_rand     = write_iops_rand,
+        read_iops_rand      = read_iops_rand)
+    session.add(Hermes_Rand)
+    session.commit()
 
-    #parse data into Disk Results if disk tests were requested
-    if disk_rand == 'y':
-        Hermes_Rand             = HermesRand(
-            uid                 = generated_uid,
-            iteration           = iterator,
-            read_runtime        = runtime_read_rand,
-            write_runtime       = runtime_write_rand,
-            read_iops           = iops_read_rand,
-            read_io             = io_read_rand,
-            read_bw             = bw_read_rand,
-            read_ticks          = ticks_read_rand,
-            write_iops          = iops_write_rand,
-            write_io            = io_write_rand,
-            write_bw            = bw_write_rand,
-            write_ticks         = ticks_write_rand)
-        session.add(Hermes_Rand)
-        session.commit()
-        if fio_async == 'y':
-            Hermes_Rand_Async   = HermesRandasync(
-                uid                 = generated_uid,
-                iteration           = iterator,
-                read_runtime        = runtime_read_rand_async,
-                write_runtime       = runtime_write_rand_async,
-                read_iops           = iops_read_rand_async,
-                read_io             = io_read_rand_async,
-                read_bw             = bw_read_rand_async,
-                read_ticks          = ticks_read_rand_async,
-                write_iops          = iops_write_rand_async,
-                write_io            = io_write_rand_async,
-                write_bw            = bw_write_rand_async,
-                write_ticks         = ticks_write_rand_async)
-            session.add(Hermes_Rand_Async)
-            session.commit()
+if disk_seq == 'y':
+    Hermes_Seq              = HermesSeq(
+        uid                 = generated_uid,
+        write_mbps_seq      = write_mbps_seq,
+        read_mbps_seq       = read_mbps_seq,
+        write_iops_seq      = write_iops_seq,
+        read_iops_seq       = read_iops_seq)
+    session.add(Hermes_Seq)
+    session.commit()
 
-    if disk_seq == 'y':
-        Hermes_Seq              = HermesSeq(
-            uid                 = generated_uid,
-            iteration           = iterator,
-            read_runtime        = runtime_read_seq,
-            write_runtime       = runtime_write_seq,
-            read_iops           = iops_read_seq,
-            read_io             = io_read_seq,
-            read_bw             = bw_read_seq,
-            read_ticks          = ticks_read_seq,
-            write_iops          = iops_write_seq,
-            write_io            = io_write_seq,
-            write_bw            = bw_write_seq,
-            write_ticks         = ticks_write_seq)
-        session.add(Hermes_Seq)
-        session.commit()
-        if fio_async == 'y':
-            Hermes_Seq_Async    = HermesSeqasync(
-                uid                 = generated_uid,
-                iteration           = iterator,
-                read_runtime        = runtime_read_seq_async,
-                write_runtime       = runtime_write_seq_async,
-                read_iops           = iops_read_seq_async,
-                read_io             = io_read_seq_async,
-                read_bw             = bw_read_seq_async,
-                read_ticks          = ticks_read_seq_async,
-                write_iops          = iops_write_seq_async,
-                write_io            = io_write_seq_async,
-                write_bw            = bw_write_seq_async,
-                write_ticks         = ticks_write_seq_async)
-            session.add(Hermes_Seq_Async)
-            session.commit()
-
-    if internal_net_tests == 'y':
-        Hermes_Net              = HermesNet(
-            uid                 = generated_uid,
-            iteration           = iterator,
-            transfer_mb         = internal_network_data,
-            bandwidth_mb        = internal_network_bandwidth)
-        session.add(Hermes_Net)
-        session.commit()
-
-    iterator = iterator + 1
-    #Any delay before the next round is executed
-    sleep(sleeptime)
+if internal_net_tests == 'y':
+    Hermes_Net              = HermesNet(
+        uid                 = generated_uid,
+        transfer_mb         = internal_network_data,
+        bandwidth_mb        = internal_network_bandwidth)
+    session.add(Hermes_Net)
+    session.commit()
 
 if textnotifications == 'y':
     try:
