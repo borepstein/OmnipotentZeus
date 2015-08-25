@@ -4,8 +4,7 @@
 <p><b>4. Install Microsoft Visual C++ Compiler</b></p>
 <p><b>5. Install MySQL Database server (5.6.26) and set path</b></p>
 <p><b>6. Install git</b></p>
-<p>```apt-get install git --yes```</p>
 <p><b>7. Clone the repository.</b></p>
-<p>```git clone -b inapp-windows-script https://github.com/kennymuli/OmnipotentZeus.git```</p>
+<P>```git clone -b inapp-windows-script https://github.com/kennymuli/OmnipotentZeus.git```
 <p><b>8. Run the program.</b></p>
-<p>```./OmnipotentZeus/run_win.bat```</p>
+<P>```./OmnipotentZeus/run_win.bat```
