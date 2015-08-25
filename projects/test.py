@@ -11,7 +11,7 @@ operating_system = 'windows' #windows
 system_tests = 'y' #y #Geekbench 3 suite
 disk_rand = 'y' #y #sqlio random read and random write
 disk_seq = 'y' #y #sqlio sequential read and sequential write
-internal_net_tests = 'n' #y #iperf internal network tests
+internal_net_tests = 'y' #y #iperf internal network tests
 
 #INTERNAL NETWORK INFORMATION
 #If you selected yes for internal network tests, then you have to fill out this information

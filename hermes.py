@@ -1,7 +1,3 @@
-#TO-DO
-#Add Geekbench's Processor Information to collect that into the database
-
-#Don't forget to change this first import to import the correct configuration file
 from projects.test import *
 import json
 import os
@@ -12,20 +8,19 @@ import multiprocessing
 import urllib2
 import zipfile
 from time import sleep, time
-from bs4 import BeautifulSoup as bs
 from collections import OrderedDict as od
-from prometheus import Base, Olympus, Hermes_System, HermesRand, HermesSeq, HermesNet, HermesPTS
+from prometheus import Base, Olympus
 from prometheus import Ignition
 from sqlalchemy.orm import sessionmaker
 from random import randint
 from psutil import virtual_memory
 
-#Bind Ignition to the metadata of the Base class
+# Bind Ignition to the metadata of the Base class
 Base.metadata.bind = Ignition
 DBSession          = sessionmaker(bind=Ignition)
 session            = DBSession()
 
-#====================GLOBAL INTRODUCTION====================#
+# ==================== GLOBAL INTRODUCTION ==================== #
 os.system('cls')
 print "|------------------------|"
 print "|    Project Olympus     |"
@@ -35,8 +30,6 @@ print ""
 print "Project Olympus is designed to be a testbed for measuring virtual machine performance in a scalable, cloud environment. The design of Olympus is its flexibility in continuous testing over time, rather than spot testing, which is an archaic method that cannot apply to highly variable environments with multiple (many of which are possibly uncontrolled) variables."
 print ""
 print ""
-
-processor_info = ''
 
 if operating_system == 'windows': 
     if system_tests == 'y': #Install Geekbench - Download & Unpackage if to be tested
@@ -53,14 +46,14 @@ if operating_system == 'windows':
             with zipfile.ZipFile('iperf-3.0.11-win64.zip', "r") as z:
                 z.extractall()
 
-#Getting CPU Amount
+# Fetching CPU Amount
 vcpu_input = multiprocessing.cpu_count()
 
-#RAM Amount
+# Fetching RAM Amount
 mem = virtual_memory()
-ram_input = (float(mem.total) / 1024.0 / 1024.0 / 1024.0)
+ram_input = "%.2f" % (float(mem.total) / 1024.0 / 1024.0 / 1024.0)
 
-#Collect information on the provider and VM environment
+# Collect information on the provider and VM environment
 provider_input   = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS , SunGard , Peak10, Dimension Data or Azure): ")
 provider_input   = provider_input.lower()
 while True:
@@ -95,7 +88,7 @@ vmcount_input    = '0'
 local_input      = raw_input("Local Disk (in GB). Put 0 if none: ")
 block_input      = raw_input("Block Disk (in GB). Put 0 if none: ")
 
-#Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
+# Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
 random_uid    = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
 
@@ -103,22 +96,18 @@ if internal_net_tests == 'y':
     internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
     internal_net_csv = "C"
 
-#====================GLOBAL TESTING====================#
+# ==================== GLOBAL TESTING ==================== #
 
 if system_tests == 'y':
-    #Run Geekbench
-    #sub.call(['./geekbench_x86_64','--no-upload','--export-json', 'gb.json'])
-    sub.call(['C:\Program Files (x86)\Geekbench 3\geekbench_x86_64.exe','--no-upload','--export-json', 'gb.json'], shell=True)
-    
-    #OPEN the file
-    geekbench_json = open('gb.json')
 
-    #Load the JSON file
+    # Run Geekbench
+    sub.call(['C:\Program Files (x86)\Geekbench 3\geekbench_x86_64.exe','--no-upload','--export-json', 'gb.json'], shell=True)
+
+    # Parse variables from Geekbench result
+    geekbench_json = open('gb.json')
     data = json.load(geekbench_json)
     processor_info = str(data['metrics'][6]['value'])
-
-    #Parse the Variables
-    #Integer multi-core numbers
+    
     y = 0
     scores = {}
     for x in range(0,13,1):
@@ -178,11 +167,15 @@ if system_tests == 'y':
             values[key] = val
         y = y + 1
     values = od(values)
+    print "completed system tests"
 
 if disk_rand == 'y':
     output_file = 'diskrand.txt'
 
+    # Run disk random test for 'read'
     sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kR', '-s10', '-frandom', '-b8'], stdout=open(output_file, "w"))
+
+    # Parse variables from disk random read result
     for row in open(output_file):
         line = row.rstrip()
         if "IOs/sec" in line:
@@ -197,7 +190,10 @@ if disk_rand == 'y':
             read_mbps_rand = float(item[1].strip())
             break
 
+    # Run disk random test for 'write'
     sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kW', '-s10', '-frandom', '-b8'], stdout=open(output_file, "w"))
+    
+    # Parse variables from disk random write result
     for row in open(output_file):
         line = row.rstrip()
         if "IOs/sec" in line:
@@ -212,14 +208,16 @@ if disk_rand == 'y':
             write_mbps_rand = float(item[1].strip())
             break
 
-    print "finished transferring"
     os.remove(output_file)
-    print "finished deleting the file"
+    print "completed disk random test"
 
 if disk_seq == 'y':
     output_file = 'diskseq.txt'
 
+    # Run disk sequential test for 'read'
     sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kR', '-s10', '-fsequential', '-b64'], stdout=open(output_file, "w"))
+
+    # Parse variables from disk sequential read result
     for row in open(output_file):
         line = row.rstrip()
         if "IOs/sec" in line:
@@ -234,7 +232,10 @@ if disk_seq == 'y':
             read_mbps_seq = float(item[1].strip())
             break
 
+    # Run disk sequential test for 'write'
     sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kW', '-s10', '-fsequential', '-b64'], stdout=open(output_file, "w"))
+    
+    # Parse variables from disk sequential write result
     for row in open(output_file):
         line = row.rstrip()
         if "IOs/sec" in line:
@@ -249,30 +250,49 @@ if disk_seq == 'y':
             write_mbps_seq = float(item[1].strip())
             break
 
-    print "finished transferring"
     os.remove(output_file)
-    print "finished deleting the file"
+    print "completed disk sequential test"
+
+# Remove testfile.dat created during SQLIO test
+if os.path.isfile('testfile.dat'):
+    os.remove('testfile.dat')
 
 if internal_net_tests == 'y':
-    # iperf -c IP_ADDRESS -t TIME -f m -y C >> iperf_results.csv
-    sub.call(['iperf3.exe', '-c', internal_net_ip, '-t', internal_net_time, '-y', 'C'], stdout=open("iperf_results.csv","w"))
 
-    internal_net_csv_file = 'iperf_results.csv'
-    opener = open(internal_net_csv_file)
-    csv_open = csv.reader(opener)
-    for row in csv_open:
-        internal_network_data = int(row[7])
-        internal_network_data = (internal_network_data / 1024) / 1024
-        print internal_network_data
-        internal_network_bandwidth = int(row[8])
-        internal_network_bandwidth = (internal_network_bandwidth / 1024) / 1024
-        print internal_network_bandwidth
-    print "finished transferring"
-    os.remove(internal_net_csv_file)
-    print "finished deleting the file"
+    iperf_output = 'iperf_results.txt'
 
-#====================GLOBAL TRANSMITTING====================#
-#Transmit data back to Olympus
+    # Run iperf test
+    os.system("start cmd /c iperf3.exe -s")
+    sub.call(['iperf3.exe', '-c', internal_net_ip], stdout=open(iperf_output, "w"))
+
+    # Parse variables from iperf result
+    for row in open(iperf_output):
+        line = row.rstrip()
+        if "sender" in line:
+            item = line.split(" ")
+            for i in range(0, len(item)):
+                if item[i].strip() == "GBytes":
+                    sender_transfer_mb = float(item[i-1].strip())       
+                if item[i].strip() == "Gbits/sec":
+                    sender_bandwidth_mb = float(item[i-1].strip())
+            break
+
+    for row in open(iperf_output):
+        line = row.rstrip()
+        if "receiver" in line:
+            item = line.split(" ")
+            for i in range(0, len(item)):
+                if item[i].strip() == "GBytes":
+                    receiver_transfer_mb = float(item[i-1].strip())       
+                if item[i].strip() == "Gbits/sec":
+                    receiver_bandwidth_mb = float(item[i-1].strip())
+            break
+
+    os.remove(iperf_output)
+    print "completed internal network tests"
+
+# ====================GLOBAL TRANSMITTING==================== #
+# Transmit data back to Olympus
 print "Transmitting to Olympus"
 print "Transfer..."
 Open_Olympus       = Olympus(
@@ -280,7 +300,6 @@ Open_Olympus       = Olympus(
     provider       = provider_input,
     region         = provider_region,
     startdate      = startdate_input,
-    processor      = processor_info,
     uid            = generated_uid,
     vm             = vm_input,
     vmcount        = vmcount_input,
@@ -294,82 +313,85 @@ print "Transfer 2"
 session.commit()
 print "Transfer Complete"
 
-#Parse data into System Results if processor & memory tests were requested
 if system_tests == 'y':
-    Hermes_System_Results   = Hermes_System(
-        uid                 = generated_uid,
-        runtime             = values['Runtime'],
-        intmulti            = values['Integer Multicore'],
-        floatmulti          = values['Floating Point Multicore'],
-        memmulti            = values['Memory Multicore'],
-        intsingle           = values['Integer Singlecore'],
-        floatsingle         = values['Floating Point Singlecore'],
-        memsingle           = values['Memory Singlecore'],
-        totalmulti          = values['Total'],
-        totalsingle         = values['Total Single'],
-        aes                 = values['AES'],
-        twofish             = values['Twofish'],
-        sha1                = values['SHA1'],
-        sha2                = values['SHA2'],
-        bzipcompression     = values['BZip2 Compress'],
-        bzipdecompression   = values['BZip2 Decompress'],
-        jpegcompression     = values['JPEG Compress'],
-        jpegdecompression   = values['JPEG Decompress'],
-        pngcompression      = values['PNG Compress'],
-        pngdecompression    = values['PNG Decompress'],
-        sobel               = values['Sobel'],
-        lua                 = values['Lua'],
-        dijkstra            = values['Dijkstra'],
-        blackscholes        = values['BlackScholes'],
-        mandelbrot          = values['Mandelbrot'],
-        sharpenimage        = values['Sharpen Filter'],
-        blurimage           = values['Blur Filter'],
-        sgemm               = values['SGEMM'],
-        dgemm               = values['DGEMM'],
-        sfft                = values['SFFT'],
-        dfft                = values['DFFT'],
-        nbody               = values['N-Body'],
-        raytrace            = values['Ray Trace'],
-        copy                = values['Stream Copy'],
-        scale               = values['Stream Scale'],
-        add                 = values['Stream Add'],
-        triad               = values['Stream Triad'])
-    session.add(Hermes_System_Results)
-    session.commit()
-    #Remove the geekbench file
-    #os.remove('gb.json')
-    #Close the Geekbench file when you're done with it
-    geekbench_json.close()
 
-#parse data into Disk Results if disk tests were requested
-if disk_rand == 'y':
-    Hermes_Rand             = HermesRand(
-        uid                 = generated_uid,
-        write_mbps_rand     = write_mbps_rand,
-        read_mbps_rand      = read_mbps_rand,
-        write_iops_rand     = write_iops_rand,
-        read_iops_rand      = read_iops_rand)
-    session.add(Hermes_Rand)
+    session.query(Olympus).filter(Olympus.id==Open_Olympus.id).update({
+        Olympus.processor: processor_info,
+        Olympus.runtime: values['Runtime'],
+        Olympus.intmulti: values['Integer Multicore'],
+        Olympus.floatmulti: values['Floating Point Multicore'],
+        Olympus.memmulti: values['Memory Multicore'],
+        Olympus.intsingle: values['Integer Singlecore'],
+        Olympus.floatsingle: values['Floating Point Singlecore'],
+        Olympus.memsingle: values['Memory Singlecore'],
+        Olympus.totalmulti: values['Total'],
+        Olympus.totalsingle: values['Total Single'],
+        Olympus.aes: values['AES'],
+        Olympus.twofish: values['Twofish'],
+        Olympus.sha1: values['SHA1'],
+        Olympus.sha2: values['SHA2'],
+        Olympus.bzipcompression: values['BZip2 Compress'],
+        Olympus.bzipdecompression: values['BZip2 Decompress'],
+        Olympus.jpegcompression: values['JPEG Compress'],
+        Olympus.jpegdecompression: values['JPEG Decompress'],
+        Olympus.pngcompression: values['PNG Compress'],
+        Olympus.pngdecompression: values['PNG Decompress'],
+        Olympus.sobel: values['Sobel'],
+        Olympus.lua: values['Lua'],
+        Olympus.dijkstra: values['Dijkstra'],
+        Olympus.blackscholes: values['BlackScholes'],
+        Olympus.mandelbrot: values['Mandelbrot'],
+        Olympus.sharpenimage: values['Sharpen Filter'],
+        Olympus.blurimage: values['Blur Filter'],
+        Olympus.sgemm: values['SGEMM'],
+        Olympus.dgemm: values['DGEMM'],
+        Olympus.sfft: values['SFFT'],
+        Olympus.dfft: values['DFFT'],
+        Olympus.nbody: values['N-Body'],
+        Olympus.raytrace: values['Ray Trace'],
+        Olympus.copy: values['Stream Copy'],
+        Olympus.scale: values['Stream Scale'],
+        Olympus.add: values['Stream Add'],
+        Olympus.triad: values['Stream Triad']
+    })
     session.commit()
+    geekbench_json.close()
+    print "finished transferring geekbench results"
+
+if disk_rand == 'y':
+
+    session.query(Olympus).filter(Olympus.id==Open_Olympus.id).update({
+        Olympus.read_mbps_rand: read_mbps_rand,
+        Olympus.write_mbps_rand: write_mbps_rand,
+        Olympus.read_iops_rand: read_iops_rand,
+        Olympus.write_iops_rand: write_iops_rand
+    })
+    session.commit()
+    print "finished transferring disk random results"
 
 if disk_seq == 'y':
-    Hermes_Seq              = HermesSeq(
-        uid                 = generated_uid,
-        write_mbps_seq      = write_mbps_seq,
-        read_mbps_seq       = read_mbps_seq,
-        write_iops_seq      = write_iops_seq,
-        read_iops_seq       = read_iops_seq)
-    session.add(Hermes_Seq)
+
+    session.query(Olympus).filter(Olympus.id==Open_Olympus.id).update({
+        Olympus.read_mbps_seq: read_mbps_seq,
+        Olympus.write_mbps_seq: write_mbps_seq,
+        Olympus.read_iops_seq: read_iops_seq,
+        Olympus.write_iops_seq: write_iops_seq
+    })
     session.commit()
+    print "finished transferring disk sequential results"
 
 if internal_net_tests == 'y':
-    Hermes_Net              = HermesNet(
-        uid                 = generated_uid,
-        transfer_mb         = internal_network_data,
-        bandwidth_mb        = internal_network_bandwidth)
-    session.add(Hermes_Net)
-    session.commit()
 
+    session.query(Olympus).filter(Olympus.id==Open_Olympus.id).update({
+        Olympus.sender_transfer_mb: sender_transfer_mb,
+        Olympus.sender_bandwidth_mb: sender_bandwidth_mb,
+        Olympus.receiver_transfer_mb: receiver_transfer_mb,
+        Olympus.receiver_bandwidth_mb: receiver_bandwidth_mb
+    })
+    session.commit()
+    print "finished transferring internal net test results"
+
+# Send text notification
 if textnotifications == 'y':
     try:
         server = smtp.SMTP("smtp.gmail.com",587)
