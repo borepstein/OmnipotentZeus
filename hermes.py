@@ -77,15 +77,15 @@ for x in memoutput_list:
         ram_input = "%.2f" % mem_count
 
 #Collect information on the provider and VM environment
-provider_input   = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS , SunGard , Peak10, Dimension Data or Azure): ")
+provider_input   = raw_input("Please enter the provider's name: ")
 provider_input   = provider_input.lower()
 provider_region  = "N/A"
 
 vm_input         = raw_input("Please enter the VM name (if no VM name, just say vCPU/RAM in GB (e.g., 2vCPU/4GB): ")
 vm_input         = vm_input.lower()
-vmcount_input    = '0'
-local_input      = raw_input("Local Disk (in GB). Put 0 if none: ")
-block_input      = raw_input("Block Disk (in GB). Put 0 if none: ")
+vmcount_input    = raw_input("Which VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
+local_input      = "0"
+block_input      = "0"
 
 #Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
 random_uid    = randint(0,1000000)
