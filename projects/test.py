@@ -15,8 +15,8 @@ internal_net_tests = 'n' #iperf internal network tests
 #DISK INFORMATION
 #If you selected yes for disk_rand or disk_seq, then you have to fill out this information
 fio_blocksize = '4' #please enter the block size in kilobytes
-fio_filesize = '1024' #please enter the file size in megabytes
-fio_numjobs = '8' #please enter the number of copies of the test that you would like to run
+fio_filesize = '5120' #please enter the file size in megabytes
+fio_numjobs = '1' #please enter the number of copies of the test that you would like to run
 fio_runtime = '60' #how long would you like this test to run for in seconds
 fio_direct = 'y' #if direct I/O is required (bypass cache), please mark y
 fio_async = 'y'
