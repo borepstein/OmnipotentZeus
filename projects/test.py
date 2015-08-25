@@ -1,8 +1,8 @@
 #TESTS TO RUN
 #CONFIGURATION INFORMATION
 #Start date is to specify when the test began
-project_id = 'c-netelligent-20150821'
-startdate_input = '20150821' #Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
+project_id = '2016-top25'
+startdate_input = '20150826' #Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
 operating_system = 'ubuntu' #debian, ubuntu, redhat, or centos
 
 #Please mark with a y (indicating yes) for each test you want to run
@@ -19,7 +19,7 @@ fio_filesize = '1024' #please enter the file size in megabytes
 fio_numjobs = '8' #please enter the number of copies of the test that you would like to run
 fio_runtime = '60' #how long would you like this test to run for in seconds
 fio_direct = 'y' #if direct I/O is required (bypass cache), please mark y
-fio_async = 'n'
+fio_async = 'y'
 
 fio_rand_rw = 'randrw' #Please say randread for random read, randwrite for random write, and randrw to do both operations
 fio_rand_rw = '-rw=' + fio_rand_rw
