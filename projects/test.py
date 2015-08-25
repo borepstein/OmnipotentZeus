@@ -51,8 +51,8 @@ internal_net_time = '60' #please enter the time, in seconds, that you want iperf
 #Duration and duration value will limit the time the suite will be running for. 
 #Either duration or number of iterations must complete in order for the testing to stop.
 sleeptime = 0
-iterations = 500
-duration        = 1
+iterations = 5000000
+duration        = 24
 duration_value  = "hours" #please enter seconds, minutes, hours, or days
 if duration_value.lower()   == "seconds":
     duration = duration

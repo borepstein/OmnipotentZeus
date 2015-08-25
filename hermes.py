@@ -203,7 +203,7 @@ for x in range(iterations):
 
     def fio_command_generator(option):
         global fio_command
-        fio_command = ['fio',option,fio_filename,fio_blocksize,fio_filesize,fio_numjobs,fio_runtime,fio_direct, ,'-time_based','--output-format=json','--output=fio.json','-time_based' ,'-group_reporting','-exitall']
+        fio_command = ['fio',option,fio_filename,fio_blocksize,fio_filesize,fio_numjobs,fio_runtime,fio_direct,'-time_based','--output-format=json','--output=fio.json','-time_based' ,'-group_reporting','-exitall']
         return fio_command
 
     def fio_async_command_generator(option):
