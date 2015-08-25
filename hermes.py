@@ -79,31 +79,7 @@ for x in memoutput_list:
 #Collect information on the provider and VM environment
 provider_input   = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS , SunGard , Peak10, Dimension Data or Azure): ")
 provider_input   = provider_input.lower()
-while True:
-    if provider_input == 'netelligent':
-        provider_region = 'STL'
-        break
-    elif provider_input == 'rackspace':
-        provider_region = 'DFW'
-        break
-    elif provider_input == 'aws':
-        provider_region = 'us-east'
-        break
-    elif provider_input == 'azure':
-        provider_region = 'us-central'
-        break
-    elif provider_input == 'sungard':
-        provider_region = 'N/A'
-        break
-    elif provider_input == 'Peak10':
-        provider_region = 'N/A'
-        break
-    elif provider_input == 'dimensiondata':
-        provider_region = 'N/A'
-        break
-    else:
-        provider_input   = raw_input("Please enter the provider's name (No spaces; e.g., 'Digital Ocean' should be 'digitalocean'): ")
-        provider_input   = provider_input.lower()
+provider_region  = "N/A"
 
 vm_input         = raw_input("Please enter the VM name (if no VM name, just say vCPU/RAM in GB (e.g., 2vCPU/4GB): ")
 vm_input         = vm_input.lower()
