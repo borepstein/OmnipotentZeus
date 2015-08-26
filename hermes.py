@@ -91,8 +91,9 @@ block_input = raw_input("Block Disk (in GB). Put 0 if none: ")
 random_uid = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
 
-if internal_net_tests == 'y':
-    internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
+# if internal_net_tests == 'y':
+#     internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
+internal_net_ip = "localhost"
 
 print "\n#######################################################\n"
 
@@ -404,7 +405,7 @@ if internal_net_tests == 'y':
         Olympus.receiver_bandwidth_mb: receiver_bandwidth_mb
     })
     session.commit()
-    print "Finished transferring internal net test results"
+    print "Finished transferring internal network test results"
 
 print "\n#######################################################\n"
 print "All tests are successfully completed and the results are transferred to our database"
