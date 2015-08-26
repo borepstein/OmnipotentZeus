@@ -103,7 +103,7 @@ if system_tests == 'y':
 
     # Run Geekbench
     geekbench_output = 'gb.json'
-    sub.call(['C:\Program Files (x86)\Geekbench 3\geekbench_x86_64.exe', '--no-upload','--export-json', geekbench_output], shell=True)
+    sub.call(['C:\Program Files\Geekbench 3\geekbench_x86_64.exe', '--no-upload','--export-json', geekbench_output], shell=True)
 
     # Parse variables from Geekbench result
 
@@ -180,7 +180,7 @@ if disk_rand == 'y':
     sqlio_output = 'sqlio_results.txt'
 
     # Run disk random test for 'read'
-    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kR', '-s10', '-frandom', '-b8'], stdout=open(sqlio_output, "w"))
+    sub.call(['C:\Program Files\SQLIO\sqlio.exe', '-kR', '-s10', '-frandom', '-b8'], stdout=open(sqlio_output, "w"))
 
     # Parse variables from disk random read result
     sqlio_file_handler = open(sqlio_output)
@@ -201,7 +201,7 @@ if disk_rand == 'y':
     sqlio_file_handler.close()
 
     # Run disk random test for 'write'
-    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kW', '-s10', '-frandom', '-b8'], stdout=open(sqlio_output, "w"))
+    sub.call(['C:\Program Files\SQLIO\sqlio.exe', '-kW', '-s10', '-frandom', '-b8'], stdout=open(sqlio_output, "w"))
 
     # Parse variables from disk random write result
     sqlio_file_handler = open(sqlio_output)
@@ -227,7 +227,7 @@ if disk_seq == 'y':
     sqlio_output = 'sqlio_results.txt'
 
     # Run disk sequential test for 'read'
-    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kR', '-s10', '-fsequential', '-b64'], stdout=open(sqlio_output, "w"))
+    sub.call(['C:\Program Files\SQLIO\sqlio.exe', '-kR', '-s10', '-fsequential', '-b64'], stdout=open(sqlio_output, "w"))
 
     # Parse variables from disk sequential read result
     sqlio_file_handler = open(sqlio_output)
@@ -248,7 +248,7 @@ if disk_seq == 'y':
     sqlio_file_handler.close()
 
     # Run disk sequential test for 'write'
-    sub.call(['C:\Program Files (x86)\SQLIO\sqlio.exe', '-kW', '-s10', '-fsequential', '-b64'], stdout=open(sqlio_output, "w"))
+    sub.call(['C:\Program Files\SQLIO\sqlio.exe', '-kW', '-s10', '-fsequential', '-b64'], stdout=open(sqlio_output, "w"))
 
     # Parse variables from disk sequential write result
     sqlio_file_handler = open(sqlio_output)

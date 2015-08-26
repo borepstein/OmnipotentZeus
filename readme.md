@@ -17,3 +17,4 @@ Then run the following (which may require administrator access):
 <P>```git clone -b inapp-windows-script https://github.com/kennymuli/OmnipotentZeus.git```
 <P><B>8. Run the program</B>
 <P>```./OmnipotentZeus/run_win.bat```
+<P>Note: While installing Geekbench and SQLIO, please make sure that you specify the path as C:/Program Files/
