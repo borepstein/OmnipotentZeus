@@ -94,6 +94,8 @@ generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
 if internal_net_tests == 'y':
     internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
 
+print "\n#######################################################\n"
+
 # ==================== GLOBAL TESTING ==================== #
 
 if system_tests == 'y':
@@ -308,7 +310,9 @@ if internal_net_tests == 'y':
 
 # ====================GLOBAL TRANSMITTING==================== #
 # Transmit data back to Olympus
+print "\n#######################################################\n"
 print "Transmitting to Olympus"
+print "\n#######################################################\n"
 Open_Olympus = Olympus(
     project=project_id,
     provider=provider_input,
