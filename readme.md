@@ -1,3 +1,4 @@
+<P>You must have these prerequisites installed in your windows machine before running the script.
 <P><B>1. Install Python 2.7.10 and set path</B>
 <P><B>2. Install pip and set path</B>
 <P><B>3. Install .NET framework 4.0</B>
