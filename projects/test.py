@@ -3,7 +3,7 @@
 
 from datetime import datetime
 
-project_id = 'aws-%s' % datetime.now().strftime('%Y%m%d')
+project_id = 'c-edgehosting-20150827'
 startdate_input = datetime.now().strftime('%Y%m%d-%H%M')  # Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
 operating_system = 'windows'  # windows
 
