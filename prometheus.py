@@ -77,7 +77,7 @@ class Olympus(Base):
 # The SQLEngine object is used to open the connection, which is what is being used in the db variable. 
 # Format for create_engine is "engine://user:password@host:port/database"
 # Ignition = create_engine("mysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeus2")
-Ignition = create_engine("mysql+pymysql://root:inapp@localhost:3306/omnipotentzeuswin")
+Ignition = create_engine("mysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeuswin")
 
 # Holds all the database metadata.
 Base.metadata.create_all(Ignition)
