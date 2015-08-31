@@ -8,10 +8,10 @@ startdate_input = datetime.now().strftime('%Y%m%d-%H%M')  # Please enter the sta
 operating_system = 'windows'  # windows
 
 # Please mark with a y (indicating yes) for each test you want to run
-system_tests = 'n'  # Geekbench 3 suite
+system_tests = 'y'  # Geekbench 3 suite
 disk_rand = 'y'  # sqlio random read and random write
 disk_seq = 'y'  # sqlio sequential read and sequential write
-internal_net_tests = 'n'  # iperf internal network tests
+internal_net_tests = 'y'  # iperf internal network tests
 
 # INTERNAL NETWORK INFORMATION
 # If you selected yes for internal network tests, then you have to fill out this information
