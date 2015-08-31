@@ -17,6 +17,7 @@ class Olympus(Base):
     provider = Column(String(30), nullable=False)
     region = Column(String(30), nullable=False)
     startdate = Column(String(30), nullable=False)
+    iteration = Column(Integer, nullable=False)
     vm = Column(String(30), nullable=False)
     vmcount = Column(Integer, nullable=False)
     vcpu = Column(Integer, nullable=False)
