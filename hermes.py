@@ -54,10 +54,13 @@ mem = virtual_memory()
 ram_input = "%.2f" % (float(mem.total) / 1024.0 / 1024.0 / 1024.0)
 
 # Collect information on the provider and VM environment
-provider_input = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS , SunGard , Peak10, Dimension Data or Azure): ")
+provider_input = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS, SunGard, Peak10, Dimension Data or Azure): ")
 provider_input = provider_input.lower()
 while True:
-    if provider_input == 'netelligent':
+    if provider_input == 'Edge':
+        provider_region = 'N/A'
+        break
+    elif provider_input == 'netelligent':
         provider_region = 'STL'
         break
     elif provider_input == 'rackspace':
