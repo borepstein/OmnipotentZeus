@@ -13,8 +13,11 @@ Then run the following (which may require administrator access):
 <P>http://dev.mysql.com/get/Downloads/MySQLInstaller/mysql-installer-web-community-5.6.26.0.msi
 <P><B>6. Install git</B>
 <P>http://git-scm.com/download/win
+<P><B>6. Install wget for Windows and set path</B>
+<P>http://downloads.sourceforge.net/gnuwin32/wget-1.11.4-1-setup.exe
 <P><B>7. Clone the repository</B>
 <P>```git clone -b inapp-windows-script https://github.com/kennymuli/OmnipotentZeus.git```
 <P><B>8. Run the program</B>
 <P>```./OmnipotentZeus/run_win.bat```
-<P>Note: While installing Geekbench and SQLIO, please make sure that you specify the path as C:/Program Files/
+<P>Note: The default installation path for Geekbench is in C:/Program Files/ and for SQLIO is C:/Program Files (x86)/
+<P>If you have installed Geekbench or SQLIO in a different path other than mentioned above, please remember to specify it in: /OmnipotentZeus/projects/test.py
