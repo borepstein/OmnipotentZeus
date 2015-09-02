@@ -34,11 +34,11 @@ if operating_system == 'windows':
     if system_tests == 'y':  # Install Geekbench - Download & Unpackage if to be tested
         if not os.path.isfile('Geekbench-3.3.2-WindowsSetup.exe'):
             os.system('wget --no-check-certificate https://s3.amazonaws.com/internal-downloads/Geekbench-3.3.2-WindowsSetup.exe')
-            sub.call(['Geekbench-3.3.2-WindowsSetup.exe', '-r', email, key], shell=True)
+        sub.call(['Geekbench-3.3.2-WindowsSetup.exe', '-r', email, key], shell=True)
     if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
         if not os.path.isfile('SQLIO.msi'):
             os.system('wget http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi')
-            sub.call(['SQLIO.msi'], shell=True)
+        sub.call(['SQLIO.msi'], shell=True)
     if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
         if not os.path.isfile('iperf3.exe'):
             os.system('wget --no-check-certificate https://iperf.fr/download/iperf_3.0/iperf-3.0.11-win64.zip')
@@ -54,10 +54,10 @@ mem = virtual_memory()
 ram_input = "%.2f" % (float(mem.total) / 1024.0 / 1024.0 / 1024.0)
 
 # Collect information on the provider and VM environment
-provider_input = raw_input("Please enter the provider's name (Netelligent, Rackspace, AWS, SunGard, Peak10, Dimension Data or Azure): ")
+provider_input = raw_input("Please enter the provider's name (Edge, Netelligent, Rackspace, AWS, SunGard, Peak10, Dimension Data or Azure): ")
 provider_input = provider_input.lower()
 while True:
-    if provider_input == 'Edge':
+    if provider_input == 'edge':
         provider_region = 'N/A'
         break
     elif provider_input == 'netelligent':
@@ -109,6 +109,8 @@ for x in range(iterations):
     print "\n#######################################################\n"
     print "Iteration: " + str(iterator)
     print "\n#######################################################\n"
+
+    iteration_start_time = datetime.now().strftime('%Y-%m-%d %H:%M')
 
     if system_tests == 'y':
 
@@ -289,7 +291,6 @@ for x in range(iterations):
 
         # Run iperf test
         iperf_output = 'iperf_results.txt'
-        os.system("start cmd /c iperf3.exe -s")
         sub.call(['iperf3.exe', '-c', internal_net_ip], stdout=open(iperf_output, "w"))
 
         # Parse variables from iperf result
@@ -327,11 +328,12 @@ for x in range(iterations):
     print "\n\n"
     Open_Olympus = Olympus(
         project=project_id,
+        uid=generated_uid,
         provider=provider_input,
         region=provider_region,
         startdate=startdate_input,
         iteration=iterator,
-        uid=generated_uid,
+        iteration_start_time=iteration_start_time,
         vm=vm_input,
         vmcount=vmcount_input,
         vcpu=vcpu_input,

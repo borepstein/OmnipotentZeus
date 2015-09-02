@@ -18,6 +18,7 @@ class Olympus(Base):
     region = Column(String(30), nullable=False)
     startdate = Column(String(30), nullable=False)
     iteration = Column(Integer, nullable=False)
+    iteration_start_time = Column(String(50), nullable=False)
     vm = Column(String(30), nullable=False)
     vmcount = Column(Integer, nullable=False)
     vcpu = Column(Integer, nullable=False)
@@ -77,7 +78,6 @@ class Olympus(Base):
 # Create an object, db, to act as the connect to the database.
 # The SQLEngine object is used to open the connection, which is what is being used in the db variable. 
 # Format for create_engine is "engine://user:password@host:port/database"
-# Ignition = create_engine("mysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeus2")
 Ignition = create_engine("mysql+pymysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeuswin")
 
 # Holds all the database metadata.

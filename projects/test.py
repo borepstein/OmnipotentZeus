@@ -3,7 +3,7 @@
 
 from datetime import datetime
 
-project_id = 'c-edgehosting-20150827'
+project_id = 'c-edgehosting-20150902'
 startdate_input = datetime.now().strftime('%Y%m%d-%H%M')  # Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
 operating_system = 'windows'  # windows
 
@@ -42,5 +42,5 @@ textnotifications = 'n'
 email = 'contact@cloudspectator.com'
 key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 
-geekbench_install_dir = 'C:\Program Files'
+geekbench_install_dir = 'C:\Program Files (x86)'
 sqlio_install_dir = 'C:\Program Files (x86)'
