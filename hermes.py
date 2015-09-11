@@ -116,13 +116,22 @@ for x in range(iterations):
 
         # Run Geekbench
         geekbench_output = 'gb.json'
-        sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64.exe', '--no-upload','--export-json', geekbench_output], shell=True)
 
-        # Parse variables from Geekbench result
+        processor_info = ''
+        while True:
+            try:
+                os.system("start gb_listener.bat")
+                sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64.exe', '--no-upload', '--export-json', geekbench_output], shell=True)
 
-        geekbench_file_handler = open(geekbench_output)
-        data = json.load(geekbench_file_handler)
-        processor_info = str(data['metrics'][6]['value'])
+                # Parse variables from Geekbench result
+                geekbench_file_handler = open(geekbench_output)
+                data = json.load(geekbench_file_handler)
+                processor_info = str(data['metrics'][6]['value'])
+                if processor_info != '':
+                    os.system('taskkill /f /im cmd.exe /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat"')
+                    break
+            except:
+                continue
 
         y = 0
         scores = {}
