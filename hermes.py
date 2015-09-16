@@ -208,7 +208,7 @@ for x in range(iterations):
 
     def fio_async_command_generator(option):
         global fio_command
-        fio_command = ['fio',option,fio_filename,"-bs=128k","-size=128M",-numjobs=8,fio_runtime,fio_direct,'-iodepth=32','-ioengine=libaio','-time_based','--output-format=json','--output=fio.json','-time_based' ,'-group_reporting','-exitall']
+        fio_command = ['fio',option,fio_filename,"-bs=128k","-size=128M","-numjobs=8",fio_runtime,fio_direct,'-iodepth=32','-ioengine=libaio','-time_based','--output-format=json','--output=fio.json','-time_based' ,'-group_reporting','-exitall']
         return fio_command
 
     def spider_egg_exterminator():
