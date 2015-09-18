@@ -31,14 +31,16 @@ print ""
 
 # Download executable files for running tests
 if operating_system == 'windows':
-    if system_tests == 'y':  # Install Geekbench - Download & Unpackage if to be tested
-        if not os.path.isfile('Geekbench-3.3.2-WindowsSetup.exe'):
+    if system_tests == 'y':  # Install Geekbench if to be tested
+        if not os.path.isfile(geekbench_install_dir + '\Geekbench 3\geekbench_x86_64.exe'):
             os.system('wget --no-check-certificate https://s3.amazonaws.com/internal-downloads/Geekbench-3.3.2-WindowsSetup.exe')
-        sub.call(['Geekbench-3.3.2-WindowsSetup.exe', '-r', email, key], shell=True)
-    if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
-        if not os.path.isfile('SQLIO.msi'):
+            sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
+            sub.call(['Geekbench-3.3.2-WindowsSetup.exe'], shell=True)
+        sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
+    if disk_rand == 'y' or disk_seq == 'y':  # Install SQLIO for disk testing if to be tested
+        if not os.path.isfile(sqlio_install_dir + '\SQLIO\sqlio.exe'):
             os.system('wget http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi')
-        sub.call(['SQLIO.msi'], shell=True)
+            sub.call(['SQLIO.msi'], shell=True)
     if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
         if not os.path.isfile('iperf3.exe'):
             os.system('wget --no-check-certificate https://iperf.fr/download/iperf_3.0/iperf-3.0.11-win64.zip')
@@ -128,7 +130,8 @@ for x in range(iterations):
                 data = json.load(geekbench_file_handler)
                 processor_info = str(data['metrics'][6]['value'])
                 if processor_info != '':
-                    os.system('taskkill /f /im cmd.exe /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat"')
+                    os.system('taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat" /fi "IMAGENAME eq cmd.exe"')
+                    os.system('taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat" /fi "IMAGENAME eq timeout.exe"')
                     break
             except:
                 continue
@@ -299,34 +302,18 @@ for x in range(iterations):
     if internal_net_tests == 'y':
 
         # Run iperf test
-        iperf_output = 'iperf_results.txt'
-        sub.call(['iperf3.exe', '-c', internal_net_ip], stdout=open(iperf_output, "w"))
+        iperf_output = 'iperf_results.json'
+        sub.call(['iperf3.exe', '-J', '-c', internal_net_ip], stdout=open(iperf_output, "w"))
 
         # Parse variables from iperf result
-        output_file_handler = open(iperf_output)
-        for row in output_file_handler:
-            line = row.rstrip()
-            if "sender" in line:
-                item = line.split(" ")
-                for i in range(0, len(item)):
-                    if "Bytes" in item[i].strip():
-                        sender_transfer_mb = float(item[i - 1].strip())
-                    if "bits/sec" in item[i].strip():
-                        sender_bandwidth_mb = float(item[i - 1].strip())
-                break
+        with open(iperf_output) as iperf_results:
+            data = json.load(iperf_results)
 
-        for row in output_file_handler:
-            line = row.rstrip()
-            if "receiver" in line:
-                item = line.split(" ")
-                for i in range(0, len(item)):
-                    if "Bytes" in item[i].strip():
-                        receiver_transfer_mb = float(item[i - 1].strip())
-                    if "bits/sec" in item[i].strip():
-                        receiver_bandwidth_mb = float(item[i - 1].strip())
-                break
+            sender_transfer_mb = float(data["end"]["sum_sent"]["bytes"]) / (1024 * 1024)
+            sender_bandwidth_mbps = float(data["end"]["sum_sent"]["bits_per_second"]) / 1000000
+            receiver_transfer_mb = float(data["end"]["sum_received"]["bytes"]) / (1024 * 1024)
+            receiver_bandwidth_mbps = float(data["end"]["sum_received"]["bits_per_second"]) / 1000000
 
-        output_file_handler.close()
         os.remove(iperf_output)
         print "Completed internal network tests"
 
@@ -423,9 +410,9 @@ for x in range(iterations):
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.sender_transfer_mb: sender_transfer_mb,
-            Olympus.sender_bandwidth_mb: sender_bandwidth_mb,
+            Olympus.sender_bandwidth_mbps: sender_bandwidth_mbps,
             Olympus.receiver_transfer_mb: receiver_transfer_mb,
-            Olympus.receiver_bandwidth_mb: receiver_bandwidth_mb
+            Olympus.receiver_bandwidth_mbps: receiver_bandwidth_mbps
         })
         session.commit()
         print "Finished transferring internal network test results"

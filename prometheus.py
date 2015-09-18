@@ -71,9 +71,9 @@ class Olympus(Base):
     read_iops_seq = Column(Float(30), nullable=True)
     write_iops_seq = Column(Float(30), nullable=True)
     sender_transfer_mb = Column(Float(30), nullable=True)
-    sender_bandwidth_mb = Column(Float(30), nullable=True)
+    sender_bandwidth_mbps = Column(Float(30), nullable=True)
     receiver_transfer_mb = Column(Float(30), nullable=True)
-    receiver_bandwidth_mb = Column(Float(30), nullable=True)
+    receiver_bandwidth_mbps = Column(Float(30), nullable=True)
 
 # Create an object, db, to act as the connect to the database.
 # The SQLEngine object is used to open the connection, which is what is being used in the db variable. 
