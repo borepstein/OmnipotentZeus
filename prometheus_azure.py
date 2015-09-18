@@ -18,6 +18,7 @@ class Olympus(Base):
 	provider			= Column(String(30), nullable=False)
 	region				= Column(String(30), nullable=False)
 	startdate			= Column(String(30), nullable=False)
+	processor			= Column(String(100), nullable=False)
 	vm 					= Column(String(30), nullable=False)
 	vmcount				= Column(Integer,    nullable=False)
 	vcpu 				= Column(Integer,    nullable=False)
@@ -40,7 +41,11 @@ class Hermes_System(Base):
 	intmulti			= Column(Integer,    nullable=True)
 	floatmulti			= Column(Integer,    nullable=True)
 	memmulti			= Column(Integer,    nullable=True)
+	intsingle			= Column(Integer,    nullable=True)
+	floatsingle			= Column(Integer,    nullable=True)
+	memsingle			= Column(Integer,    nullable=True)
 	totalmulti			= Column(Integer,    nullable=True)
+	totalsingle			= Column(Integer,    nullable=True)
 	aes 				= Column(Float(30),  nullable=True)
 	twofish				= Column(Float(30),  nullable=True)
 	sha1				= Column(Float(30),  nullable=True)
@@ -101,6 +106,40 @@ class HermesSeq(Base):
 	write_bw            = Column(Float(30),  nullable=True)
 	write_ticks         = Column(Float(30),  nullable=True)
 
+class HermesRandasync(Base):
+	__tablename__ = 'random_disk_async'
+	extend_existing=True
+	id                  = Column(Integer,    primary_key=True)
+	uid                 = Column(String(50), nullable=True)
+	iteration           = Column(Integer,    nullable=True)
+	read_runtime        = Column(Float(30),  nullable=True)
+	write_runtime       = Column(Float(30),  nullable=True)
+	read_iops           = Column(Float(30),  nullable=True)
+	read_io             = Column(Float(30),  nullable=True)
+	read_bw             = Column(Float(30),  nullable=True)
+	read_ticks          = Column(Float(30),  nullable=True)
+	write_iops          = Column(Float(30),  nullable=True)
+	write_io            = Column(Float(30),  nullable=True)
+	write_bw            = Column(Float(30),  nullable=True)
+	write_ticks         = Column(Float(30),  nullable=True)
+
+class HermesSeqasync(Base):
+	__tablename__ = 'sequential_disk_async'
+	extend_existing=True
+	id                  = Column(Integer,    primary_key=True)
+	uid                 = Column(String(50), nullable=True)
+	iteration           = Column(Integer,    nullable=True)
+	read_runtime        = Column(Float(30),  nullable=True)
+	write_runtime       = Column(Float(30),  nullable=True)
+	read_iops           = Column(Float(30),  nullable=True)
+	read_io             = Column(Float(30),  nullable=True)
+	read_bw             = Column(Float(30),  nullable=True)
+	read_ticks          = Column(Float(30),  nullable=True)
+	write_iops          = Column(Float(30),  nullable=True)
+	write_io            = Column(Float(30),  nullable=True)
+	write_bw            = Column(Float(30),  nullable=True)
+	write_ticks         = Column(Float(30),  nullable=True)
+
 class HermesNet(Base):
 	__tablename__ = 'internal_network'
 	id                  = Column(Integer,    primary_key=True)
@@ -109,10 +148,20 @@ class HermesNet(Base):
 	transfer_mb			= Column(Float(30),  nullable=True)
 	bandwidth_mb		= Column(Float(30),  nullable=True) 
 
+class HermesPTS(Base):
+	__tablename__ = 'pts'
+	id                  = Column(Integer,    primary_key=True)
+	uid                 = Column(String(50), nullable=True)
+	iteration           = Column(Integer,    nullable=True)
+	compress7zip		= Column(Float(30),	 nullable=True)
+	phpbench			= Column(Float(30),    nullable=True)
+	mp3encode			= Column(Float(30),    nullable=True)
+	x264				= Column(Float(30),    nullable=True) 
+
 #Create an object, db, to act as the connect to the database.
 #The SQLEngine object is used to open the connection, which is what is being used in the db variable. 
 #Format for create_engine is "engine://user:password@host:port/database"
-Ignition = create_engine("mysql://root@localhost/omnipotentzeus")
+Ignition = create_engine("mysql://root@localhost/omnipotentzeus3")
 
 #Holds all the database metadata.
 Base.metadata.create_all(Ignition)
