@@ -9,9 +9,42 @@ operating_system = 'windows'  # windows
 
 # Please mark with a y (indicating yes) for each test you want to run
 system_tests = 'y'  # Geekbench 3 suite
-disk_rand = 'y'  # sqlio random read and random write
-disk_seq = 'y'  # sqlio sequential read and sequential write
+disk_rand = 'y'  # fio random read and random write
+disk_seq = 'y'  # fio sequential read and sequential write
 internal_net_tests = 'y'  # iperf internal network tests
+
+# DISK INFORMATION
+# If you selected yes for disk_rand or disk_seq, then you have to fill out this information
+fio_blocksize = '4' # please enter the block size in kilobytes
+fio_filesize = '256' # please enter the file size in megabytes
+fio_numjobs = '5' # please enter the number of copies of the test that you would like to run
+fio_runtime = '60' # how long would you like this test to run for in seconds
+fio_direct = 'y' # if direct I/O is required (bypass cache), please mark y
+fio_async = 'y'
+
+fio_rand_rw = 'randrw' # Please say randread for random read, randwrite for random write, and randrw to do both operations
+fio_rand_rw = '--rw=' + fio_rand_rw
+
+fio_seq_rw = 'rw' # Please say read for sequential read, write for sequential write, and rw to do both operations
+fio_seq_rw = '--rw=' + fio_seq_rw
+
+# disk conversions; please don't mess with these variables
+fio_blocksize = '--bs=' + fio_blocksize + 'k'
+fio_filesize = '--size=' + fio_filesize + 'M'
+fio_numjobs = '--numjobs=' + fio_numjobs
+fio_runtime = '--runtime=' + fio_runtime
+fio_json_file = 'fio.json'
+fio_filename = '--name=fio_disk'
+
+if fio_async == 'y':
+	fio_async_engine = '--ioengine=windowsaio'
+
+if fio_direct == 'y':
+    fio_direct_val = 'Direct'
+    fio_direct = '--direct=1'
+else:
+    fio_direct_val = 'Cached'
+    fio_direct = '--direct=0'
 
 # INTERNAL NETWORK INFORMATION
 # If you selected yes for internal network tests, then you have to fill out this information
@@ -43,4 +76,4 @@ email = 'contact@cloudspectator.com'
 key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 
 geekbench_install_dir = 'C:\Program Files (x86)'
-sqlio_install_dir = 'C:\Program Files (x86)'
+fio_install_dir = 'C:\Program Files (x86)'

@@ -37,10 +37,10 @@ if operating_system == 'windows':
             sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
             sub.call(['Geekbench-3.3.2-WindowsSetup.exe'], shell=True)
         sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
-    if disk_rand == 'y' or disk_seq == 'y':  # Install SQLIO for disk testing if to be tested
-        if not os.path.isfile(sqlio_install_dir + '\SQLIO\sqlio.exe'):
-            os.system('wget http://download.microsoft.com/download/f/3/f/f3f92f8b-b24e-4c2e-9e86-d66df1f6f83b/SQLIO.msi')
-            sub.call(['SQLIO.msi'], shell=True)
+    if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
+        if not os.path.isfile(fio_install_dir + '\/fio\/fio.exe'):
+            os.system('wget http://www.bluestop.org/fio/releases/fio-2.2.10-x86.msi')
+            sub.call(['fio-2.2.10-x86.msi'], shell=True)
     if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
         if not os.path.isfile('iperf3.exe'):
             os.system('wget --no-check-certificate https://iperf.fr/download/iperf_3.0/iperf-3.0.11-win64.zip')
@@ -200,104 +200,70 @@ for x in range(iterations):
         os.remove(geekbench_output)
         print "Completed system tests"
 
+    disk_options = [fio_rand_rw, fio_seq_rw]
+
     if disk_rand == 'y':
+        sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+        with open(fio_json_file) as fio_results:
+            fio_data = json.load(fio_results)
 
-        sqlio_output = 'sqlio_results.txt'
+        runtime_read_rand = str(fio_data['jobs'][0]['read']['runtime'])
+        runtime_write_rand = str(fio_data['jobs'][0]['write']['runtime'])
+        io_read_rand = str(fio_data['jobs'][0]['read']['io_bytes'])
+        io_write_rand = str(fio_data['jobs'][0]['write']['io_bytes'])
+        iops_read_rand = str(fio_data['jobs'][0]['read']['iops'])
+        iops_write_rand = str(fio_data['jobs'][0]['write']['iops'])
+        bw_read_rand = str(fio_data['jobs'][0]['read']['bw'])
+        bw_write_rand = str(fio_data['jobs'][0]['write']['bw'])
 
-        # Run disk random test for 'write'
-        sub.call([sqlio_install_dir + '\SQLIO\sqlio.exe', '-kW', '-s10', '-frandom', '-b4'], stdout=open(sqlio_output, "w"))
+        if fio_async =='y':
+            sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, fio_async_engine, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+            with open(fio_json_file) as fio_results:
+                fio_data = json.load(fio_results)
 
-        # Parse variables from disk random write result
-        sqlio_file_handler = open(sqlio_output)
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "IOs/sec" in line:
-                item = line.split(":")
-                write_iops_rand = float(item[1].strip())
-                break
-
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "MBs/sec" in line:
-                item = line.split(":")
-                write_mbps_rand = float(item[1].strip())
-                break
-
-        sqlio_file_handler.close()
-
-        # Run disk random test for 'read'
-        sub.call([sqlio_install_dir + '\SQLIO\sqlio.exe', '-kR', '-s10', '-frandom', '-b4'], stdout=open(sqlio_output, "w"))
-
-        # Parse variables from disk random read result
-        sqlio_file_handler = open(sqlio_output)
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "IOs/sec" in line:
-                item = line.split(":")
-                read_iops_rand = float(item[1].strip())
-                break
-
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "MBs/sec" in line:
-                item = line.split(":")
-                read_mbps_rand = float(item[1].strip())
-                break
-
-        sqlio_file_handler.close()
-        print "Completed disk random tests"
+            runtime_read_rand_async = str(fio_data['jobs'][0]['read']['runtime'])
+            runtime_write_rand_async = str(fio_data['jobs'][0]['write']['runtime'])
+            io_read_rand_async = str(fio_data['jobs'][0]['read']['io_bytes'])
+            io_write_rand_async = str(fio_data['jobs'][0]['write']['io_bytes'])
+            iops_read_rand_async = str(fio_data['jobs'][0]['read']['iops'])
+            iops_write_rand_async = str(fio_data['jobs'][0]['write']['iops'])
+            bw_read_rand_async = str(fio_data['jobs'][0]['read']['bw'])
+            bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
 
     if disk_seq == 'y':
+        sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+        with open(fio_json_file) as fio_results:
+            fio_data = json.load(fio_results)
 
-        sqlio_output = 'sqlio_results.txt'
+        runtime_read_seq = str(fio_data['jobs'][0]['read']['runtime'])
+        runtime_write_seq = str(fio_data['jobs'][0]['write']['runtime'])
+        io_read_seq = str(fio_data['jobs'][0]['read']['io_bytes'])
+        io_write_seq = str(fio_data['jobs'][0]['write']['io_bytes'])
+        iops_read_seq = str(fio_data['jobs'][0]['read']['iops'])
+        iops_write_seq = str(fio_data['jobs'][0]['write']['iops'])
+        bw_read_seq = str(fio_data['jobs'][0]['read']['bw'])
+        bw_write_seq = str(fio_data['jobs'][0]['write']['bw'])
 
-        # Run disk sequential test for 'write'
-        sub.call([sqlio_install_dir + '\SQLIO\sqlio.exe', '-kW', '-s10', '-fsequential', '-b4'], stdout=open(sqlio_output, "w"))
+        if fio_async =='y':
+            sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, fio_async_engine, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+            with open(fio_json_file) as fio_results:
+                fio_data = json.load(fio_results)
 
-        # Parse variables from disk sequential write result
-        sqlio_file_handler = open(sqlio_output)
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "IOs/sec" in line:
-                item = line.split(":")
-                write_iops_seq = float(item[1].strip())
-                break
+            runtime_read_seq_async = str(fio_data['jobs'][0]['read']['runtime'])
+            runtime_write_seq_async = str(fio_data['jobs'][0]['write']['runtime'])
+            io_read_seq_async = str(fio_data['jobs'][0]['read']['io_bytes'])
+            io_write_seq_async = str(fio_data['jobs'][0]['write']['io_bytes'])
+            iops_read_seq_async = str(fio_data['jobs'][0]['read']['iops'])
+            iops_write_seq_async = str(fio_data['jobs'][0]['write']['iops'])
+            bw_read_seq_async = str(fio_data['jobs'][0]['read']['bw'])
+            bw_write_seq_async = str(fio_data['jobs'][0]['write']['bw'])
 
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "MBs/sec" in line:
-                item = line.split(":")
-                write_mbps_seq = float(item[1].strip())
-                break
-
-        sqlio_file_handler.close()
-
-        # Run disk sequential test for 'read'
-        sub.call([sqlio_install_dir + '\SQLIO\sqlio.exe', '-kR', '-s10', '-fsequential', '-b4'], stdout=open(sqlio_output, "w"))
-
-        # Parse variables from disk sequential read result
-        sqlio_file_handler = open(sqlio_output)
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "IOs/sec" in line:
-                item = line.split(":")
-                read_iops_seq = float(item[1].strip())
-                break
-
-        for row in sqlio_file_handler:
-            line = row.rstrip()
-            if "MBs/sec" in line:
-                item = line.split(":")
-                read_mbps_seq = float(item[1].strip())
-                break
-
-        sqlio_file_handler.close()
-        print "Completed disk sequential tests"
-
-    if disk_rand == 'y' or disk_seq == 'y':
-        # Remove output file generated during SQLIO test
-        if os.path.isfile(sqlio_output):
-            os.remove(sqlio_output)
+    fio_disk_dir = os.path.dirname(os.path.abspath(__file__))
+    for file_name in os.listdir(fio_disk_dir):
+        if file_name.startswith('fio_disk'):
+            os.remove(os.path.join(fio_disk_dir, file_name))
+    os.remove(fio_json_file)
+    print "Completed disk tests"
 
     if internal_net_tests == 'y':
 
@@ -387,23 +353,60 @@ for x in range(iterations):
     if disk_rand == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.read_mbps_rand: read_mbps_rand,
-            Olympus.write_mbps_rand: write_mbps_rand,
-            Olympus.read_iops_rand: read_iops_rand,
-            Olympus.write_iops_rand: write_iops_rand
+            Olympus.iops_read_rand: iops_read_rand,
+            Olympus.iops_write_rand: iops_write_rand,
+            Olympus.io_read_rand: io_read_rand,
+            Olympus.io_write_rand: io_write_rand,
+            Olympus.runtime_read_rand: runtime_read_rand,
+            Olympus.runtime_write_rand: runtime_write_rand,
+            Olympus.bw_read_rand: bw_read_rand,
+            Olympus.bw_write_rand: bw_write_rand
         })
         session.commit()
+
+        if fio_async == 'y':
+
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.iops_read_rand_async: iops_read_rand_async,
+                Olympus.iops_write_rand_async: iops_write_rand_async,
+                Olympus.io_read_rand_async: io_read_rand_async,
+                Olympus.io_write_rand_async: io_write_rand_async,
+                Olympus.runtime_read_rand_async: runtime_read_rand_async,
+                Olympus.runtime_write_rand_async: runtime_write_rand_async,
+                Olympus.bw_read_rand_async: bw_read_rand_async,
+                Olympus.bw_write_rand_async: bw_write_rand_async
+            })
+            session.commit()
+
         print "Finished transferring disk random results"
 
     if disk_seq == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.read_mbps_seq: read_mbps_seq,
-            Olympus.write_mbps_seq: write_mbps_seq,
-            Olympus.read_iops_seq: read_iops_seq,
-            Olympus.write_iops_seq: write_iops_seq
+            Olympus.iops_read_seq: iops_read_seq,
+            Olympus.iops_write_seq: iops_write_seq,
+            Olympus.io_read_seq: io_read_seq,
+            Olympus.io_write_seq: io_write_seq,
+            Olympus.runtime_read_seq: runtime_read_seq,
+            Olympus.runtime_write_seq: runtime_write_seq,
+            Olympus.bw_read_seq: bw_read_seq,
+            Olympus.bw_write_seq: bw_write_seq
         })
         session.commit()
+
+        if fio_async == 'y':
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.iops_read_seq_async: iops_read_seq_async,
+                Olympus.iops_write_seq_async: iops_write_seq_async,
+                Olympus.io_read_seq_async: io_read_seq_async,
+                Olympus.io_write_seq_async: io_write_seq_async,
+                Olympus.runtime_read_seq_async: runtime_read_seq_async,
+                Olympus.runtime_write_seq_async: runtime_write_seq_async,
+                Olympus.bw_read_seq_async: bw_read_seq_async,
+                Olympus.bw_write_seq_async: bw_write_seq_async
+            })
+            session.commit()
+
         print "Finished transferring disk sequential results"
 
     if internal_net_tests == 'y':
