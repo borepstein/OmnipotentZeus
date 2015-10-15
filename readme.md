@@ -19,5 +19,5 @@ Then run the following (which may require administrator access):
 <P>```git clone -b inapp-windows-script https://github.com/kennymuli/OmnipotentZeus.git```
 <P><B>9. Run the program</B>
 <P>```./OmnipotentZeus/run_win.bat```
-<P><B>Note:</B> The default installation path for Geekbench and SQLIO is C:/Program Files (x86)/
-<P>If you have installed Geekbench or SQLIO in a different path other than mentioned above, please remember to specify it in: /OmnipotentZeus/projects/test.py
+<P><B>Note:</B> The default installation path for Geekbench and FIO is C:/Program Files (x86)/
+<P>If you have installed Geekbench or FIO in a different path other than mentioned above, please remember to specify it in: /OmnipotentZeus/projects/test.py
