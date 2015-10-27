@@ -203,7 +203,7 @@ for x in range(iterations):
     disk_options = [fio_rand_rw, fio_seq_rw]
 
     if disk_rand == 'y':
-        sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+        sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json', fio_filename, fio_runtime, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
         with open(fio_json_file) as fio_results:
             fio_data = json.load(fio_results)
 
@@ -223,7 +223,7 @@ for x in range(iterations):
         os.remove(fio_json_file)
 
         if fio_async =='y':
-            sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, fio_async_engine, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+            sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json', '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
             with open(fio_json_file) as fio_results:
                 fio_data = json.load(fio_results)
 
@@ -243,7 +243,7 @@ for x in range(iterations):
             os.remove(fio_json_file)
 
     if disk_seq == 'y':
-        sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+        sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json', fio_filename, fio_runtime, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
         with open(fio_json_file) as fio_results:
             fio_data = json.load(fio_results)
 
@@ -263,7 +263,7 @@ for x in range(iterations):
         os.remove(fio_json_file)
 
         if fio_async =='y':
-            sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, fio_async_engine, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
+            sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json', '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
             with open(fio_json_file) as fio_results:
                 fio_data = json.load(fio_results)
 
