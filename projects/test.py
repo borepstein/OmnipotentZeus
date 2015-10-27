@@ -16,8 +16,8 @@ internal_net_tests = 'y'  # iperf internal network tests
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
 fio_blocksize = '4' # please enter the block size in kilobytes
-fio_filesize = '256' # please enter the file size in megabytes
-fio_numjobs = '5' # please enter the number of copies of the test that you would like to run
+fio_filesize = '1024' # please enter the file size in megabytes
+fio_numjobs = '8' # please enter the number of copies of the test that you would like to run
 fio_runtime = '60' # how long would you like this test to run for in seconds
 fio_direct = 'y' # if direct I/O is required (bypass cache), please mark y
 fio_async = 'y'
@@ -37,7 +37,7 @@ fio_json_file = 'fio.json'
 fio_filename = '--name=fio_disk'
 
 if fio_async == 'y':
-	fio_async_engine = '--ioengine=windowsaio'
+    fio_async_engine = '--ioengine=windowsaio'
 
 if fio_direct == 'y':
     fio_direct_val = 'Direct'
