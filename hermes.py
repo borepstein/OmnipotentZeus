@@ -216,6 +216,12 @@ for x in range(iterations):
         bw_read_rand = str(fio_data['jobs'][0]['read']['bw'])
         bw_write_rand = str(fio_data['jobs'][0]['write']['bw'])
 
+        fio_disk_dir = os.path.dirname(os.path.abspath(__file__))
+        for file_name in os.listdir(fio_disk_dir):
+            if file_name.startswith('fio_disk'):
+                os.remove(os.path.join(fio_disk_dir, file_name))
+        os.remove(fio_json_file)
+
         if fio_async =='y':
             sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, fio_async_engine, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
             with open(fio_json_file) as fio_results:
@@ -229,6 +235,12 @@ for x in range(iterations):
             iops_write_rand_async = str(fio_data['jobs'][0]['write']['iops'])
             bw_read_rand_async = str(fio_data['jobs'][0]['read']['bw'])
             bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
+
+            fio_disk_dir = os.path.dirname(os.path.abspath(__file__))
+            for file_name in os.listdir(fio_disk_dir):
+                if file_name.startswith('fio_disk'):
+                    os.remove(os.path.join(fio_disk_dir, file_name))
+            os.remove(fio_json_file)
 
     if disk_seq == 'y':
         sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
@@ -244,6 +256,12 @@ for x in range(iterations):
         bw_read_seq = str(fio_data['jobs'][0]['read']['bw'])
         bw_write_seq = str(fio_data['jobs'][0]['write']['bw'])
 
+        fio_disk_dir = os.path.dirname(os.path.abspath(__file__))
+        for file_name in os.listdir(fio_disk_dir):
+            if file_name.startswith('fio_disk'):
+                os.remove(os.path.join(fio_disk_dir, file_name))
+        os.remove(fio_json_file)
+
         if fio_async =='y':
             sub.call([fio_install_dir + '\/fio\/fio.exe', '--thread', '--output-format=json', fio_filename, fio_runtime, fio_async_engine, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs], stdout=open(fio_json_file, "w"))
             with open(fio_json_file) as fio_results:
@@ -258,11 +276,12 @@ for x in range(iterations):
             bw_read_seq_async = str(fio_data['jobs'][0]['read']['bw'])
             bw_write_seq_async = str(fio_data['jobs'][0]['write']['bw'])
 
-    fio_disk_dir = os.path.dirname(os.path.abspath(__file__))
-    for file_name in os.listdir(fio_disk_dir):
-        if file_name.startswith('fio_disk'):
-            os.remove(os.path.join(fio_disk_dir, file_name))
-    os.remove(fio_json_file)
+            fio_disk_dir = os.path.dirname(os.path.abspath(__file__))
+            for file_name in os.listdir(fio_disk_dir):
+                if file_name.startswith('fio_disk'):
+                    os.remove(os.path.join(fio_disk_dir, file_name))
+            os.remove(fio_json_file)
+
     print "Completed disk tests"
 
     if internal_net_tests == 'y':
