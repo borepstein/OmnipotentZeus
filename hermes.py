@@ -44,6 +44,8 @@ if operating_system =='centos' or operating_system == 'redhat':
         os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
         os.chdir('dist/Geekbench-3.1.2-Linux')
         sub.call(['./geekbench_x86_64','-r',email,key])
+    if ab_tests == 'y': # Install ApacheBench if to be tested
+        os.system('apt-get install apache2-utils')
 
 if operating_system == 'ubuntu' or operating_system == 'debian': 
     if disk_rand == 'y' or disk_seq =='y':  #Install fio for disk testing if to be tested
@@ -59,7 +61,10 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
         os.system('apt-get install phoronix-test-suite --yes')
         os.system('y | phoronix-test-suite')
         os.system('mv ~/OmnipotentZeus/user-config.xml ~/.phoronix-test-suite/user-config.xml')
+    if ab_tests == 'y': # Install ApacheBench if to be tested
+        os.system('apt-get install apache2-utils')
 
+processor_info = ""
 #Getting CPU Amount
 v1               = sub.Popen(['cat','/proc/cpuinfo'],stdout=sub.PIPE)
 v2               = sub.Popen(['grep','processor'], stdin=v1.stdout, stdout=sub.PIPE)
@@ -327,6 +332,17 @@ for x in range(iterations):
         print "finished transferring"
         os.remove(internal_net_csv_file)
         print "finished deleting the file"
+
+    if ab_tests == 'y':
+        ab_results = "ab_results.txt"
+        ab_address = ab_hostname
+        if ab_port:
+            ab_address = ab_address + ":" + ab_port
+        if ab_path:
+            ab_address = ab_address + ab_path
+
+        sub.call(['ab', '-q', '-n', ab_requests, '-c', ab_concurrency, '-s', ab_timeout, '-e', ab_results, ab_address], stdout = open(ab_results, "w"))
+        print "completed apachebench tests"
 
     if disk_rand =='n' and disk_seq =='n':
         fio_rw = "n/a"

@@ -11,6 +11,7 @@ pts_tests = 'n' #Phoronix Test Suite
 disk_rand = 'y' #fio random read and random write
 disk_seq = 'y' #fio sequential read and sequential write
 internal_net_tests = 'y' #iperf internal network tests
+ab_tests = 'y' # ApacheBench tests
 
 #DISK INFORMATION
 #If you selected yes for disk_rand or disk_seq, then you have to fill out this information
@@ -76,3 +77,11 @@ directory   = "dist/Geekbench-3.1.2-Linux"
 
 #Phoronix Test Suite
 pts_available_tests = {'compress-7zip':'','phpbench':'','encode-mp3':'','x264':''}
+
+# ApacheBench
+ab_requests = "200" # number of requests to perform
+ab_concurrency = "10" # number of multiple requests to make at a time
+ab_timeout = "30" # maximum seconds to wait for each response. default 30s.
+ab_hostname = "104.131.118.115" # hostname
+ab_port = "" # default port 80
+ab_path = "/admin" # path
