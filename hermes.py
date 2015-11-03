@@ -45,7 +45,7 @@ if operating_system =='centos' or operating_system == 'redhat':
         os.chdir('dist/Geekbench-3.1.2-Linux')
         sub.call(['./geekbench_x86_64','-r',email,key])
     if ab_tests == 'y': # Install ApacheBench if to be tested
-        os.system('apt-get install apache2-utils')
+        os.system('yum install httpd-tools')
 
 if operating_system == 'ubuntu' or operating_system == 'debian': 
     if disk_rand == 'y' or disk_seq =='y':  #Install fio for disk testing if to be tested
