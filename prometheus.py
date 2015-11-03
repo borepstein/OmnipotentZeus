@@ -154,9 +154,29 @@ class HermesPTS(Base):
 	uid                 = Column(String(50), nullable=True)
 	iteration           = Column(Integer,    nullable=True)
 	compress7zip		= Column(Float(30),	 nullable=True)
-	phpbench			= Column(Float(30),    nullable=True)
-	mp3encode			= Column(Float(30),    nullable=True)
-	x264				= Column(Float(30),    nullable=True)
+	phpbench			= Column(Float(30),  nullable=True)
+	mp3encode			= Column(Float(30),  nullable=True)
+	x264				= Column(Float(30),  nullable=True)
+
+class HermesAb(Base):
+	__tablename__ = 'apache_bench'
+	id                  = Column(Integer,    primary_key=True)
+	uid                 = Column(String(50), nullable=True)
+	iteration           = Column(Integer,    nullable=True)
+	hostname            = Column(String(100), nullable=True)
+	concurrency_level   = Column(Integer,    nullable=True)
+	time_taken          = Column(Float(30),  nullable=True)
+	completed_requests  = Column(Integer,    nullable=True)
+	requests_per_sec    = Column(Float(30),  nullable=True)
+	percent_50          = Column(Integer,    nullable=True)
+	percent_66          = Column(Integer,    nullable=True)
+	percent_75          = Column(Integer,    nullable=True)
+	percent_80          = Column(Integer,    nullable=True)
+	percent_90          = Column(Integer,    nullable=True)
+	percent_95          = Column(Integer,    nullable=True)
+	percent_98          = Column(Integer,    nullable=True)
+	percent_99          = Column(Integer,    nullable=True)
+	percent_100         = Column(Integer,    nullable=True)
 
 #Create an object, db, to act as the connect to the database.
 #The SQLEngine object is used to open the connection, which is what is being used in the db variable. 

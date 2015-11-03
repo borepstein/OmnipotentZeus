@@ -11,7 +11,7 @@ import smtplib as smtp
 from time import sleep, time
 from bs4 import BeautifulSoup as bs
 from collections import OrderedDict as od
-from prometheus import Base, Olympus, Hermes_System, HermesRand, HermesRandasync, HermesSeq, HermesSeqasync, HermesNet, HermesPTS
+from prometheus import Base, Olympus, Hermes_System, HermesRand, HermesRandasync, HermesSeq, HermesSeqasync, HermesNet, HermesPTS, HermesAb
 from prometheus import Ignition
 from sqlalchemy.orm import sessionmaker
 from random import randint
@@ -317,7 +317,7 @@ for x in range(iterations):
 
     if internal_net_tests == 'y':
         #iperf -c IP_ADDRESS -t TIME -f m -y C >> iperf_results.csv
-        sub.call(['iperf','-c',internal_net_ip,'-t',internal_net_time,'-y',internal_net_csv],stdout=open("iperf_results.csv","w"))
+        sub.call(['iperf','-c',internal_net_ip,'-t',internal_net_time,'-y',internal_net_csv], stdout=open("iperf_results.csv","w"))
 
         internal_net_csv_file = 'iperf_results.csv'
         opener = open(internal_net_csv_file)
@@ -341,7 +341,34 @@ for x in range(iterations):
         if ab_path:
             ab_address = ab_address + ab_path
 
-        sub.call(['ab', '-q', '-n', ab_requests, '-c', ab_concurrency, '-s', ab_timeout, '-e', ab_results, ab_address], stdout = open(ab_results, "w"))
+        sub.call(['ab', '-q', '-n', ab_requests, '-c', ab_concurrency, '-s', ab_timeout, '-e', ab_results, ab_address], stdout=open("ab_results.txt","w"))
+        with open(ab_results) as f:
+            lines = f.readlines()
+            for l in lines:
+                if("Requests per second" in l):
+                    requests_per_sec = filter(None, l.split(" "))[3]
+                if("Time taken for tests:" in l):
+                    time_taken = filter(None, l.split(" "))[4]
+                if("50%" in l):
+                    percent_50 = filter(None, l.split(" "))[1]
+                if("66%" in l):
+                    percent_66 = filter(None, l.split(" "))[1]
+                if("75%" in l):
+                    percent_75 = filter(None, l.split(" "))[1]
+                if("80%" in l):
+                    percent_80 = filter(None, l.split(" "))[1]
+                if("90%" in l):
+                    percent_90 = filter(None, l.split(" "))[1]
+                if("95%" in l):
+                    percent_95 = filter(None, l.split(" "))[1]
+                if("98%" in l):
+                    percent_98 = filter(None, l.split(" "))[1]
+                if("99%" in l):
+                    percent_99 = filter(None, l.split(" "))[1]
+                if("100%" in l):
+                    percent_100 = filter(None, l.split(" "))[1]
+
+        os.remove(ab_results)
         print "completed apachebench tests"
 
     if disk_rand =='n' and disk_seq =='n':
@@ -515,6 +542,27 @@ for x in range(iterations):
             transfer_mb         = internal_network_data,
             bandwidth_mb        = internal_network_bandwidth)
         session.add(Hermes_Net)
+        session.commit()
+
+    if ab_tests == 'y':
+        Hermes_Ab               = HermesAb(
+            uid                 = generated_uid,
+            iteration           = iterator,
+            hostname            = ab_address,
+            concurrency_level   = ab_concurrency,
+            time_taken          = time_taken,
+            completed_requests  = ab_requests,
+            requests_per_sec    = requests_per_sec,
+            percent_50          = percent_50,
+            percent_66          = percent_66,
+            percent_75          = percent_75,
+            percent_80          = percent_80,
+            percent_90          = percent_90,
+            percent_95          = percent_95,
+            percent_98          = percent_98,
+            percent_99          = percent_99,
+            percent_100         = percent_100)
+        session.add(Hermes_Ab)
         session.commit()
 
     iterator = iterator + 1

@@ -52,6 +52,7 @@ internal_net_time = '60' #please enter the time, in seconds, that you want iperf
 #Duration and duration value will limit the time the suite will be running for. 
 #Either duration or number of iterations must complete in order for the testing to stop.
 sleeptime = 0
+# iterations = 5000000
 iterations = 5000000
 duration        = 24
 duration_value  = "hours" #please enter seconds, minutes, hours, or days
@@ -74,6 +75,8 @@ key     = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 #DIRECTORY
 #The directory that houses the Geekbench 3 suite and where all the tests will run
 directory   = "dist/Geekbench-3.1.2-Linux"
+
+textnotifications = 'n'
 
 #Phoronix Test Suite
 pts_available_tests = {'compress-7zip':'','phpbench':'','encode-mp3':'','x264':''}
