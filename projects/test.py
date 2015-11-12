@@ -21,7 +21,7 @@ fio_filesize = '1024'  # please enter the file size in megabytes
 fio_numjobs = '8'  # please enter the number of copies of the test that you would like to run
 fio_runtime = '60'  # how long would you like this test to run for in seconds
 fio_direct = 'y'  # if direct I/O is required (bypass cache), please mark y
-fio_async = 'n'
+fio_async = 'y'
 
 fio_rand_rw = 'randrw'  # Please say randread for random read, randwrite for random write, and randrw to do both operations
 fio_rand_rw = '-rw=' + fio_rand_rw
