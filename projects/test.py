@@ -3,7 +3,7 @@
 
 from datetime import datetime
 
-project_id = 'c-edgehosting-20150902'
+project_id = 'c-edgehosting-20151116'
 startdate_input = datetime.now().strftime('%Y%m%d-%H%M')  # Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
 operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
 

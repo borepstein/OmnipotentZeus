@@ -181,6 +181,7 @@ for x in range(iterations):
                 values[key] = val
             y = y + 1
         values = od(values)
+        print "completed geekbench test"
 
     disk_options = [fio_seq_rw, fio_rand_rw]
 
@@ -243,6 +244,7 @@ for x in range(iterations):
             ticks_write_rand_async   = str(fio_data['disk_util'][0]   ['write_ticks'])
 
             spider_egg_exterminator()
+        print "completed random disk tests"
 
     if disk_seq == 'y':
         sub.call(fio_command_generator(disk_options[1]))
@@ -282,6 +284,7 @@ for x in range(iterations):
             ticks_write_seq_async   = str(fio_data['disk_util'][0]   ['write_ticks'])
 
             spider_egg_exterminator()
+        print "completed sequential disk tests"
 
     if internal_net_tests == 'y':
         sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time, '-y', internal_net_csv], stdout=open("iperf_results.csv","w"))
@@ -290,15 +293,10 @@ for x in range(iterations):
         opener = open(internal_net_csv_file)
         csv_open = csv.reader(opener)
         for row in csv_open:
-            internal_network_data = int(row[7])
-            internal_network_data = (internal_network_data / 1024) / 1024
-            print internal_network_data
-            internal_network_bandwidth = int(row[8])
-            internal_network_bandwidth = (internal_network_bandwidth / 1024) / 1024
-            print internal_network_bandwidth
-        print "finished transferring"
+            internal_network_data = (int(row[7]) / 1024) / 1024
+            internal_network_bandwidth = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
-        print "finished deleting the file"
+        print "completed internal network tests"
 
     if ab_tests == 'y':
         ab_results = "ab_results.txt"
@@ -481,16 +479,14 @@ for x in range(iterations):
     if internal_net_tests == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.sender_transfer_mb: sender_transfer_mb,
-            Olympus.sender_bandwidth_mbps: sender_bandwidth_mbps,
-            Olympus.receiver_transfer_mb: receiver_transfer_mb,
-            Olympus.receiver_bandwidth_mbps: receiver_bandwidth_mbps
+            Olympus.internal_network_data: internal_network_data,
+            Olympus.internal_network_bandwidth: internal_network_bandwidth
         })
         session.commit()
         print "Finished transferring internal network test results"
 
     print "\n\n"
-    print "All tests are successfully completed and the results are transferred to our database"
+    print "All the tests are successfully completed and the results are transferred to database"
     print "\n\n"
 
     if ab_tests == 'y':
