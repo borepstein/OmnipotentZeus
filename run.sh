@@ -1,3 +1,4 @@
+sudo apt-get update
 sudo apt-get install python-pip mysql-server libmysqlclient-dev python-dev python-lxml --yes
 sudo pip install mysql-python
 sudo pip install sqlalchemy
