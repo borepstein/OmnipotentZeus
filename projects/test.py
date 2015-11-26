@@ -3,7 +3,7 @@
 
 from datetime import datetime
 
-project_id = 'c-edgehosting-20151116'
+project_id = 'c-edgehosting-20151126'
 startdate_input = datetime.now().strftime('%Y%m%d-%H%M')  # Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
 operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
 
@@ -11,13 +11,13 @@ operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
 system_tests = 'y'  # Geekbench 3 suite
 disk_rand = 'y'  # fio random read and random write
 disk_seq = 'y'  # fio sequential read and sequential write
-internal_net_tests = 'y'  # iperf internal network tests
+internal_net_tests = 'n'  # iperf internal network tests
 ab_tests = 'y'  # ApacheBench tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
 fio_blocksize = '4'  # please enter the block size in kilobytes
-fio_filesize = '1024'  # please enter the file size in megabytes
+fio_filesize = '64'  # please enter the file size in megabytes
 fio_numjobs = '8'  # please enter the number of copies of the test that you would like to run
 fio_runtime = '60'  # how long would you like this test to run for in seconds
 fio_direct = 'y'  # if direct I/O is required (bypass cache), please mark y
