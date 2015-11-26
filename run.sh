@@ -1,6 +1,6 @@
-sudo apt-get update
-sudo apt-get install python-pip mysql-server libmysqlclient-dev python-dev python-lxml --yes
-sudo pip install mysql-python
-sudo pip install sqlalchemy
-sudo pip install beautifulsoup4
+apt-get update
+apt-get install python-pip mysql-server libmysqlclient-dev python-dev python-lxml --yes
+pip install mysql-python
+pip install sqlalchemy
+pip install beautifulsoup4
 screen python OmnipotentZeus/hermes.py
