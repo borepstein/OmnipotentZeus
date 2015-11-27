@@ -8,10 +8,10 @@ startdate_input = datetime.now().strftime('%Y%m%d-%H%M')  # Please enter the sta
 operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
 
 # Please mark with a y (indicating yes) for each test you want to run
-system_tests = 'y'  # Geekbench 3 suite
-disk_rand = 'y'  # fio random read and random write
-disk_seq = 'y'  # fio sequential read and sequential write
-internal_net_tests = 'n'  # iperf internal network tests
+system_tests = 'n'  # Geekbench 3 suite
+disk_rand = 'n'  # fio random read and random write
+disk_seq = 'n'  # fio sequential read and sequential write
+internal_net_tests = 'y'  # iperf internal network tests
 ab_tests = 'y'  # ApacheBench tests
 
 # DISK INFORMATION
