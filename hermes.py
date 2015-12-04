@@ -41,6 +41,10 @@ if operating_system == 'centos' or operating_system == 'redhat':
         sub.call(['./geekbench_x86_64', '-r', email, key])
     if ab_tests == 'y':  # Install ApacheBench if to be tested
         os.system('yum install httpd-tools')
+    if iozone == 'y':
+        os.system('wget http://www.iozone.org/src/current/iozone3_394.tar')
+        os.system('tar xvf iozone3_394.tar')
+        os.chdir('iozone3_394/src/current')
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
     if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
@@ -48,8 +52,8 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
     if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
         os.system('apt-get install iperf')
     if system_tests == 'y':  # Install Geekbench - Download & Unpackage if to be tested
-        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
+        # os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
+        # os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
         os.chdir('dist/Geekbench-3.1.2-Linux')
         sub.call(['./geekbench_x86_64', '-r', email, key])
     if ab_tests == 'y':  # Install ApacheBench if to be tested
@@ -80,7 +84,8 @@ provider_region = "N/A"
 
 vm_input = raw_input("Please enter the VM name (if no VM name, just say vCPU/RAM in GB (e.g., 2vCPU/4GB): ")
 vm_input = vm_input.lower()
-vmcount_input = raw_input("Which VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
+vmcount_input = raw_input(
+    "Which VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
 local_input = "0"
 block_input = "0"
 
@@ -187,12 +192,14 @@ for x in range(iterations):
 
     def fio_command_generator(option):
         global fio_command
-        fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct, '-time_based', '--output-format=json', '--output=fio.json', '-time_based', '-group_reporting', '-exitall']
+        fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
+                       '-time_based', '--output-format=json', '--output=fio.json', '-time_based', '-group_reporting', '-exitall']
         return fio_command
 
     def fio_async_command_generator(option):
         global fio_command
-        fio_command = ['fio', option, fio_filename, "-bs=128k", "-size=128M", "-numjobs=8", fio_runtime, fio_direct, '-iodepth=32', '-ioengine=libaio', '-time_based', '--output-format=json', '--output=fio.json', '-time_based' , '-group_reporting', '-exitall']
+        fio_command = ['fio', option, fio_filename, "-bs=128k", "-size=128M", "-numjobs=8", fio_runtime, fio_direct, '-iodepth=32',
+                       '-ioengine=libaio', '-time_based', '--output-format=json', '--output=fio.json', '-time_based', '-group_reporting', '-exitall']
         return fio_command
 
     def spider_egg_exterminator():
@@ -210,18 +217,18 @@ for x in range(iterations):
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
 
-        runtime_read_rand  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-        runtime_write_rand = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-        ops_read_rand      = str(fio_data['disk_util'][0]   ['read_ios'])
-        ops_write_rand     = str(fio_data['disk_util'][0]   ['write_ios'])
-        io_read_rand       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-        io_write_rand      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-        iops_read_rand     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-        iops_write_rand    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-        bw_read_rand       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-        bw_write_rand      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-        ticks_read_rand    = str(fio_data['disk_util'][0]   ['read_ticks'])
-        ticks_write_rand   = str(fio_data['disk_util'][0]   ['write_ticks'])
+        runtime_read_rand = str(fio_data['jobs'][0]['read']['runtime'])
+        runtime_write_rand = str(fio_data['jobs'][0]['write']['runtime'])
+        ops_read_rand = str(fio_data['disk_util'][0]['read_ios'])
+        ops_write_rand = str(fio_data['disk_util'][0]['write_ios'])
+        io_read_rand = str(fio_data['jobs'][0]['read']['io_bytes'])
+        io_write_rand = str(fio_data['jobs'][0]['write']['io_bytes'])
+        iops_read_rand = str(fio_data['jobs'][0]['read']['iops'])
+        iops_write_rand = str(fio_data['jobs'][0]['write']['iops'])
+        bw_read_rand = str(fio_data['jobs'][0]['read']['bw'])
+        bw_write_rand = str(fio_data['jobs'][0]['write']['bw'])
+        ticks_read_rand = str(fio_data['disk_util'][0]['read_ticks'])
+        ticks_write_rand = str(fio_data['disk_util'][0]['write_ticks'])
 
         spider_egg_exterminator()
 
@@ -230,18 +237,18 @@ for x in range(iterations):
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
-            runtime_read_rand_async  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-            runtime_write_rand_async = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-            ops_read_rand_async      = str(fio_data['disk_util'][0]   ['read_ios'])
-            ops_write_rand_async     = str(fio_data['disk_util'][0]   ['write_ios'])
-            io_read_rand_async       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-            io_write_rand_async      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-            iops_read_rand_async     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-            iops_write_rand_async    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-            bw_read_rand_async       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-            bw_write_rand_async      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-            ticks_read_rand_async    = str(fio_data['disk_util'][0]   ['read_ticks'])
-            ticks_write_rand_async   = str(fio_data['disk_util'][0]   ['write_ticks'])
+            runtime_read_rand_async = str(fio_data['jobs'][0]['read']['runtime'])
+            runtime_write_rand_async = str(fio_data['jobs'][0]['write']['runtime'])
+            ops_read_rand_async = str(fio_data['disk_util'][0]['read_ios'])
+            ops_write_rand_async = str(fio_data['disk_util'][0]['write_ios'])
+            io_read_rand_async = str(fio_data['jobs'][0]['read']['io_bytes'])
+            io_write_rand_async = str(fio_data['jobs'][0]['write']['io_bytes'])
+            iops_read_rand_async = str(fio_data['jobs'][0]['read']['iops'])
+            iops_write_rand_async = str(fio_data['jobs'][0]['write']['iops'])
+            bw_read_rand_async = str(fio_data['jobs'][0]['read']['bw'])
+            bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
+            ticks_read_rand_async = str(fio_data['disk_util'][0]['read_ticks'])
+            ticks_write_rand_async = str(fio_data['disk_util'][0]['write_ticks'])
 
             spider_egg_exterminator()
         print "completed random disk tests"
@@ -251,18 +258,18 @@ for x in range(iterations):
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
 
-        runtime_read_seq  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-        runtime_write_seq = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-        ops_read_seq      = str(fio_data['disk_util'][0]   ['read_ios'])
-        ops_write_seq     = str(fio_data['disk_util'][0]   ['write_ios'])
-        io_read_seq       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-        io_write_seq      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-        iops_read_seq     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-        iops_write_seq    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-        bw_read_seq       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-        bw_write_seq      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-        ticks_read_seq    = str(fio_data['disk_util'][0]   ['read_ticks'])
-        ticks_write_seq   = str(fio_data['disk_util'][0]   ['write_ticks'])
+        runtime_read_seq = str(fio_data['jobs'][0]['read']['runtime'])
+        runtime_write_seq = str(fio_data['jobs'][0]['write']['runtime'])
+        ops_read_seq = str(fio_data['disk_util'][0]['read_ios'])
+        ops_write_seq = str(fio_data['disk_util'][0]['write_ios'])
+        io_read_seq = str(fio_data['jobs'][0]['read']['io_bytes'])
+        io_write_seq = str(fio_data['jobs'][0]['write']['io_bytes'])
+        iops_read_seq = str(fio_data['jobs'][0]['read']['iops'])
+        iops_write_seq = str(fio_data['jobs'][0]['write']['iops'])
+        bw_read_seq = str(fio_data['jobs'][0]['read']['bw'])
+        bw_write_seq = str(fio_data['jobs'][0]['write']['bw'])
+        ticks_read_seq = str(fio_data['disk_util'][0]['read_ticks'])
+        ticks_write_seq = str(fio_data['disk_util'][0]['write_ticks'])
 
         spider_egg_exterminator()
         if fio_async == 'y':
@@ -270,24 +277,25 @@ for x in range(iterations):
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
-            runtime_read_seq_async  = str(fio_data['jobs'][0]        ['read']           ['runtime'])
-            runtime_write_seq_async = str(fio_data['jobs'][0]        ['write']          ['runtime'])
-            ops_read_seq_async      = str(fio_data['disk_util'][0]   ['read_ios'])
-            ops_write_seq_async     = str(fio_data['disk_util'][0]   ['write_ios'])
-            io_read_seq_async       = str(fio_data['jobs'][0]        ['read']           ['io_bytes'])
-            io_write_seq_async      = str(fio_data['jobs'][0]        ['write']          ['io_bytes'])
-            iops_read_seq_async     = str(fio_data['jobs'][0]        ['read']           ['iops'])
-            iops_write_seq_async    = str(fio_data['jobs'][0]        ['write']          ['iops'])
-            bw_read_seq_async       = str(fio_data['jobs'][0]        ['read']           ['bw'])
-            bw_write_seq_async      = str(fio_data['jobs'][0]        ['write']          ['bw'])
-            ticks_read_seq_async    = str(fio_data['disk_util'][0]   ['read_ticks'])
-            ticks_write_seq_async   = str(fio_data['disk_util'][0]   ['write_ticks'])
+            runtime_read_seq_async = str(fio_data['jobs'][0]['read']['runtime'])
+            runtime_write_seq_async = str(fio_data['jobs'][0]['write']['runtime'])
+            ops_read_seq_async = str(fio_data['disk_util'][0]['read_ios'])
+            ops_write_seq_async = str(fio_data['disk_util'][0]['write_ios'])
+            io_read_seq_async = str(fio_data['jobs'][0]['read']['io_bytes'])
+            io_write_seq_async = str(fio_data['jobs'][0]['write']['io_bytes'])
+            iops_read_seq_async = str(fio_data['jobs'][0]['read']['iops'])
+            iops_write_seq_async = str(fio_data['jobs'][0]['write']['iops'])
+            bw_read_seq_async = str(fio_data['jobs'][0]['read']['bw'])
+            bw_write_seq_async = str(fio_data['jobs'][0]['write']['bw'])
+            ticks_read_seq_async = str(fio_data['disk_util'][0]['read_ticks'])
+            ticks_write_seq_async = str(fio_data['disk_util'][0]['write_ticks'])
 
             spider_egg_exterminator()
         print "completed sequential disk tests"
 
     if internal_net_tests == 'y':
-        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time, '-y', internal_net_csv], stdout=open("iperf_results.csv","w"))
+        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
+                  '-y', internal_net_csv], stdout=open("iperf_results.csv", "w"))
 
         internal_net_csv_file = 'iperf_results.csv'
         opener = open(internal_net_csv_file)
@@ -306,7 +314,8 @@ for x in range(iterations):
         if ab_path:
             ab_address = ab_address + ab_path
 
-        sub.call(['ab', '-q', '-n', ab_requests, '-c', ab_concurrency, '-s', ab_timeout, '-e', ab_results, ab_address], stdout=open("ab_results.txt","w"))
+        sub.call(['ab', '-q', '-n', ab_requests, '-c', ab_concurrency, '-s', ab_timeout,
+                  '-e', ab_results, ab_address], stdout=open("ab_results.txt", "w"))
         with open(ab_results) as f:
             lines = f.readlines()
             for l in lines:
