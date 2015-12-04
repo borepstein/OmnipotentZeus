@@ -78,7 +78,7 @@ for x in memoutput_list:
         ram_input = "%.2f" % mem_count
 
 # Collect information on the provider and VM environment
-provider_input = raw_input("Please enter the provider's name: ")
+provider_input = raw_input("\nPlease enter the provider's name: ")
 provider_input = provider_input.lower()
 provider_region = "N/A"
 
