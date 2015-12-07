@@ -114,6 +114,12 @@ class Olympus(Base):
     percent_98 = Column(Integer, nullable=True)
     percent_99 = Column(Integer, nullable=True)
     percent_100 = Column(Integer, nullable=True)
+    iozone_seq_writers = Column(Float(30), nullable=True)
+    iozone_seq_rewriters = Column(Float(30), nullable=True)
+    iozone_seq_readers = Column(Float(30), nullable=True)
+    iozone_seq_rereaders = Column(Float(30), nullable=True)
+    iozone_random_readers = Column(Float(30), nullable=True)
+    iozone_random_writers = Column(Float(30), nullable=True)
 
 # Create an object, db, to act as the connect to the database.
 # The SQLEngine object is used to open the connection, which is what is being used in the db variable.

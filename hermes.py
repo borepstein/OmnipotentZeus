@@ -23,9 +23,10 @@ print "|    Project Olympus     |"
 print "|         v1.5           |"
 print "|------------------------|"
 print ""
-print "Project Olympus is designed to be a testbed for measuring virtual machine performance in a scalable, cloud environment. The design of Olympus is its flexibility in continuous testing over time, rather than spot testing, which is an archaic method that cannot apply to highly variable environments with multiple (many of which are possibly uncontrolled) variables."
-print ""
-print ""
+print "Project Olympus is designed to be a testbed for measuring virtual machine performance in a scalable, \
+cloud environment. The design of Olympus is its flexibility in continuous testing over time, rather than \
+spot testing, which is an archaic method that cannot apply to highly variable environments with multiple \
+(many of which are possibly uncontrolled) variables.\n\n"
 
 # ==================== GLOBAL INSTALLER ==================== #
 if operating_system == 'centos' or operating_system == 'redhat':
@@ -41,10 +42,9 @@ if operating_system == 'centos' or operating_system == 'redhat':
         sub.call(['./geekbench_x86_64', '-r', email, key])
     if ab_tests == 'y':  # Install ApacheBench if to be tested
         os.system('yum install httpd-tools')
-    if iozone == 'y':
-        os.system('wget http://www.iozone.org/src/current/iozone3_394.tar')
-        os.system('tar xvf iozone3_394.tar')
-        os.chdir('iozone3_394/src/current')
+    if iozone == 'y':  # Install iozone if to be tested
+        os.system("wget http://www.iozone.org/src/current/iozone-3-338.i386.rpm")
+        os.system("rpm -ivh iozone-3-338.i386.rpm")
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
     if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
@@ -58,6 +58,8 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
         sub.call(['./geekbench_x86_64', '-r', email, key])
     if ab_tests == 'y':  # Install ApacheBench if to be tested
         os.system('apt-get install apache2-utils')
+    if iozone_tests == 'y':  # Install iozone if to be tested
+        os.system('apt-get install iozone3')
 
 processor_info = ""
 # Getting CPU Amount
@@ -193,13 +195,15 @@ for x in range(iterations):
     def fio_command_generator(option):
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
-                       '-time_based', '--output-format=json', '--output=fio.json', '-time_based', '-group_reporting', '-exitall']
+                       '-time_based', '--output-format=json', '--output=fio.json', '-time_based', '-group_reporting',
+                       '-exitall']
         return fio_command
 
     def fio_async_command_generator(option):
         global fio_command
-        fio_command = ['fio', option, fio_filename, "-bs=128k", "-size=128M", "-numjobs=8", fio_runtime, fio_direct, '-iodepth=32',
-                       '-ioengine=libaio', '-time_based', '--output-format=json', '--output=fio.json', '-time_based', '-group_reporting', '-exitall']
+        fio_command = ['fio', option, fio_filename, "-bs=128k", "-size=128M", "-numjobs=8", fio_runtime, fio_direct,
+                       '-iodepth=32', '-ioengine=libaio', '-time_based', '--output-format=json', '--output=fio.json',
+                       '-time_based', '-group_reporting', '-exitall']
         return fio_command
 
     def spider_egg_exterminator():
@@ -294,10 +298,10 @@ for x in range(iterations):
         print "completed sequential disk tests"
 
     if internal_net_tests == 'y':
-        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
-                  '-y', internal_net_csv], stdout=open("iperf_results.csv", "w"))
-
         internal_net_csv_file = 'iperf_results.csv'
+        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
+                  '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
+
         opener = open(internal_net_csv_file)
         csv_open = csv.reader(opener)
         for row in csv_open:
@@ -315,7 +319,7 @@ for x in range(iterations):
             ab_address = ab_address + ab_path
 
         sub.call(['ab', '-q', '-n', ab_requests, '-c', ab_concurrency, '-s', ab_timeout,
-                  '-e', ab_results, ab_address], stdout=open("ab_results.txt", "w"))
+                  '-e', ab_results, ab_address], stdout=open(ab_results, "w"))
         with open(ab_results) as f:
             lines = f.readlines()
             for l in lines:
@@ -344,6 +348,60 @@ for x in range(iterations):
 
         os.remove(ab_results)
         print "completed apachebench tests"
+
+    def iozone_dummy_exterminator():
+        for iozone_dummy in range(0, spider_hatchlings):
+            iozone_dummy_file = "iozone.DUMMY." + str(iozone_dummy)
+            try:
+                os.remove(iozone_dummy_file)
+            except:
+                print 'no file'
+
+    def iozone_result_parser(result_file, target_var):
+        with open(result_file) as f:
+            lines = f.readlines()
+            for l in lines:
+                if target_var in l:
+                    target_res = l.split("=")
+                    target_res = filter(None, target_res[1].split(" "))
+                    target_res = target_res[0]
+                    return target_res
+                    break
+
+    if iozone_tests == 'y':
+
+        # Sequential Write, 64K requests, 32 threads:
+        iozone_results = 'iozone_seq_write_results.txt'
+        os.system('iozone -I -t %s -O -r %s -s %s -w -i 0 > %s' %
+                  (iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
+        target_var = "initial writers"
+        iozone_seq_writers = iozone_result_parser(iozone_results, target_var)
+        target_var = "rewriters"
+        iozone_seq_rewriters = iozone_result_parser(iozone_results, target_var)
+        os.remove(iozone_results)
+
+        # Sequential Read, 64K requests, 32 threads:
+        iozone_results = 'iozone_seq_read_results.txt'
+        os.system('iozone -I -t %s -M -O -r %s -s %s -w -i 1 > %s' %
+                  (iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
+        target_var = "readers"
+        iozone_seq_readers = iozone_result_parser(iozone_results, target_var)
+        target_var = "re-readers"
+        iozone_seq_rereaders = iozone_result_parser(iozone_results, target_var)
+        os.remove(iozone_results)
+
+        # Random Read / Write, 4K requests, 32 threads:
+        iozone_results = 'iozone_rand_results.txt'
+        os.system('iozone -I -t %s -M -O -r %s -s %s -w -i 2 > %s' %
+                  (iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
+        target_var = "random readers"
+        iozone_random_readers = iozone_result_parser(iozone_results, target_var)
+        target_var = "random writers"
+        iozone_random_writers = iozone_result_parser(iozone_results, target_var)
+        os.remove(iozone_results)
+
+        iozone_dummy_exterminator()
+        print "completed iozone tests"
 
     if disk_rand == 'n' and disk_seq == 'n':
         fio_rw = "n/a"
@@ -494,10 +552,6 @@ for x in range(iterations):
         session.commit()
         print "Finished transferring internal network test results"
 
-    print "\n\n"
-    print "All the tests are successfully completed and the results are transferred to database"
-    print "\n\n"
-
     if ab_tests == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
@@ -518,7 +572,20 @@ for x in range(iterations):
         })
 
         session.commit()
-        print "Finished transferring internal network test results"
+        print "Finished transferring apache bench test results"
+
+    if iozone_tests == 'y':
+        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+            Olympus.iozone_seq_writers: iozone_seq_writers,
+            Olympus.iozone_seq_rewriters: iozone_seq_rewriters,
+            Olympus.iozone_seq_readers: iozone_seq_readers,
+            Olympus.iozone_seq_rereaders: iozone_seq_rereaders,
+            Olympus.iozone_random_readers: iozone_random_readers,
+            Olympus.iozone_random_writers: iozone_random_writers,
+        })
+
+        session.commit()
+        print "Finished transferring iozone test results"
 
     print "\n\n"
     print "All tests are successfully completed and the results are transferred to our database"
