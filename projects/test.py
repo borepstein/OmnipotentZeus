@@ -14,7 +14,7 @@ disk_rand = 'y'  # fio random read and random write
 disk_seq = 'y'  # fio sequential read and sequential write
 internal_net_tests = 'n'  # iperf internal network tests
 ab_tests = 'n'  # ApacheBench tests
-iozone_tests = 'y'  # ApacheBench tests
+iozone_tests = 'y'  # iozone tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
@@ -40,7 +40,7 @@ fio_seq_rw = '-rw=' + fio_seq_rw
 # disk conversions; please don't mess with these variables
 fio_blocksize = '-bs=' + fio_blocksize + 'k'
 fio_filesize = '-size=' + fio_filesize + "M"
-spider_hatchlings = int(fio_numjobs) + 1
+spider_hatchlings = int(fio_numjobs)
 fio_numjobs = '-numjobs=' + fio_numjobs
 fio_runtime = '-runtime=' + fio_runtime
 fio_json_file = 'fio.json'
