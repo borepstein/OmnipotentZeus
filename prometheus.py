@@ -98,11 +98,18 @@ class Olympus(Base):
     sender_bandwidth_mbps = Column(Float(30), nullable=True)
     receiver_transfer_mb = Column(Float(30), nullable=True)
     receiver_bandwidth_mbps = Column(Float(30), nullable=True)
+    iozone_seq_writers = Column(Float(30), nullable=True)
+    iozone_seq_rewriters = Column(Float(30), nullable=True)
+    iozone_seq_readers = Column(Float(30), nullable=True)
+    iozone_seq_rereaders = Column(Float(30), nullable=True)
+    iozone_random_readers = Column(Float(30), nullable=True)
+    iozone_random_writers = Column(Float(30), nullable=True)
 
 # Create an object, db, to act as the connect to the database.
-# The SQLEngine object is used to open the connection, which is what is being used in the db variable. 
+# The SQLEngine object is used to open the connection, which is what is being used in the db variable.
 # Format for create_engine is "engine://user:password@host:port/database"
-Ignition = create_engine("mysql+pymysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeuswin")
+# Ignition = create_engine("mysql+pymysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeuswin")
+Ignition = create_engine("mysql+pymysql://root:inapp@localhost:3306/omnipotentzeus")
 
 
 # Holds all the database metadata.
