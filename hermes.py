@@ -1,4 +1,5 @@
 from projects.test import *
+from datetime import datetime
 import json
 import os
 import csv
@@ -61,6 +62,33 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
     if iozone_tests == 'y':  # Install iozone if to be tested
         os.system('apt-get install iozone3')
 
+if disk_rand == 'y' or disk_seq == 'y':
+    fio_rand_rw = '-rw=randrw'  # randread for random read, randwrite for random write, and randrw to do both operations
+    fio_seq_rw = '-rw=rw'  # read for sequential read, write for sequential write, and rw to do both operations
+
+    fio_blocksize = '-bs=' + blocksize + 'k'
+    fio_filesize = '-size=' + filesize + "M"
+    spider_hatchlings = int(numjobs) + 1
+    fio_numjobs = '-numjobs=' + numjobs
+    fio_runtime = '-runtime=' + runtime
+    fio_json_file = 'fio.json'
+    fio_filename = '-name=spider_eggs'
+    if direct_io == 'y':
+        fio_direct_val = "Direct"
+        fio_direct = '-direct=1'
+    else:
+        fio_direct_val = "Cached"
+        fio_direct = '-direct=0'
+
+if iozone_tests == 'y':
+    iozone_blocksize = blocksize + 'k'
+    iozone_filesize = filesize + 'm'
+    iozone_numjobs = numjobs
+    if direct_io == 'y':
+        iozone_direct = '-I'
+    else:
+        iozone_direct = ''
+
 processor_info = ""
 # Getting CPU Amount
 v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
@@ -91,6 +119,7 @@ vmcount_input = raw_input(
 local_input = "0"
 block_input = "0"
 
+startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
 # Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
 random_uid = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
@@ -236,7 +265,7 @@ for x in range(iterations):
 
         spider_egg_exterminator()
 
-        if fio_async == 'y':
+        if async_io == 'y':
             sub.call(fio_async_command_generator(disk_options[0]))
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
@@ -276,7 +305,7 @@ for x in range(iterations):
         ticks_write_seq = str(fio_data['disk_util'][0]['write_ticks'])
 
         spider_egg_exterminator()
-        if fio_async == 'y':
+        if async_io == 'y':
             sub.call(fio_async_command_generator(disk_options[1]))
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
@@ -350,7 +379,7 @@ for x in range(iterations):
         print "completed apachebench tests"
 
     def iozone_dummy_exterminator():
-        for iozone_dummy in range(0, spider_hatchlings):
+        for iozone_dummy in range(0, spider_hatchlings - 1):
             iozone_dummy_file = "iozone.DUMMY." + str(iozone_dummy)
             try:
                 os.remove(iozone_dummy_file)
@@ -372,8 +401,8 @@ for x in range(iterations):
 
         # Sequential Write, 64K requests, 32 threads:
         iozone_results = 'iozone_seq_write_results.txt'
-        os.system('iozone -I -t %s -O -r %s -s %s -w -i 0 > %s' %
-                  (iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
+        os.system('iozone %s -t %s -O -r %s -s %s -w -i 0 > %s' %
+                  (iozone_direct, iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
         target_var = "initial writers"
         iozone_seq_writers = iozone_result_parser(iozone_results, target_var)
         target_var = "rewriters"
@@ -382,8 +411,8 @@ for x in range(iterations):
 
         # Sequential Read, 64K requests, 32 threads:
         iozone_results = 'iozone_seq_read_results.txt'
-        os.system('iozone -I -t %s -M -O -r %s -s %s -w -i 1 > %s' %
-                  (iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
+        os.system('iozone %s -t %s -M -O -r %s -s %s -w -i 1 > %s' %
+                  (iozone_direct, iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
         target_var = "readers"
         iozone_seq_readers = iozone_result_parser(iozone_results, target_var)
         target_var = "re-readers"
@@ -392,8 +421,8 @@ for x in range(iterations):
 
         # Random Read / Write, 4K requests, 32 threads:
         iozone_results = 'iozone_rand_results.txt'
-        os.system('iozone -I -t %s -M -O -r %s -s %s -w -i 2 > %s' %
-                  (iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
+        os.system('iozone %s -t %s -M -O -r %s -s %s -w -i 2 > %s' %
+                  (iozone_direct, iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
         target_var = "random readers"
         iozone_random_readers = iozone_result_parser(iozone_results, target_var)
         target_var = "random writers"
@@ -498,7 +527,7 @@ for x in range(iterations):
         })
         session.commit()
 
-        if fio_async == 'y':
+        if async_io == 'y':
 
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
                 Olympus.iops_read_rand_async: iops_read_rand_async,
@@ -528,7 +557,7 @@ for x in range(iterations):
         })
         session.commit()
 
-        if fio_async == 'y':
+        if async_io == 'y':
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
                 Olympus.iops_read_seq_async: iops_read_seq_async,
                 Olympus.iops_write_seq_async: iops_write_seq_async,
