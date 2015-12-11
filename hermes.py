@@ -1,4 +1,5 @@
 from projects.test import *
+from datetime import datetime
 import json
 import os
 import subprocess as sub
@@ -19,21 +20,24 @@ DBSession = sessionmaker(bind=Ignition)
 session = DBSession()
 
 # ==================== GLOBAL INTRODUCTION ==================== #
-os.system('cls')
+os.system('clear')
 print "|------------------------|"
 print "|    Project Olympus     |"
 print "|         v1.5           |"
 print "|------------------------|"
 print ""
-print "Project Olympus is designed to be a testbed for measuring virtual machine performance in a scalable, cloud environment. The design of Olympus is its flexibility in continuous testing over time, rather than spot testing, which is an archaic method that cannot apply to highly variable environments with multiple (many of which are possibly uncontrolled) variables."
-print ""
-print ""
+print "Project Olympus is designed to be a testbed for measuring virtual machine performance in a scalable, \
+cloud environment. The design of Olympus is its flexibility in continuous testing over time, rather than \
+spot testing, which is an archaic method that cannot apply to highly variable environments with multiple \
+(many of which are possibly uncontrolled) variables.\n\n"
 
+# ==================== GLOBAL INSTALLER ==================== #
 # Download executable files for running tests
 if operating_system == 'windows':
     if system_tests == 'y':  # Install Geekbench if to be tested
         if not os.path.isfile(geekbench_install_dir + '\Geekbench 3\geekbench_x86_64.exe'):
-            os.system('wget --no-check-certificate https://s3.amazonaws.com/internal-downloads/Geekbench-3.3.2-WindowsSetup.exe')
+            os.system('wget --no-check-certificate https://s3.amazonaws.com/internal-downloads/\
+                Geekbench-3.3.2-WindowsSetup.exe')
             sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
             sub.call(['Geekbench-3.3.2-WindowsSetup.exe'], shell=True)
         sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
@@ -51,6 +55,35 @@ if operating_system == 'windows':
         if not os.path.isfile('IozoneSetup.exe'):
             os.system("wget http://www.iozone.org/src/current/IozoneSetup.exe")
         sub.call(['IozoneSetup.exe'], shell=True)
+
+if disk_rand == 'y' or disk_seq == 'y':
+    fio_rand_rw = '--rw=randrw'  # randread for random read, randwrite for random write, and randrw for both operations
+    fio_seq_rw = '--rw=rw'  # read for sequential read, write for sequential write, and rw for both operations
+    disk_options = [fio_rand_rw, fio_seq_rw]
+
+    fio_blocksize = '--bs=' + blocksize + 'k'
+    fio_filesize = '--size=' + filesize + "M"
+    fio_numjobs = '--numjobs=' + numjobs
+    fio_runtime = '--runtime=' + runtime
+    fio_json_file = 'fio.json'
+    fio_filename = '--name=fio_disk'
+
+    if async_io == 'y':
+        fio_async_engine = '--ioengine=windowsaio'
+
+    if direct_io == 'y':
+        fio_direct_val = "Direct"
+        fio_direct = '--direct=1'
+    else:
+        fio_direct_val = "Cached"
+        fio_direct = '--direct=0'
+
+if iozone_tests == 'y':
+    iozone_blocksize = blocksize + 'k'
+    iozone_filesize = filesize + 'm'
+    iozone_numjobs = numjobs
+
+spider_hatchlings = int(numjobs) + 1
 
 # Fetching CPU Amount
 vcpu_input = multiprocessing.cpu_count()
@@ -99,6 +132,7 @@ vmcount_input = '0'
 local_input = raw_input("Local Disk (in GB). Put 0 if none: ")
 block_input = raw_input("Block Disk (in GB). Put 0 if none: ")
 
+startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
 # Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
 random_uid = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
@@ -121,7 +155,6 @@ for x in range(iterations):
     iteration_start_time = datetime.now().strftime('%Y-%m-%d %H:%M')
 
     if system_tests == 'y':
-
         # Run Geekbench
         geekbench_output = 'gb.json'
 
@@ -137,10 +170,10 @@ for x in range(iterations):
                 data = json.load(geekbench_file_handler)
                 processor_info = str(data['metrics'][6]['value'])
                 if processor_info != '':
-                    os.system(
-                        'taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat" /fi "IMAGENAME eq cmd.exe"')
-                    os.system(
-                        'taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat" /fi "IMAGENAME eq timeout.exe"')
+                    os.system('taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat" /fi \
+                        "IMAGENAME eq cmd.exe"')
+                    os.system('taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - gb_listener.bat" /fi \
+                        "IMAGENAME eq timeout.exe"')
                     break
             except:
                 continue
@@ -209,8 +242,6 @@ for x in range(iterations):
         os.remove(geekbench_output)
         print "Completed system tests"
 
-    disk_options = [fio_rand_rw, fio_seq_rw]
-
     def fio_exception_handler(fio_command):
         while True:
             try:
@@ -223,10 +254,11 @@ for x in range(iterations):
 
                 iops_read_rand = str(fio_data['jobs'][0]['read']['iops'])
                 if iops_read_rand != '':
+                    os.system('taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - fio_listener.bat" /fi \
+                        "IMAGENAME eq cmd.exe"')
                     os.system(
-                        'taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - fio_listener.bat" /fi "IMAGENAME eq cmd.exe"')
-                    os.system(
-                        'taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - fio_listener.bat" /fi "IMAGENAME eq timeout.exe"')
+                        'taskkill /f /fi "WINDOWTITLE eq C:\Windows\system32\cmd.exe - fio_listener.bat" /fi \
+                        "IMAGENAME eq timeout.exe"')
                     break
             except:
                 continue
@@ -253,10 +285,12 @@ for x in range(iterations):
                 os.remove(os.path.join(fio_disk_dir, file_name))
         os.remove(fio_json_file)
 
-        if fio_async == 'y':
+        if async_io == 'y':
 
-            fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json', '--iodepth=32',
-                           fio_filename, fio_runtime, fio_async_engine, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
+            fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json',
+                           '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, disk_options[0],
+                           fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
+
             fio_data = fio_exception_handler(fio_command)
 
             runtime_read_rand_async = str(fio_data['jobs'][0]['read']['runtime'])
@@ -295,10 +329,12 @@ for x in range(iterations):
                 os.remove(os.path.join(fio_disk_dir, file_name))
         os.remove(fio_json_file)
 
-        if fio_async == 'y':
+        if async_io == 'y':
 
-            fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json', '--iodepth=32',
-                           fio_filename, fio_runtime, fio_async_engine, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
+            fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json',
+                           '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, disk_options[1],
+                           fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
+
             fio_data = fio_exception_handler(fio_command)
 
             runtime_read_seq_async = str(fio_data['jobs'][0]['read']['runtime'])
@@ -337,7 +373,7 @@ for x in range(iterations):
         print "Completed internal network tests"
 
     def iozone_dummy_exterminator():
-        for iozone_dummy in range(0, spider_hatchlings):
+        for iozone_dummy in range(0, spider_hatchlings - 1):
             iozone_dummy_file = "iozone.DUMMY." + str(iozone_dummy)
             try:
                 os.remove(iozone_dummy_file)
@@ -358,8 +394,13 @@ for x in range(iterations):
 
         # Sequential Write
         iozone_results = 'iozone_seq_write_results.txt'
-        sub.call([iozone_install_dir + '\/iozone.exe', '-I', '-t', iozone_numjobs, '-O', '-r',
-                  iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '0'], stdout=open(iozone_results, "w"))
+        if direct_io == 'y':
+            sub.call([iozone_install_dir + '\/iozone.exe', '-I', '-t', iozone_numjobs, '-O', '-r',
+                      iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '0'], stdout=open(iozone_results, "w"))
+        else:
+            sub.call([iozone_install_dir + '\/iozone.exe', '-t', iozone_numjobs, '-O', '-r',
+                      iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '0'], stdout=open(iozone_results, "w"))
+
         target_var = "initial writers"
         iozone_seq_writers = iozone_result_parser(iozone_results, target_var)
         target_var = "rewriters"
@@ -368,8 +409,13 @@ for x in range(iterations):
 
         # Sequential Read
         iozone_results = 'iozone_seq_read_results.txt'
-        sub.call([iozone_install_dir + '\/iozone.exe', '-I', '-t', iozone_numjobs, '-O', '-r',
-                  iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '1'], stdout=open(iozone_results, "w"))
+        if direct_io == 'y':
+            sub.call([iozone_install_dir + '\/iozone.exe', '-I', '-t', iozone_numjobs, '-O', '-r',
+                      iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '1'], stdout=open(iozone_results, "w"))
+        else:
+            sub.call([iozone_install_dir + '\/iozone.exe', '-t', iozone_numjobs, '-O', '-r',
+                      iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '1'], stdout=open(iozone_results, "w"))
+
         target_var = "readers"
         iozone_seq_readers = iozone_result_parser(iozone_results, target_var)
         target_var = "re-readers"
@@ -378,8 +424,12 @@ for x in range(iterations):
 
         # Random Read / Write
         iozone_results = 'iozone_rand_results.txt'
-        sub.call([iozone_install_dir + '\/iozone.exe', '-I', '-t', iozone_numjobs, '-O', '-r',
-                  iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '2'], stdout=open(iozone_results, "w"))
+        if direct_io == 'y':
+            sub.call([iozone_install_dir + '\/iozone.exe', '-I', '-t', iozone_numjobs, '-O', '-r',
+                      iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '2'], stdout=open(iozone_results, "w"))
+        else:
+            sub.call([iozone_install_dir + '\/iozone.exe', '-t', iozone_numjobs, '-O', '-r',
+                      iozone_blocksize, '-s', iozone_filesize, '-w', '-i', '2'], stdout=open(iozone_results, "w"))
         target_var = "random readers"
         iozone_random_readers = iozone_result_parser(iozone_results, target_var)
         target_var = "random writers"
@@ -470,7 +520,7 @@ for x in range(iterations):
         })
         session.commit()
 
-        if fio_async == 'y':
+        if async_io == 'y':
 
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
                 Olympus.iops_read_rand_async: iops_read_rand_async,
@@ -500,7 +550,7 @@ for x in range(iterations):
         })
         session.commit()
 
-        if fio_async == 'y':
+        if async_io == 'y':
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
                 Olympus.iops_read_seq_async: iops_read_seq_async,
                 Olympus.iops_write_seq_async: iops_write_seq_async,
