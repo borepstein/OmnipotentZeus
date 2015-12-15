@@ -51,7 +51,7 @@ if operating_system == 'windows':
             with zipfile.ZipFile('iperf-3.0.11-win64.zip', "r") as z:
                 z.extractall()
             os.remove('iperf-3.0.11-win64.zip')
-    if iozone_tests == 'y':  # Install iozone if to be tested
+    if iozone == 'y':  # Install iozone if to be tested
         if not os.path.isfile('IozoneSetup.exe'):
             os.system("wget http://www.iozone.org/src/current/IozoneSetup.exe")
         sub.call(['IozoneSetup.exe'], shell=True)
@@ -78,10 +78,26 @@ if disk_rand == 'y' or disk_seq == 'y':
         fio_direct_val = "Cached"
         fio_direct = '--direct=0'
 
-if iozone_tests == 'y':
+if iozone == 'y':
     iozone_blocksize = blocksize + 'k'
     iozone_filesize = filesize + 'm'
     iozone_numjobs = numjobs
+
+if sysbench == 'y':
+    sysbench_blocksize = blocksize + 'K'
+    sysbench_filesize = str(int(filesize) * int(numjobs)) + 'M'
+    sysbench_numjobs = numjobs
+    sysbench_runtime = runtime
+
+    if async_io == 'y':
+        sysbench_io_mode = 'async'
+    else:
+        sysbench_io_mode = 'sync'
+
+    if direct_io == 'y':
+        sysbench_direct = '--file-extra-flags=direct'
+    else:
+        sysbench_direct = ''
 
 spider_hatchlings = int(numjobs) + 1
 
@@ -390,7 +406,7 @@ for x in range(iterations):
                     target_res = target_res[0]
                     return target_res
 
-    if iozone_tests == 'y':
+    if iozone == 'y':
 
         # Sequential Write
         iozone_results = 'iozone_seq_write_results.txt'
@@ -438,6 +454,68 @@ for x in range(iterations):
 
         iozone_dummy_exterminator()
         print "completed iozone tests"
+
+    def sysbench_command_generator(sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs,
+                                   sysbench_io_mode, sysbench_test_mode, sysbench_runtime, sysbench_results):
+
+        sysbench_command = 'sysbench.exe %s --test=fileio --file-total-size=%s --file-block-size=%s \
+        --file-num=%s --num-threads=%s --file-io-mode=%s --file-test-mode=%s --max-time=%s run > %s' % (
+            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_numjobs,
+            sysbench_io_mode, sysbench_test_mode, sysbench_runtime, sysbench_results)
+
+        return sysbench_command
+
+    def sysbench_result_parser(sysbench_results, sysbench_test_mode):
+        with open(sysbench_results) as f:
+            lines = f.readlines()
+            target = 'Requests/sec'
+            for l in lines:
+                if target in l:
+                    res = filter(None, l.split(" "))
+                    return res[0]
+                    break
+
+    if sysbench == 'y':
+
+        sysbench_results = 'sysbench_results.txt'
+
+        sysbench_test_mode = 'seqwr'
+        sysbench_command = sysbench_command_generator(
+            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+            sysbench_test_mode, sysbench_runtime, sysbench_results)
+        os.system(sysbench_command)
+        sysbench_seq_write = sysbench_result_parser(sysbench_results, sysbench_test_mode)
+        os.remove(sysbench_results)
+
+        sysbench_test_mode = 'seqrd'
+        sysbench_command = sysbench_command_generator(
+            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+            sysbench_test_mode, sysbench_runtime, sysbench_results)
+        os.system(sysbench_command)
+        sysbench_seq_read = sysbench_result_parser(sysbench_results, sysbench_test_mode)
+        os.remove(sysbench_results)
+        os.system('sysbench.exe --test=fileio --file-total-size=%s --file-num=%s cleanup' %
+                  (sysbench_filesize, sysbench_numjobs))
+
+        sysbench_test_mode = 'rndwr'
+        sysbench_command = sysbench_command_generator(
+            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+            sysbench_test_mode, sysbench_runtime, sysbench_results)
+        os.system(sysbench_command)
+        sysbench_rand_write = sysbench_result_parser(sysbench_results, sysbench_test_mode)
+        os.remove(sysbench_results)
+
+        sysbench_test_mode = 'rndrd'
+        sysbench_command = sysbench_command_generator(
+            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+            sysbench_test_mode, sysbench_runtime, sysbench_results)
+        os.system(sysbench_command)
+        sysbench_rand_read = sysbench_result_parser(sysbench_results, sysbench_test_mode)
+        os.remove(sysbench_results)
+        os.system('sysbench.exe --test=fileio --file-total-size=%s --file-num=%s cleanup' %
+                  (sysbench_filesize, sysbench_numjobs))
+
+        print "completed sysbench tests"
 
     # ====================GLOBAL TRANSMITTING==================== #
     # Transmit data back to Olympus
@@ -576,7 +654,7 @@ for x in range(iterations):
         session.commit()
         print "Finished transferring internal network test results"
 
-    if iozone_tests == 'y':
+    if iozone == 'y':
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.iozone_seq_writers: iozone_seq_writers,
             Olympus.iozone_seq_rewriters: iozone_seq_rewriters,
@@ -587,7 +665,18 @@ for x in range(iterations):
         })
 
         session.commit()
-        print "Finished transferring iozone test results"
+        print "Finished transferring iozone results"
+
+    if sysbench == 'y':
+        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+            Olympus.sysbench_seq_write: sysbench_seq_write,
+            Olympus.sysbench_seq_read: sysbench_seq_read,
+            Olympus.sysbench_rand_write: sysbench_rand_write,
+            Olympus.sysbench_rand_read: sysbench_rand_read,
+        })
+
+        session.commit()
+        print "Finished transferring sysbench results"
 
     print "\n\n"
     print "All tests are successfully completed and the results are transferred to our database"

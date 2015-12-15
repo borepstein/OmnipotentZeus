@@ -11,7 +11,8 @@ system_tests = 'n'  # Geekbench 3 suite
 disk_rand = 'y'  # fio random read and random write
 disk_seq = 'y'  # fio sequential read and sequential write
 internal_net_tests = 'n'  # iperf internal network tests
-iozone_tests = 'y'  # iozone tests
+iozone = 'y'  # iozone tests
+sysbench = 'y'  # sysbench tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
@@ -19,8 +20,8 @@ blocksize = '4'  # please enter the block size in kilobytes
 filesize = '16'  # please enter the file size in megabytes
 numjobs = '8'  # please enter the number of copies of the test that you would like to run
 runtime = '60'  # how long would you like this test to run for in seconds
-direct_io = 'n'  # if direct I/O is required (bypass cache), please mark y
-async_io = 'y'  # Set y to enable asynchronous tests
+direct_io = 'y'  # if direct I/O is required (bypass cache), please mark y
+async_io = 'n'  # Set y to enable asynchronous tests
 
 # INTERNAL NETWORK INFORMATION
 # If you selected yes for internal network tests, then you have to fill out this information
