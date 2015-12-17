@@ -51,25 +51,25 @@ if operating_system == 'centos' or operating_system == 'redhat':
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
     if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
-        os.system('apt-get install fio --yes')
+        os.system('sudo apt-get install fio --yes')
     if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
         os.system('apt-get install iperf')
     if system_tests == 'y':  # Install Geekbench - Download & Unpackage if to be tested
-        # os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-        # os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
+        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
+        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
         os.chdir('dist/Geekbench-3.1.2-Linux')
         sub.call(['./geekbench_x86_64', '-r', email, key])
     if apachebench == 'y':  # Install ApacheBench if to be tested
         os.system('apt-get install apache2-utils')
     if iozone == 'y':  # Install iozone if to be tested
-        os.system('apt-get install iozone3')
+        os.system('sudo apt-get install iozone3')
     if sysbench == 'y':
         os.system('sudo apt-get install sysbench')
 
 if disk_rand == 'y' or disk_seq == 'y':
     fio_rand_rw = '-rw=randrw'  # randread for random read, randwrite for random write, and randrw to do both operations
     fio_seq_rw = '-rw=rw'  # read for sequential read, write for sequential write, and rw to do both operations
-    disk_options = [fio_seq_rw, fio_rand_rw]
+    disk_options = [fio_rand_rw, fio_seq_rw]
 
     fio_blocksize = '-bs=' + blocksize + 'k'
     fio_filesize = '-size=' + filesize + "M"
@@ -147,9 +147,13 @@ generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
 
 if disk_rand == 'y':
     fio_rw = "Yes"
+else:
+    fio_rw = "No"
 
 if disk_seq == 'y':
     fio_seq = "Yes"
+else:
+    fio_seq = "No"
 
 if internal_net_tests == 'y':
     internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
@@ -243,14 +247,14 @@ for x in range(iterations):
     def fio_command_generator(option):
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
-                       '-time_based', '--output-format=json', '--output=fio.json', '-time_based', '-group_reporting',
+                       '-time_based', '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
                        '-exitall']
         return fio_command
 
     def fio_async_command_generator(option):
         global fio_command
-        fio_command = ['fio', option, fio_filename, "-bs=128k", "-size=128M", "-numjobs=8", fio_runtime, fio_direct,
-                       '-iodepth=32', '-ioengine=libaio', '-time_based', '--output-format=json', '--output=fio.json',
+        fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
+                       '-iodepth=32', '-ioengine=libaio', '-time_based', '-output-format=json', '-output=fio.json',
                        '-time_based', '-group_reporting', '-exitall']
         return fio_command
 
@@ -264,8 +268,19 @@ for x in range(iterations):
             except:
                 print 'no file'
 
+    def clean_fio_json_result(fio_json_file):
+        with open(fio_json_file, "r+") as f:
+            lines = f.readlines()
+            f.seek(0)
+            for l in lines:
+                if "fio:" not in l:
+                    f.write(l)
+            f.truncate()
+            f.close()
+
     if disk_rand == 'y':
         sub.call(fio_command_generator(disk_options[0]))
+        clean_fio_json_result(fio_json_file)
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
 
@@ -286,6 +301,7 @@ for x in range(iterations):
 
         if async_io == 'y':
             sub.call(fio_async_command_generator(disk_options[0]))
+            clean_fio_json_result(fio_json_file)
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
@@ -307,6 +323,7 @@ for x in range(iterations):
 
     if disk_seq == 'y':
         sub.call(fio_command_generator(disk_options[1]))
+        clean_fio_json_result(fio_json_file)
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
 
@@ -326,6 +343,7 @@ for x in range(iterations):
         spider_egg_exterminator()
         if async_io == 'y':
             sub.call(fio_async_command_generator(disk_options[1]))
+            clean_fio_json_result(fio_json_file)
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
