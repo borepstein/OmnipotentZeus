@@ -8,7 +8,7 @@ operating_system = 'windows'  # windows
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
 geekbench = 'y'  # system tests
-iperf = 'y'  # Internal network tests
+iperf = 'y'  # internal network tests
 fio = 'y'  # disk tests
 
 iozone = 'n'  # disk tests

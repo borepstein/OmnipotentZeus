@@ -450,7 +450,7 @@ for x in range(iterations):
             try:
                 os.remove(iozone_dummy_file)
             except:
-                print 'no file'
+                pass
 
     def iozone_result_parser(result_file, target_var):
         with open(result_file) as f:
