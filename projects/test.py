@@ -7,13 +7,12 @@ operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-system_tests = 'n'  # Geekbench 3 suite
-disk_rand = 'y'  # fio random read and random write
-disk_seq = 'y'  # fio sequential read and sequential write
-internal_net_tests = 'n'  # iperf internal network tests
+geekbench = 'y'  # system tests
+iperf = 'y'  # internal network tests
+fio = 'y'  # disk tests
+iozone = 'n'  # disk tests
+sysbench = 'n'  # disk tests
 apachebench = 'n'  # ApacheBench tests
-iozone = 'y'  # iozone tests
-sysbench = 'y'  # sysbench tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
@@ -22,7 +21,7 @@ filesize = '16'  # please enter the file size in megabytes
 numjobs = '8'  # please enter the number of copies of the test that you would like to run
 runtime = '60'  # how long would you like this test to run for in seconds
 direct_io = 'y'  # if direct I/O is required (bypass cache), please mark y
-async_io = 'n'  # Set y to enable asynchronous tests
+async_io = 'y'  # Set y to enable asynchronous tests
 
 # INTERNAL NETWORK INFORMATION
 # If you selected yes for internal network tests, then you have to fill out this information
@@ -63,7 +62,4 @@ key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 
 # DIRECTORY
 # The directory that houses the Geekbench 3 suite and where all the tests will run
-directory = "dist/Geekbench-3.1.2-Linux"
-
-# TEXT NOTIFICATIONS
-textnotifications = 'n'
+geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"

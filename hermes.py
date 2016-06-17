@@ -31,45 +31,46 @@ spot testing, which is an archaic method that cannot apply to highly variable en
 
 # ==================== GLOBAL INSTALLER ==================== #
 if operating_system == 'centos' or operating_system == 'redhat':
-    if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
+    if fio == 'y':
         os.system('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
         os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
-    if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
+    if iperf == 'y':
         os.system('yum install iperf -y')
-    if system_tests == 'y':  # Install Geekbench - Download & Unpackage if to be tested
+    if geekbench == 'y':
         os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
         os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
         os.chdir('dist/Geekbench-3.1.2-Linux')
         sub.call(['./geekbench_x86_64', '-r', email, key])
-    if apachebench == 'y':  # Install ApacheBench if to be tested
+    if apachebench == 'y':
         os.system('yum install httpd-tools')
-    if iozone == 'y':  # Install iozone if to be tested
+    if iozone == 'y':
         os.system("wget http://www.iozone.org/src/current/iozone-3-338.i386.rpm")
         os.system("rpm -ivh iozone-3-338.i386.rpm")
     if sysbench == 'y':
         os.system('yum -y install sysbench')
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
-    if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
-        os.system('sudo apt-get install fio --yes')
-    if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
+    if fio == 'y':
+        os.system('apt-get install fio --yes')
+    if iperf == 'y':
         os.system('apt-get install iperf')
-    if system_tests == 'y':  # Install Geekbench - Download & Unpackage if to be tested
-        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-        os.chdir('dist/Geekbench-3.1.2-Linux')
+    if geekbench == 'y':
+        if not os.path.isfile(geekbench_install_dir + '/geekbench_x86_64'):
+            os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
+            os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
+        os.chdir(geekbench_install_dir)
         sub.call(['./geekbench_x86_64', '-r', email, key])
-    if apachebench == 'y':  # Install ApacheBench if to be tested
-        os.system('apt-get install apache2-utils')
-    if iozone == 'y':  # Install iozone if to be tested
-        os.system('sudo apt-get install iozone3')
-    if sysbench == 'y':
-        os.system('sudo apt-get install sysbench')
 
-if disk_rand == 'y' or disk_seq == 'y':
+    if apachebench == 'y':
+        os.system('apt-get install apache2-utils')
+    if iozone == 'y':
+        os.system('apt-get install iozone3')
+    if sysbench == 'y':
+        os.system('apt-get install sysbench')
+
+if fio == 'y':
     fio_rand_rw = '-rw=randrw'  # randread for random read, randwrite for random write, and randrw to do both operations
     fio_seq_rw = '-rw=rw'  # read for sequential read, write for sequential write, and rw to do both operations
-    disk_options = [fio_rand_rw, fio_seq_rw]
 
     fio_blocksize = '-bs=' + blocksize + 'k'
     fio_filesize = '-size=' + filesize + "M"
@@ -86,6 +87,7 @@ if disk_rand == 'y' or disk_seq == 'y':
         fio_direct = '-direct=0'
 
 if iozone == 'y':
+    spider_hatchlings = int(numjobs) + 1
     iozone_blocksize = blocksize + 'k'
     iozone_filesize = filesize + 'm'
     iozone_numjobs = numjobs
@@ -145,17 +147,14 @@ startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
 random_uid = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
 
-if disk_rand == 'y':
+if fio == 'y':
     fio_rw = "Yes"
-else:
-    fio_rw = "No"
-
-if disk_seq == 'y':
     fio_seq = "Yes"
 else:
+    fio_rw = "No"
     fio_seq = "No"
 
-if internal_net_tests == 'y':
+if iperf == 'y':
     internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
     internal_net_csv = "C"
 
@@ -173,7 +172,7 @@ for x in range(iterations):
 
     iteration_start_time = datetime.now().strftime('%Y-%m-%d %H:%M')
 
-    if system_tests == 'y':
+    if geekbench == 'y':
         # Run Geekbench
         sub.call(['./geekbench_x86_64', '--no-upload', '--export-json', 'gb.json'])
 
@@ -242,20 +241,24 @@ for x in range(iterations):
                 values[key] = val
             y = y + 1
         values = od(values)
-        print "completed geekbench test"
+        print "\ncompleted geekbench test"
 
     def fio_command_generator(option):
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
-                       '-time_based', '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
+                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
                        '-exitall']
+        print "\n"
+        print fio_command
         return fio_command
 
     def fio_async_command_generator(option):
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
-                       '-iodepth=32', '-ioengine=libaio', '-time_based', '-output-format=json', '-output=fio.json',
-                       '-time_based', '-group_reporting', '-exitall']
+                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
+                       '-iodepth=32', '-ioengine=libaio', '-exitall']
+        print "\n"
+        print fio_command
         return fio_command
 
     def spider_egg_exterminator():
@@ -266,7 +269,7 @@ for x in range(iterations):
             try:
                 os.remove(spideregg_file)
             except:
-                print 'no file'
+                pass
 
     def clean_fio_json_result(fio_json_file):
         with open(fio_json_file, "r+") as f:
@@ -278,8 +281,8 @@ for x in range(iterations):
             f.truncate()
             f.close()
 
-    if disk_rand == 'y':
-        sub.call(fio_command_generator(disk_options[0]))
+    if fio == 'y':
+        sub.call(fio_command_generator(fio_rand_rw))
         clean_fio_json_result(fio_json_file)
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
@@ -300,7 +303,7 @@ for x in range(iterations):
         spider_egg_exterminator()
 
         if async_io == 'y':
-            sub.call(fio_async_command_generator(disk_options[0]))
+            sub.call(fio_async_command_generator(fio_rand_rw))
             clean_fio_json_result(fio_json_file)
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
@@ -319,10 +322,9 @@ for x in range(iterations):
             ticks_write_rand_async = str(fio_data['disk_util'][0]['write_ticks'])
 
             spider_egg_exterminator()
-        print "completed random disk tests"
+        print "\n\ncompleted random disk tests"
 
-    if disk_seq == 'y':
-        sub.call(fio_command_generator(disk_options[1]))
+        sub.call(fio_command_generator(fio_seq_rw))
         clean_fio_json_result(fio_json_file)
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
@@ -342,7 +344,7 @@ for x in range(iterations):
 
         spider_egg_exterminator()
         if async_io == 'y':
-            sub.call(fio_async_command_generator(disk_options[1]))
+            sub.call(fio_async_command_generator(fio_seq_rw))
             clean_fio_json_result(fio_json_file)
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
@@ -361,9 +363,9 @@ for x in range(iterations):
             ticks_write_seq_async = str(fio_data['disk_util'][0]['write_ticks'])
 
             spider_egg_exterminator()
-        print "completed sequential disk tests"
+        print "\n\ncompleted sequential disk tests"
 
-    if internal_net_tests == 'y':
+    if iperf == 'y':
         internal_net_csv_file = 'iperf_results.csv'
         sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
                   '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
@@ -374,7 +376,7 @@ for x in range(iterations):
             internal_network_data = (int(row[7]) / 1024) / 1024
             internal_network_bandwidth = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
-        print "completed internal network tests"
+        print "\ncompleted internal network tests"
 
     if apachebench == 'y':
         ab_results = "ab_results.txt"
@@ -413,7 +415,7 @@ for x in range(iterations):
                     percent_100 = filter(None, l.split(" "))[1]
 
         os.remove(ab_results)
-        print "completed apachebench tests"
+        print "\ncompleted apachebench tests"
 
     def iozone_dummy_exterminator():
         for iozone_dummy in range(0, spider_hatchlings - 1):
@@ -421,7 +423,7 @@ for x in range(iterations):
             try:
                 os.remove(iozone_dummy_file)
             except:
-                print 'no file'
+                pass
 
     def iozone_result_parser(result_file, target_var):
         with open(result_file) as f:
@@ -467,7 +469,7 @@ for x in range(iterations):
         os.remove(iozone_results)
 
         iozone_dummy_exterminator()
-        print "completed iozone tests"
+        print "\ncompleted iozone tests"
 
     def sysbench_command_generator(sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs,
                                    sysbench_io_mode, sysbench_test_mode, sysbench_runtime, sysbench_results):
@@ -529,9 +531,9 @@ for x in range(iterations):
         os.system('sysbench --test=fileio --file-total-size=%s --file-num=%s cleanup' %
                   (sysbench_filesize, sysbench_numjobs))
 
-        print "completed sysbench tests"
+        print "\ncompleted sysbench tests"
 
-    if disk_rand == 'n' and disk_seq == 'n':
+    if fio == 'n':
         fio_rw = "n/a"
         fio_seq = "n/a"
         fio_blocksize = 0
@@ -568,7 +570,7 @@ for x in range(iterations):
     session.commit()
     print "Basic information transfer complete"
 
-    if system_tests == 'y':
+    if geekbench == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.processor: processor_info,
@@ -612,7 +614,7 @@ for x in range(iterations):
         session.commit()
         print "Finished transferring geekbench results"
 
-    if disk_rand == 'y':
+    if fio == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.iops_read_rand: iops_read_rand,
@@ -642,8 +644,6 @@ for x in range(iterations):
 
         print "Finished transferring disk random results"
 
-    if disk_seq == 'y':
-
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.iops_read_seq: iops_read_seq,
             Olympus.iops_write_seq: iops_write_seq,
@@ -671,7 +671,7 @@ for x in range(iterations):
 
         print "Finished transferring disk sequential results"
 
-    if internal_net_tests == 'y':
+    if iperf == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.internal_network_data: internal_network_data,
@@ -727,23 +727,9 @@ for x in range(iterations):
         print "Finished transferring sysbench results"
 
     print "\n\n"
-    print "All tests are successfully completed and the results are transferred to our database"
+    print "All tests are successfully completed and the results are transferred to database"
     print "\n\n"
 
     iterator = iterator + 1
     # Any delay before the next round is executed
     sleep(sleeptime)
-
-if textnotifications == 'y':
-    try:
-        server = smtp.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        message = tester_name + ", the testing on your " + provider_input + " VM (" + vm_input + ") is completed."
-        FROM = 'Hermestxtnotifications@gmail.com'
-        server.sendmail(FROM, TO, message)
-        server.close()
-        print "Text Sent"
-    except:
-        print "Not sent"
