@@ -2,8 +2,8 @@ from projects.test import *
 from datetime import datetime
 import json
 import os
+import csv
 import subprocess as sub
-import smtplib as smtp
 import multiprocessing
 import zipfile
 from time import sleep, time
@@ -34,32 +34,34 @@ spot testing, which is an archaic method that cannot apply to highly variable en
 # ==================== GLOBAL INSTALLER ==================== #
 # Download executable files for running tests
 if operating_system == 'windows':
-    if system_tests == 'y':  # Install Geekbench if to be tested
+    if geekbench == 'y':
         if not os.path.isfile(geekbench_install_dir + '\Geekbench 3\geekbench_x86_64.exe'):
             os.system('wget --no-check-certificate https://s3.amazonaws.com/internal-downloads/\
                 Geekbench-3.3.2-WindowsSetup.exe')
-            sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
             sub.call(['Geekbench-3.3.2-WindowsSetup.exe'], shell=True)
         sub.call([geekbench_install_dir + '\Geekbench 3\geekbench_x86_64', '-r', email, key])
-    if disk_rand == 'y' or disk_seq == 'y':  # Install fio for disk testing if to be tested
+    if fio == 'y':
         if not os.path.isfile(fio_install_dir + '\/fio\/fio.exe'):
-            os.system('wget http://www.bluestop.org/fio/releases/fio-2.2.10-x86.msi')
-            sub.call(['fio-2.2.10-x86.msi'], shell=True)
-    if internal_net_tests == 'y':  # Install iperf for network testing if to be tested
+            os.system('wget http://bluestop.org/files/fio/releases/fio-2.11-x64.msi')
+            sub.call(['fio-2.11-x64.msi'], shell=True)
+    if iperf == 'y':
         if not os.path.isfile('iperf3.exe'):
-            os.system('wget --no-check-certificate https://iperf.fr/download/iperf_3.0/iperf-3.0.11-win64.zip')
+            os.system('wget --no-check-certificate https://iperf.fr/download/windows/iperf-3.0.11-win64.zip')
             with zipfile.ZipFile('iperf-3.0.11-win64.zip', "r") as z:
                 z.extractall()
             os.remove('iperf-3.0.11-win64.zip')
-    if iozone == 'y':  # Install iozone if to be tested
+    if iozone == 'y':
         if not os.path.isfile('IozoneSetup.exe'):
             os.system("wget http://www.iozone.org/src/current/IozoneSetup.exe")
         sub.call(['IozoneSetup.exe'], shell=True)
+    if passmark == 'y':
+        if not os.path.isfile('petst.exe'):
+            os.system("wget http://downloads.passmark.com/ftp/petst.exe")
+        sub.call(['petst.exe'], shell=True)
 
-if disk_rand == 'y' or disk_seq == 'y':
+if fio == 'y':
     fio_rand_rw = '--rw=randrw'  # randread for random read, randwrite for random write, and randrw for both operations
     fio_seq_rw = '--rw=rw'  # read for sequential read, write for sequential write, and rw for both operations
-    disk_options = [fio_rand_rw, fio_seq_rw]
 
     fio_blocksize = '--bs=' + blocksize + 'k'
     fio_filesize = '--size=' + filesize + "M"
@@ -110,7 +112,7 @@ ram_input = "%.2f" % (float(mem.total) / 1024.0 / 1024.0 / 1024.0)
 
 # Collect information on the provider and VM environment
 provider_input = raw_input(
-    "Please enter the provider's name (Edge, Netelligent, Rackspace, AWS, SunGard, Peak10, Dimension Data or Azure): ")
+    "Please enter the provider's name (Edge, Netelligent, Rackspace, AWS, Azure, SunGard, Peak10 or Dimension Data): ")
 provider_input = provider_input.lower()
 while True:
     if provider_input == 'edge':
@@ -131,7 +133,7 @@ while True:
     elif provider_input == 'sungard':
         provider_region = 'N/A'
         break
-    elif provider_input == 'Peak10':
+    elif provider_input == 'peak10':
         provider_region = 'N/A'
         break
     elif provider_input == 'dimensiondata':
@@ -153,7 +155,7 @@ startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
 random_uid = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
 
-if internal_net_tests == 'y':
+if iperf == 'y':
     internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
 
 # ==================== GLOBAL TESTING ==================== #
@@ -170,7 +172,7 @@ for x in range(iterations):
 
     iteration_start_time = datetime.now().strftime('%Y-%m-%d %H:%M')
 
-    if system_tests == 'y':
+    if geekbench == 'y':
         # Run Geekbench
         geekbench_output = 'gb.json'
 
@@ -258,6 +260,60 @@ for x in range(iterations):
         os.remove(geekbench_output)
         print "Completed system tests"
 
+    if passmark == 'y':
+        passmark_results = 'passmark_results.csv'
+        passmark_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'passmark.pts')
+
+        sub.call([passmark_install_dir + '\PerformanceTest\PerformanceTest64.exe', '/DontGatherGraphics',
+                  '/s', passmark_script, '/i', '/ac', passmark_results], shell=True)
+
+        with open(passmark_results, 'rb') as f:
+            csv_handler = csv.reader(f)
+            for row in csv_handler:
+                if "This Computer" in row:
+                    cpu_integer_math = row[1]
+                    cpu_floating_math = row[2]
+                    cpu_prime_numbers = row[3]
+                    cpu_extended_instr = row[4]
+                    cpu_compression = row[5]
+                    cpu_encryption = row[6]
+                    cpu_physics = row[7]
+                    cpu_sorting = row[8]
+                    cpu_single_threaded = row[9]
+                    g2d_simple_vectors = row[10]
+                    g2d_complex_vectors = row[11]
+                    g2d_fonts_text = row[12]
+                    g2d_windows_interface = row[13]
+                    g2d_image_filters = row[14]
+                    g2d_image_rendering = row[15]
+                    g3d_direct_2d = row[16]
+                    g3d_direct_x9_simple = row[17]
+                    g3d_direct_x9_complex = row[18]
+                    g3d_direct_x10 = row[19]
+                    g3d_direct_x11 = row[20]
+                    g3d_direct_compute = row[21]
+                    mem_db_operations = row[22]
+                    mem_read_cached = row[23]
+                    mem_read_uncached = row[24]
+                    mem_write = row[25]
+                    mem_available_ram = row[26]
+                    mem_latency = row[27]
+                    mem_threaded = row[28]
+                    disk_seq_read = row[29]
+                    disk_seq_write = row[30]
+                    disk_ran_seq_rw = row[31]
+                    cd_dvd_read = row[32]
+                    cpu_mark = row[33]
+                    two_d_graphics_mark = row[34]
+                    mem_mark = row[35]
+                    disk_mark = row[36]
+                    three_d_graphics_mark = row[37]
+                    passmark_rating = row[38]
+                    break
+
+        os.remove(passmark_results)
+        print "Completed passmark tests"
+
     def fio_exception_handler(fio_command):
         while True:
             try:
@@ -280,10 +336,11 @@ for x in range(iterations):
                 continue
         return fio_data
 
-    if disk_rand == 'y':
+    if fio == 'y':
 
+        # Random Disk Tests
         fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json',
-                       fio_filename, fio_runtime, disk_options[0], fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
+                       fio_filename, fio_runtime, fio_rand_rw, fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
         fio_data = fio_exception_handler(fio_command)
 
         runtime_read_rand = str(fio_data['jobs'][0]['read']['runtime'])
@@ -304,7 +361,7 @@ for x in range(iterations):
         if async_io == 'y':
 
             fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json',
-                           '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, disk_options[0],
+                           '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, fio_rand_rw,
                            fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
 
             fio_data = fio_exception_handler(fio_command)
@@ -324,10 +381,9 @@ for x in range(iterations):
                     os.remove(os.path.join(fio_disk_dir, file_name))
             os.remove(fio_json_file)
 
-    if disk_seq == 'y':
-
+        # Sequential Disk Tests
         fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json',
-                       fio_filename, fio_runtime, disk_options[1], fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
+                       fio_filename, fio_runtime, fio_seq_rw, fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
         fio_data = fio_exception_handler(fio_command)
 
         runtime_read_seq = str(fio_data['jobs'][0]['read']['runtime'])
@@ -348,7 +404,7 @@ for x in range(iterations):
         if async_io == 'y':
 
             fio_command = [fio_install_dir + '\/fio\/fio.exe', '--thread', '--group_reporting', '--output-format=json',
-                           '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, disk_options[1],
+                           '--iodepth=32', fio_filename, fio_runtime, fio_async_engine, fio_seq_rw,
                            fio_blocksize, fio_direct, fio_filesize, fio_numjobs]
 
             fio_data = fio_exception_handler(fio_command)
@@ -368,9 +424,9 @@ for x in range(iterations):
                     os.remove(os.path.join(fio_disk_dir, file_name))
             os.remove(fio_json_file)
 
-        print "Completed disk tests"
+        print "Completed fio tests"
 
-    if internal_net_tests == 'y':
+    if iperf == 'y':
 
         # Run iperf test
         iperf_output = 'iperf_results.json'
@@ -540,7 +596,7 @@ for x in range(iterations):
     session.commit()
     print "Basic information transfer complete"
 
-    if system_tests == 'y':
+    if geekbench == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.processor: processor_info,
@@ -584,7 +640,7 @@ for x in range(iterations):
         session.commit()
         print "Finished transferring geekbench results"
 
-    if disk_rand == 'y':
+    if fio == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.iops_read_rand: iops_read_rand,
@@ -614,8 +670,6 @@ for x in range(iterations):
 
         print "Finished transferring disk random results"
 
-    if disk_seq == 'y':
-
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.iops_read_seq: iops_read_seq,
             Olympus.iops_write_seq: iops_write_seq,
@@ -643,7 +697,7 @@ for x in range(iterations):
 
         print "Finished transferring disk sequential results"
 
-    if internal_net_tests == 'y':
+    if iperf == 'y':
 
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.sender_transfer_mb: sender_transfer_mb,
@@ -678,6 +732,51 @@ for x in range(iterations):
         session.commit()
         print "Finished transferring sysbench results"
 
+    if passmark == 'y':
+        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+            Olympus.pm_cpu_integer_math: cpu_integer_math,
+            Olympus.pm_cpu_floating_math: cpu_floating_math,
+            Olympus.pm_cpu_prime_numbers: cpu_prime_numbers,
+            Olympus.pm_cpu_extended_instr: cpu_extended_instr,
+            Olympus.pm_cpu_compression: cpu_compression,
+            Olympus.pm_cpu_encryption: cpu_encryption,
+            Olympus.pm_cpu_physics: cpu_physics,
+            Olympus.pm_cpu_sorting: cpu_sorting,
+            Olympus.pm_cpu_single_threaded: cpu_single_threaded,
+            Olympus.pm_g2d_simple_vectors: g2d_simple_vectors,
+            Olympus.pm_g2d_complex_vectors: g2d_complex_vectors,
+            Olympus.pm_g2d_fonts_text: g2d_fonts_text,
+            Olympus.pm_g2d_windows_interface: g2d_windows_interface,
+            Olympus.pm_g2d_image_filters: g2d_image_filters,
+            Olympus.pm_g2d_image_rendering: g2d_image_rendering,
+            Olympus.pm_g3d_direct_2d: g3d_direct_2d,
+            Olympus.pm_g3d_direct_x9_simple: g3d_direct_x9_simple,
+            Olympus.pm_g3d_direct_x9_complex: g3d_direct_x9_complex,
+            Olympus.pm_g3d_direct_x10: g3d_direct_x10,
+            Olympus.pm_g3d_direct_x11: g3d_direct_x11,
+            Olympus.pm_g3d_direct_compute: g3d_direct_compute,
+            Olympus.pm_mem_db_operations: mem_db_operations,
+            Olympus.pm_mem_read_cached: mem_read_cached,
+            Olympus.pm_mem_read_uncached: mem_read_uncached,
+            Olympus.pm_mem_write: mem_write,
+            Olympus.pm_mem_available_ram: mem_available_ram,
+            Olympus.pm_mem_latency: mem_latency,
+            Olympus.pm_mem_threaded: mem_threaded,
+            Olympus.pm_disk_seq_read: disk_seq_read,
+            Olympus.pm_disk_seq_write: disk_seq_write,
+            Olympus.pm_disk_ran_seq_rw: disk_ran_seq_rw,
+            Olympus.pm_cd_dvd_read: cd_dvd_read,
+            Olympus.pm_cpu_mark: cpu_mark,
+            Olympus.pm_two_d_graphics_mark: two_d_graphics_mark,
+            Olympus.pm_mem_mark: mem_mark,
+            Olympus.pm_disk_mark: disk_mark,
+            Olympus.pm_three_d_graphics_mark: three_d_graphics_mark,
+            Olympus.pm_passmark_rating: passmark_rating
+        })
+
+        session.commit()
+        print "Finished transferring passmark results"
+
     print "\n\n"
     print "All tests are successfully completed and the results are transferred to our database"
     print "\n\n"
@@ -685,18 +784,3 @@ for x in range(iterations):
     iterator = iterator + 1
     # Any delay before the next round is executed
     sleep(sleeptime)
-
-# Send text notification
-if textnotifications == 'y':
-    try:
-        server = smtp.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.login(smtp_username, smtp_password)
-        message = tester_name + ", the testing on your " + provider_input + " VM (" + vm_input + ") is completed."
-        FROM = 'Hermestxtnotifications@gmail.com'
-        server.sendmail(FROM, TO, message)
-        server.close()
-        print "Text Sent"
-    except:
-        print "Not sent"

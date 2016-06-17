@@ -1,27 +1,28 @@
 # CONFIGURATION INFORMATION
 
-# Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
+# Please enter the start date for this test in YYYYMMDD (e.g., 20160617 for June 17TH, 2016)
 project_id = 'c-edgehosting-20151210'
 # Please enter the operating system
 operating_system = 'windows'  # windows
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-system_tests = 'n'  # Geekbench 3 suite
-disk_rand = 'y'  # fio random read and random write
-disk_seq = 'y'  # fio sequential read and sequential write
-internal_net_tests = 'n'  # iperf internal network tests
-iozone = 'y'  # iozone tests
-sysbench = 'y'  # sysbench tests
+geekbench = 'y'  # system tests
+iperf = 'y'  # Internal network tests
+fio = 'y'  # disk tests
 
-# DISK INFORMATION
-# If you selected yes for disk_rand or disk_seq, then you have to fill out this information
+iozone = 'n'  # disk tests
+sysbench = 'n'  # disk tests
+passmark = 'n'  # disk tests
+
+# DISK TEST INFORMATION
+# If you selected yes for disk tests, then you have to fill out this information
 blocksize = '4'  # please enter the block size in kilobytes
 filesize = '16'  # please enter the file size in megabytes
 numjobs = '8'  # please enter the number of copies of the test that you would like to run
 runtime = '60'  # how long would you like this test to run for in seconds
 direct_io = 'y'  # if direct I/O is required (bypass cache), please mark y
-async_io = 'n'  # Set y to enable asynchronous tests
+async_io = 'y'  # Set y to enable asynchronous tests
 
 # INTERNAL NETWORK INFORMATION
 # If you selected yes for internal network tests, then you have to fill out this information
@@ -35,9 +36,8 @@ internal_net_time = '60'  # please enter the time, in seconds, that you want ipe
 # Either duration or number of iterations must complete in order for the testing to stop.
 sleeptime = 0
 iterations = 1
-# iterations = 5000000
-duration = 24
-duration_value = "hours"  # please enter seconds, minutes, hours, or days
+duration = 15
+duration_value = "minutes"  # please enter seconds, minutes, hours, or days
 if duration_value.lower() == "seconds":
     duration = duration
 elif duration_value.lower() == "minutes":
@@ -56,6 +56,4 @@ key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 geekbench_install_dir = 'C:\Program Files (x86)'
 fio_install_dir = 'C:\Program Files (x86)'
 iozone_install_dir = 'C:\Program Files (x86)\Benchmarks\Iozone3_414'
-
-# TEXT NOTIFICATIONS
-textnotifications = 'n'
+passmark_install_dir = 'C:\Program Files (x86)'
