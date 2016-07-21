@@ -215,7 +215,7 @@ for x in range(iterations):
             y = y + 1
         for x in range(0, 1):
             z = "Total Single"
-            scores[z] = str(data['multicore_score'])
+            scores[z] = str(data['score'])
             y = y + 1
         for x in range(0, 1):
             z = "Runtime"
