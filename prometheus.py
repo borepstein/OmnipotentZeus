@@ -1,43 +1,32 @@
-# Prometheus creates the database that will house all data. It is currently designed with a MySQL database engine.
-from sqlalchemy import Column, Integer, String, Float, create_engine, __version__
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, Float, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
-# Check which version of SQLAlchemy is currently being used.
-print "Current SQLAlchemy Version: " + __version__
 Base = declarative_base()
 
-
-class Olympus(Base):
-    __tablename__ = 'olympus'
+class Virtualmachine(Base):
+    __tablename__ = 'xiaoice_virtualmachine'
     id = Column(Integer, primary_key=True)
-    project = Column(String(30), nullable=False)
-    uid = Column(String(50), nullable=False)
-    provider = Column(String(30), nullable=False)
-    region = Column(String(30), nullable=False)
-    startdate = Column(String(30), nullable=False)
-    iteration = Column(Integer, nullable=False)
-    iteration_start_time = Column(String(50), nullable=False)
+    key = Column(String(255), nullable=True)
+    display = Column(String(255), nullable=True)
+    location_id = Column(Integer, nullable=True)
+    provider_id = Column(Integer, nullable=True)
+
+class Processordata(Base):
+    __tablename__ = 'xiaoice_processordata'
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    vm_id = Column(Integer, nullable=False)
+    cores_id = Column(Integer, nullable=True)
+    os_id = Column(Integer, nullable=True)
     processor = Column(String(100), nullable=True)
-    vm = Column(String(30), nullable=False)
-    vmcount = Column(Integer, nullable=False)
-    vcpu = Column(Integer, nullable=False)
-    ram = Column(Float(30), nullable=False)
-    local = Column(Integer, nullable=False)
-    block = Column(Integer, nullable=False)
-    disk_rand = Column(String(10), nullable=True)
-    disk_seq = Column(String(10), nullable=True)
-    disk_blocksize = Column(String(20), nullable=True)
-    disk_filesize = Column(String(20), nullable=True)
-    disk_numjobs = Column(String(20), nullable=True)
-    disk_direct = Column(String(20), nullable=True)
+    performance = Column(Integer, nullable=True)
     runtime = Column(Float(30), nullable=True)
     intmulti = Column(Integer, nullable=True)
     floatmulti = Column(Integer, nullable=True)
-    memmulti = Column(Integer, nullable=True)
+    totalmulti = Column(Integer, nullable=True)
     intsingle = Column(Integer, nullable=True)
     floatsingle = Column(Integer, nullable=True)
-    memsingle = Column(Integer, nullable=True)
-    totalmulti = Column(Integer, nullable=True)
     totalsingle = Column(Integer, nullable=True)
     aes = Column(Float(30), nullable=True)
     twofish = Column(Float(30), nullable=True)
@@ -62,16 +51,39 @@ class Olympus(Base):
     dfft = Column(Float(30), nullable=True)
     nbody = Column(Float(30), nullable=True)
     raytrace = Column(Float(30), nullable=True)
+
+
+class Memorydata(Base):
+    __tablename__ = 'xiaoice_memorydata'
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    vm_id = Column(Integer, nullable=False)
+    cores_id = Column(Integer, nullable=True)
+    os_id = Column(Integer, nullable=True)
+    bandwidth = Column(Float(30), nullable=True)
     copy = Column(Float(30), nullable=True)
     scale = Column(Float(30), nullable=True)
     add = Column(Float(30), nullable=True)
     triad = Column(Float(30), nullable=True)
+    memsingle = Column(Integer, nullable=True)
+    memmulti = Column(Integer, nullable=True)
+
+
+class Localdiskdata(Base):
+    __tablename__ = 'xiaoice_localdiskdata'
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    vm_id = Column(Integer, nullable=False)
+    cores_id = Column(Integer, nullable=True)
+    os_id = Column(Integer, nullable=True)
+    iops_read_seq = Column(Float(30), nullable=True)
+    iops_write_seq = Column(Float(30), nullable=True)
+    iops_read_rand = Column(Float(30), nullable=True)
+    iops_write_rand = Column(Float(30), nullable=True)
     runtime_read_seq = Column(Float(30), nullable=True)
     runtime_write_seq = Column(Float(30), nullable=True)
     io_read_seq = Column(Float(30), nullable=True)
     io_write_seq = Column(Float(30), nullable=True)
-    iops_read_seq = Column(Float(30), nullable=True)
-    iops_write_seq = Column(Float(30), nullable=True)
     bw_read_seq = Column(Float(30), nullable=True)
     bw_write_seq = Column(Float(30), nullable=True)
     runtime_read_seq_async = Column(Float(30), nullable=True)
@@ -86,8 +98,6 @@ class Olympus(Base):
     runtime_write_rand = Column(Float(30), nullable=True)
     io_read_rand = Column(Float(30), nullable=True)
     io_write_rand = Column(Float(30), nullable=True)
-    iops_read_rand = Column(Float(30), nullable=True)
-    iops_write_rand = Column(Float(30), nullable=True)
     bw_read_rand = Column(Float(30), nullable=True)
     bw_write_rand = Column(Float(30), nullable=True)
     runtime_read_rand_async = Column(Float(30), nullable=True)
@@ -98,39 +108,43 @@ class Olympus(Base):
     iops_write_rand_async = Column(Float(30), nullable=True)
     bw_read_rand_async = Column(Float(30), nullable=True)
     bw_write_rand_async = Column(Float(30), nullable=True)
-    internal_network_data = Column(Float(30), nullable=True)
-    internal_network_bandwidth = Column(Float(30), nullable=True)
-    hostname = Column(String(100), nullable=True)
-    concurrency_level = Column(Integer, nullable=True)
-    completed_requests = Column(Integer, nullable=True)
-    time_taken = Column(Float(30), nullable=True)
-    requests_per_sec = Column(Float(30), nullable=True)
-    percent_50 = Column(Integer, nullable=True)
-    percent_66 = Column(Integer, nullable=True)
-    percent_75 = Column(Integer, nullable=True)
-    percent_80 = Column(Integer, nullable=True)
-    percent_90 = Column(Integer, nullable=True)
-    percent_95 = Column(Integer, nullable=True)
-    percent_98 = Column(Integer, nullable=True)
-    percent_99 = Column(Integer, nullable=True)
-    percent_100 = Column(Integer, nullable=True)
-    iozone_seq_writers = Column(Float(30), nullable=True)
-    iozone_seq_rewriters = Column(Float(30), nullable=True)
-    iozone_seq_readers = Column(Float(30), nullable=True)
-    iozone_seq_rereaders = Column(Float(30), nullable=True)
-    iozone_random_readers = Column(Float(30), nullable=True)
-    iozone_random_writers = Column(Float(30), nullable=True)
-    sysbench_seq_write = Column(Float(30), nullable=True)
-    sysbench_seq_read = Column(Float(30), nullable=True)
-    sysbench_rand_write = Column(Float(30), nullable=True)
-    sysbench_rand_read = Column(Float(30), nullable=True)
 
 
-# Create an object, db, to act as the connect to the database.
-# The SQLEngine object is used to open the connection, which is what is being used in the db variable.
-# Format for create_engine is "engine://user:password@host:port/database"
-# Ignition = create_engine("mysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeuslinux")
-Ignition = create_engine("mysql://root:inapp@localhost:3306/omnipotentzeuslinux")
+class Internalnetworkdata(Base):
+    __tablename__ = 'xiaoice_internalnetworkdata'
+    id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    vm_id = Column(Integer, nullable=False)
+    cores_id = Column(Integer, nullable=True)
+    os_id = Column(Integer, nullable=True)
+    single_threaded_throughput = Column(Float(30), nullable=True)
+    multi_threaded_throughput = Column(Float(30), nullable=True)
 
-# Holds all the database metadata.
+
+class Processoraggdata(Base):
+    __tablename__ = 'xiaoice_processoraggdata'
+    id = Column(Integer, primary_key=True)
+    vm_id = Column(Integer, nullable=False)
+    cores_id = Column(Integer, nullable=False)
+    os_id = Column(Integer, nullable=False)
+    month_min = Column(Float(30), nullable=True)
+    month_25 = Column(Float(30), nullable=True)
+    month_75 = Column(Float(30), nullable=True)
+    month_max = Column(Float(30), nullable=True)
+    month_median = Column(Float(30), nullable=True)
+    year_min = Column(Float(30), nullable=True)
+    year_25 = Column(Float(30), nullable=True)
+    year_75 = Column(Float(30), nullable=True)
+    year_max = Column(Float(30), nullable=True)
+    year_median = Column(Float(30), nullable=True)
+    lifetime_min = Column(Float(30), nullable=True)
+    lifetime_25 = Column(Float(30), nullable=True)
+    lifetime_75 = Column(Float(30), nullable=True)
+    lifetime_max = Column(Float(30), nullable=True)
+    lifetime_median = Column(Float(30), nullable=True)
+
+# DB connection format: "engine://user:password@host:port/database"
+Ignition = create_engine("mysql://root:inapp@localhost:3306/perf_forecast")
+
+# Create DB schema
 Base.metadata.create_all(Ignition)

@@ -1,18 +1,8 @@
-# CONFIGURATION INFORMATION
-
-# Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
-project_id = 'c-edgehosting-20151126'
-# Please enter the operating system
-operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
-
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
 geekbench = 'y'  # system tests
-iperf = 'y'  # internal network tests
-fio = 'y'  # disk tests
-iozone = 'n'  # disk tests
-sysbench = 'n'  # disk tests
-apachebench = 'n'  # ApacheBench tests
+iperf = 'n'  # internal network tests
+fio = 'n'  # disk tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
@@ -26,14 +16,6 @@ async_io = 'y'  # Set y to enable asynchronous tests
 # INTERNAL NETWORK INFORMATION
 # If you selected yes for internal network tests, then you have to fill out this information
 internal_net_time = '60'  # please enter the time, in seconds, that you want iperf to run
-
-# APACHE BENCH
-ab_requests = "200"  # number of requests to perform
-ab_concurrency = "10"  # number of multiple requests to make at a time
-ab_timeout = "30"  # maximum seconds to wait for each response. default 30s.
-ab_hostname = "104.131.118.115"  # hostname
-ab_port = ""  # default port 80
-ab_path = "/admin"  # path
 
 # TIMING
 # Timing variables to help keep the sequence of events.
