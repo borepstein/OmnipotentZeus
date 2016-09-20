@@ -1,13 +1,13 @@
-from projects.test import *
-from datetime import datetime
+import csv
 import json
 import os
-import csv
 import subprocess as sub
-from time import sleep, time
+from config import *
 from collections import OrderedDict as od
-from prometheus import Base, Ignition, Processordata, Memorydata, Localdiskdata, Blockdiskdata, Internalnetworkdata
+from datetime import datetime
+from time import sleep, time
 from sqlalchemy.orm import sessionmaker
+from db import Base, Ignition, Processordata, Memorydata, Localdiskdata, Blockdiskdata, Internalnetworkdata
 
 # Bind Ignition to the metadata of the Base class
 Base.metadata.bind = Ignition
