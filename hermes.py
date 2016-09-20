@@ -6,7 +6,7 @@ import csv
 import subprocess as sub
 from time import sleep, time
 from collections import OrderedDict as od
-from prometheus import Base, Ignition, Virtualmachine, Processordata, Memorydata, Localdiskdata, Internalnetworkdata
+from prometheus import Base, Ignition, Processordata, Memorydata, Localdiskdata, Blockdiskdata, Internalnetworkdata
 from sqlalchemy.orm import sessionmaker
 
 # Bind Ignition to the metadata of the Base class
@@ -17,15 +17,12 @@ session = DBSession()
 # ==================== GLOBAL INTRODUCTION ==================== #
 os.system('clear')
 print "|------------------------|"
-print "|    Project Olympus     |"
-print "|         v1.5           |"
+print "|    Omnipotent Hera     |"
+print "|          v1.0          |"
 print "|------------------------|"
-print ""
-print "Project Olympus is designed to be a testbed for measuring virtual machine performance in a scalable, \
-cloud environment. The design of Olympus is its flexibility in continuous testing over time, rather than \
-spot testing, which is an archaic method that cannot apply to highly variable environments with multiple \
-(many of which are possibly uncontrolled) variables.\n\n"
+print "\n"
 
+# ==================== DUMMY JSON DATA ==================== #
 provider_data = {
     1: "aws",
     2: "azure"
@@ -48,16 +45,16 @@ cores_data = {
 }
 
 # ==================== GLOBAL INSTALLER ==================== #
-if fio == 'y':
-    os.system('apt-get install fio --yes')
-if iperf == 'y':
-    os.system('apt-get install iperf')
 if geekbench == 'y':
     if not os.path.isfile(geekbench_install_dir + '/geekbench_x86_64'):
         os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
         os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
     os.chdir(geekbench_install_dir)
     sub.call(['./geekbench_x86_64', '-r', email, key])
+if fio == 'y':
+    os.system('apt-get install fio --yes')
+if iperf == 'y':
+    os.system('apt-get install iperf')
 
 if fio == 'y':
     fio_rand_rw = '-rw=randrw'  # randread for random read, randwrite for random write, and randrw to do both operations
@@ -109,7 +106,7 @@ except ValueError as e:
     exit()
 
 if iperf == 'y':
-    internal_net_ip = raw_input('\nPlease enter the IP address of the server you are trying to connect to: ')
+    internal_net_ip = raw_input("\nPlease enter the IP address of the server you are trying to connect to: ")
     internal_net_csv = "C"
 
 processor_info = ""
@@ -137,9 +134,19 @@ for x in memoutput_list:
         mem_count = (mem_count / 1024.0 / 1024.0)
         ram_input = "%.2f" % mem_count
 
-startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
+if fio == 'y':
+    disk_type = raw_input("\nPlease enter the Disk type (Local / Block): ")
+
+    if disk_type.lower() == "local":
+        fio_path = raw_input("\nPlease enter the Local storage path to run FIO test (Eg:- /mnt/): ")
+    elif disk_type.lower() == "block":
+        fio_path = raw_input("\nPlease enter the Block storage path to run FIO test (Eg:- /mnt/): ")
+    else:
+        print "\nInvalid entry for Disk type"
+        exit()
 
 # ==================== GLOBAL TESTING ==================== #
+start_date = datetime.now().strftime('%Y%m%d-%H%M')
 iterator = 1
 start = time()
 for x in range(iterations):
@@ -222,24 +229,13 @@ for x in range(iterations):
                 values[key] = val
             y = y + 1
         values = od(values)
-        print "\ncompleted geekbench test"
+        print "\nCompleted geekbench test"
 
     def fio_command_generator(option):
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
                        '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
                        '-exitall']
-        print "\n"
-        print fio_command
-        return fio_command
-
-    def fio_async_command_generator(option):
-        global fio_command
-        fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
-                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
-                       '-iodepth=32', '-ioengine=libaio', '-exitall']
-        print "\n"
-        print fio_command
         return fio_command
 
     def spider_egg_exterminator():
@@ -263,6 +259,9 @@ for x in range(iterations):
             f.close()
 
     if fio == 'y':
+        script_dir = os.getcwd()
+        os.chmod(fio_path, 0775)
+        os.chdir(fio_path)
         sub.call(fio_command_generator(fio_rand_rw))
         clean_fio_json_result(fio_json_file)
         fio_json = open(fio_json_file)
@@ -282,28 +281,7 @@ for x in range(iterations):
         ticks_write_rand = str(fio_data['disk_util'][0]['write_ticks'])
 
         spider_egg_exterminator()
-
-        if async_io == 'y':
-            sub.call(fio_async_command_generator(fio_rand_rw))
-            clean_fio_json_result(fio_json_file)
-            fio_json = open(fio_json_file)
-            fio_data = json.load(fio_json)
-
-            runtime_read_rand_async = str(fio_data['jobs'][0]['read']['runtime'])
-            runtime_write_rand_async = str(fio_data['jobs'][0]['write']['runtime'])
-            ops_read_rand_async = str(fio_data['disk_util'][0]['read_ios'])
-            ops_write_rand_async = str(fio_data['disk_util'][0]['write_ios'])
-            io_read_rand_async = str(fio_data['jobs'][0]['read']['io_bytes'])
-            io_write_rand_async = str(fio_data['jobs'][0]['write']['io_bytes'])
-            iops_read_rand_async = str(fio_data['jobs'][0]['read']['iops'])
-            iops_write_rand_async = str(fio_data['jobs'][0]['write']['iops'])
-            bw_read_rand_async = str(fio_data['jobs'][0]['read']['bw'])
-            bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
-            ticks_read_rand_async = str(fio_data['disk_util'][0]['read_ticks'])
-            ticks_write_rand_async = str(fio_data['disk_util'][0]['write_ticks'])
-
-            spider_egg_exterminator()
-        print "\n\ncompleted random disk tests"
+        print "\n\nCompleted random disk tests\n"
 
         sub.call(fio_command_generator(fio_seq_rw))
         clean_fio_json_result(fio_json_file)
@@ -324,27 +302,8 @@ for x in range(iterations):
         ticks_write_seq = str(fio_data['disk_util'][0]['write_ticks'])
 
         spider_egg_exterminator()
-        if async_io == 'y':
-            sub.call(fio_async_command_generator(fio_seq_rw))
-            clean_fio_json_result(fio_json_file)
-            fio_json = open(fio_json_file)
-            fio_data = json.load(fio_json)
-
-            runtime_read_seq_async = str(fio_data['jobs'][0]['read']['runtime'])
-            runtime_write_seq_async = str(fio_data['jobs'][0]['write']['runtime'])
-            ops_read_seq_async = str(fio_data['disk_util'][0]['read_ios'])
-            ops_write_seq_async = str(fio_data['disk_util'][0]['write_ios'])
-            io_read_seq_async = str(fio_data['jobs'][0]['read']['io_bytes'])
-            io_write_seq_async = str(fio_data['jobs'][0]['write']['io_bytes'])
-            iops_read_seq_async = str(fio_data['jobs'][0]['read']['iops'])
-            iops_write_seq_async = str(fio_data['jobs'][0]['write']['iops'])
-            bw_read_seq_async = str(fio_data['jobs'][0]['read']['bw'])
-            bw_write_seq_async = str(fio_data['jobs'][0]['write']['bw'])
-            ticks_read_seq_async = str(fio_data['disk_util'][0]['read_ticks'])
-            ticks_write_seq_async = str(fio_data['disk_util'][0]['write_ticks'])
-
-            spider_egg_exterminator()
-        print "\n\ncompleted sequential disk tests"
+        print "\n\nCompleted sequential disk tests"
+        os.chdir(script_dir)
 
     if iperf == 'y':
         internal_net_csv_file = 'iperf_results.csv'
@@ -357,7 +316,7 @@ for x in range(iterations):
             internal_network_data = (int(row[7]) / 1024) / 1024
             internal_network_bandwidth = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
-        print "\ncompleted internal network tests"
+        print "\nCompleted internal network tests"
 
 # ==================== GLOBAL TRANSMITTING ==================== #
     # Transmit data back to Olympus
@@ -422,48 +381,56 @@ for x in range(iterations):
         print "Finished transferring geekbench results"
 
     if fio == 'y':
-
-        Open_Localdiskdata = Localdiskdata(
-            vm_id=vm_id,
-            cores_id=cores_id,
-            os_id=os_id,
-            iops_read_rand=iops_read_rand,
-            iops_write_rand=iops_write_rand,
-            io_read_seq=io_read_seq,
-            io_write_seq=io_write_seq,
-            runtime_read_rand=runtime_read_rand,
-            runtime_write_rand=runtime_write_rand,
-            io_read_rand=io_read_rand,
-            io_write_rand=io_write_rand,
-            bw_read_rand=bw_read_rand,
-            bw_write_rand=bw_write_rand,
-            iops_read_seq=iops_read_seq,
-            iops_write_seq=iops_write_seq,
-            runtime_read_seq=runtime_read_seq,
-            runtime_write_seq=runtime_write_seq,
-            bw_read_seq=bw_read_seq,
-            bw_write_seq=bw_write_seq,
-            iops_read_seq_async=iops_read_seq_async,
-            iops_read_rand_async=iops_read_rand_async,
-            runtime_read_rand_async=runtime_read_rand_async,
-            runtime_write_rand_async=runtime_write_rand_async,
-            io_read_rand_async=io_read_rand_async,
-            io_write_rand_async=io_write_rand_async,
-            bw_read_rand_async=bw_read_rand_async,
-            bw_write_rand_async=bw_write_rand_async,
-            runtime_read_seq_async=runtime_read_seq_async,
-            runtime_write_seq_async=runtime_write_seq_async,
-            io_read_seq_async=io_read_seq_async,
-            io_write_seq_async=io_write_seq_async,
-            bw_read_seq_async=bw_read_seq_async,
-            bw_write_seq_async=bw_write_seq_async)
-        session.add(Open_Localdiskdata)
-        session.commit()
-
-        print "Finished transferring disk test results"
+        if disk_type.lower() == "local":
+            Open_Localdiskdata = Localdiskdata(
+                vm_id=vm_id,
+                cores_id=cores_id,
+                os_id=os_id,
+                iops_read_rand=iops_read_rand,
+                iops_write_rand=iops_write_rand,
+                io_read_seq=io_read_seq,
+                io_write_seq=io_write_seq,
+                runtime_read_rand=runtime_read_rand,
+                runtime_write_rand=runtime_write_rand,
+                io_read_rand=io_read_rand,
+                io_write_rand=io_write_rand,
+                bw_read_rand=bw_read_rand,
+                bw_write_rand=bw_write_rand,
+                iops_read_seq=iops_read_seq,
+                iops_write_seq=iops_write_seq,
+                runtime_read_seq=runtime_read_seq,
+                runtime_write_seq=runtime_write_seq,
+                bw_read_seq=bw_read_seq,
+                bw_write_seq=bw_write_seq)
+            session.add(Open_Localdiskdata)
+            session.commit()
+            print "Finished transferring Local disk test results"
+        elif disk_type.lower() == "block":
+            Open_Blockdiskdata = Blockdiskdata(
+                vm_id=vm_id,
+                cores_id=cores_id,
+                os_id=os_id,
+                iops_read_rand=iops_read_rand,
+                iops_write_rand=iops_write_rand,
+                io_read_seq=io_read_seq,
+                io_write_seq=io_write_seq,
+                runtime_read_rand=runtime_read_rand,
+                runtime_write_rand=runtime_write_rand,
+                io_read_rand=io_read_rand,
+                io_write_rand=io_write_rand,
+                bw_read_rand=bw_read_rand,
+                bw_write_rand=bw_write_rand,
+                iops_read_seq=iops_read_seq,
+                iops_write_seq=iops_write_seq,
+                runtime_read_seq=runtime_read_seq,
+                runtime_write_seq=runtime_write_seq,
+                bw_read_seq=bw_read_seq,
+                bw_write_seq=bw_write_seq)
+            session.add(Open_Blockdiskdata)
+            session.commit()
+            print "Finished transferring Block disk test results"
 
     if iperf == 'y':
-
         Open_Internalnetworkdata = Internalnetworkdata(
             vm_id=vm_id,
             cores_id=cores_id,

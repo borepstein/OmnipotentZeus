@@ -1,8 +1,8 @@
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-geekbench = 'y'  # system tests
+geekbench = 'n'  # system tests
+fio = 'y'  # disk tests
 iperf = 'n'  # internal network tests
-fio = 'n'  # disk tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
@@ -11,7 +11,6 @@ filesize = '16'  # please enter the file size in megabytes
 numjobs = '8'  # please enter the number of copies of the test that you would like to run
 runtime = '60'  # how long would you like this test to run for in seconds
 direct_io = 'y'  # if direct I/O is required (bypass cache), please mark y
-async_io = 'y'  # Set y to enable asynchronous tests
 
 # INTERNAL NETWORK INFORMATION
 # If you selected yes for internal network tests, then you have to fill out this information

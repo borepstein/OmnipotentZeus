@@ -16,6 +16,7 @@ class AggregateGenerator:
         self.processordata = "y"
         self.memorydata = "y"
         self.localdiskdata = "y"
+        self.blockdiskdata = "y"
         self.internalnetworkdata = "y"
 
         self.cur = self.db_connection(self.host, self.user, self.password, self.db)
@@ -88,6 +89,27 @@ class AggregateGenerator:
                             output = self.agg_data(term, table, field, res['vm_id'])
                             if output:
                                 self.cur.execute("UPDATE xiaoice_localdiskaggdata SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (field, term, output['resultmin'], field, term, output['result25'], field, term, output['result75'], field, term, output['resultmax'], field, term, output['resultmedian'], agg_id))
+                                self.con.commit()
+                except Exception as e:
+                    pass
+
+            if self.blockdiskdata == "y":
+                table = "xiaoice_blockdiskdata"
+                fields = ['iops_read_seq', 'iops_write_seq', 'iops_read_rand', 'iops_write_rand']
+
+                try:
+                    self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
+                    res = self.cur.fetchone()
+
+                    self.cur.execute("INSERT INTO xiaoice_blockdiskaggdata (vm_id, cores_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['cores_id'], res['os_id']))
+                    self.con.commit()
+                    agg_id = self.cur.lastrowid
+
+                    for field in fields:
+                        for term in self.term_list:
+                            output = self.agg_data(term, table, field, res['vm_id'])
+                            if output:
+                                self.cur.execute("UPDATE xiaoice_blockdiskaggdata SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (field, term, output['resultmin'], field, term, output['result25'], field, term, output['result75'], field, term, output['resultmax'], field, term, output['resultmedian'], agg_id))
                                 self.con.commit()
                 except Exception as e:
                     pass
