@@ -37,10 +37,10 @@ class AggregateGenerator:
                 field = "performance"
 
                 try:
-                    self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
+                    self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_processoraggdata (vm_id, cores_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['cores_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_processoraggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -57,10 +57,10 @@ class AggregateGenerator:
                 field = "bandwidth"
 
                 try:
-                    self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
+                    self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_memoryaggdata (vm_id, cores_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['cores_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_memoryaggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -74,13 +74,24 @@ class AggregateGenerator:
 
             if self.localdiskdata == "y":
                 table = "xiaoice_localdiskdata"
-                fields = ['iops_read_seq', 'iops_write_seq', 'iops_read_rand', 'iops_write_rand']
+                fields = ['iops_read_seq',
+                          'iops_write_seq',
+                          'iops_read_random',
+                          'iops_write_random',
+                          'throughput_read_seq',
+                          'throughput_write_seq',
+                          'throughput_read_random',
+                          'throughput_write_random',
+                          'latency_read_seq',
+                          'latency_write_seq',
+                          'latency_read_random',
+                          'latency_write_random']
 
                 try:
-                    self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
+                    self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_localdiskaggdata (vm_id, cores_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['cores_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_localdiskaggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -95,13 +106,24 @@ class AggregateGenerator:
 
             if self.blockdiskdata == "y":
                 table = "xiaoice_blockdiskdata"
-                fields = ['iops_read_seq', 'iops_write_seq', 'iops_read_rand', 'iops_write_rand']
+                fields = ['iops_read_seq',
+                          'iops_write_seq',
+                          'iops_read_random',
+                          'iops_write_random',
+                          'throughput_read_seq',
+                          'throughput_write_seq',
+                          'throughput_read_random',
+                          'throughput_write_random',
+                          'latency_read_seq',
+                          'latency_write_seq',
+                          'latency_read_random',
+                          'latency_write_random']
 
                 try:
-                    self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
+                    self.cur.execute("SELECT vm_id, disk_size_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_blockdiskaggdata (vm_id, cores_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['cores_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_blockdiskaggdata (vm_id, disk_size_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['disk_size_id'], res['os_id']))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -122,7 +144,7 @@ class AggregateGenerator:
                     self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_internalnetworkaggdata (vm_id, cores_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['cores_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_internalnetworkaggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 

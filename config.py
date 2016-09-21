@@ -1,7 +1,7 @@
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-geekbench = 'n'  # system tests
-fio = 'y'  # disk tests
+geekbench = 'y'  # system tests
+fio = 'n'  # disk tests
 iperf = 'n'  # internal network tests
 
 # DISK INFORMATION

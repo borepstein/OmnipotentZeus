@@ -28,20 +28,33 @@ provider_data = {
     2: "azure"
 }
 
+provider_location_data = {
+    1: "us-east-1",
+    2: "us-west-1",
+    3: "us-west-2"
+}
+
 vm_data = {
-    1: "aws",
-    2: "azure"
+    1: "small",
+    2: "medium",
+    3: "big"
 }
 
 os_data = {
-    1: "windows",
-    2: "linux"
+    1: "linux",
+    2: "windows"
 }
 
 cores_data = {
     1: "1",
     2: "2",
     3: "4"
+}
+
+disk_size_data = {
+    1: "100",
+    2: "500",
+    3: "1000"
 }
 
 # ==================== GLOBAL INSTALLER ==================== #
@@ -56,7 +69,58 @@ if fio == 'y':
 if iperf == 'y':
     os.system('apt-get install iperf')
 
+# ==================== RAW INPUT ==================== #
+# Provider name
+provider_name = raw_input("\nPlease enter the provider: ")
+provider_name = provider_name.lower()
+
+try:
+    provider_id = provider_data.keys()[provider_data.values().index(provider_name)]
+except ValueError as e:
+    print "\nInvalid data for Provider input"
+    exit()
+
+# Location
+provider_location = raw_input("\nPlease enter the location: ")
+provider_location = provider_location.lower()
+
+try:
+    provider_location_id = provider_location_data.keys()[provider_location_data.values().index(provider_location)]
+except ValueError as e:
+    print "\nInvalid data for Provider location"
+    exit()
+
+# VM name
+vm_name = raw_input("\nPlease enter the VM: ")
+vm_name = vm_name.lower()
+
+try:
+    vm_id = vm_data.keys()[vm_data.values().index(vm_name)]
+except ValueError as e:
+    print "\nInvalid data for VM input"
+    exit()
+
+# Operating system
+os_name = raw_input("\nPlease enter the Operating system: ")
+os_name = os_name.lower()
+
+try:
+    os_id = os_data.keys()[os_data.values().index(os_name)]
+except ValueError as e:
+    print "\nInvalid data for OS input"
+    exit()
+
 if fio == 'y':
+    # Disk sizes
+    disk_size = raw_input("\nPlease enter the Disk size: ")
+    disk_size = disk_size.lower()
+
+    try:
+        disk_size_id = disk_size_data.keys()[disk_size_data.values().index(disk_size)]
+    except ValueError as e:
+        print "\nInvalid data for Disk sizes"
+        exit()
+
     fio_rand_rw = '-rw=randrw'  # randread for random read, randwrite for random write, and randrw to do both operations
     fio_seq_rw = '-rw=rw'  # read for sequential read, write for sequential write, and rw to do both operations
 
@@ -72,39 +136,6 @@ if fio == 'y':
     else:
         fio_direct = '-direct=0'
 
-# Provider name
-provider_name = raw_input("\nPlease enter the provider's name: ")
-provider_name = provider_name.lower()
-
-try:
-    provider_id = provider_data.keys()[provider_data.values().index(provider_name)]
-except ValueError as e:
-    print "\nInvalid data for Provider input"
-    exit()
-
-provider_location = raw_input("\nPlease enter the provider's location: ")
-provider_location = provider_location.lower()
-
-# VM name
-vm_name = raw_input("\nPlease enter the VM name: ")
-vm_name = vm_name.lower()
-
-try:
-    vm_id = vm_data.keys()[vm_data.values().index(vm_name)]
-except ValueError as e:
-    print "\nInvalid data for VM input"
-    exit()
-
-# Operating system
-os_name = raw_input("\nPlease enter the Operating System name: ")
-os_name = os_name.lower()
-
-try:
-    os_id = os_data.keys()[os_data.values().index(os_name)]
-except ValueError as e:
-    print "\nInvalid data for OS input"
-    exit()
-
 if iperf == 'y':
     internal_net_ip = raw_input("\nPlease enter the IP address of the server you are trying to connect to: ")
     internal_net_csv = "C"
@@ -115,10 +146,11 @@ v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
 v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
 v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
 cores = v3.communicate()[0]
+cores = cores.strip()
 
 # Cores
 try:
-    cores_id = cores_data.keys()[cores_data.values().index(cores.strip())]
+    cores_id = cores_data.keys()[cores_data.values().index(cores)]
 except ValueError as e:
     print "\nInvalid data for CPU cores"
     exit()
@@ -262,23 +294,18 @@ for x in range(iterations):
         script_dir = os.getcwd()
         os.chmod(fio_path, 0775)
         os.chdir(fio_path)
+
         sub.call(fio_command_generator(fio_rand_rw))
         clean_fio_json_result(fio_json_file)
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
 
-        runtime_read_rand = str(fio_data['jobs'][0]['read']['runtime'])
-        runtime_write_rand = str(fio_data['jobs'][0]['write']['runtime'])
-        ops_read_rand = str(fio_data['disk_util'][0]['read_ios'])
-        ops_write_rand = str(fio_data['disk_util'][0]['write_ios'])
-        io_read_rand = str(fio_data['jobs'][0]['read']['io_bytes'])
-        io_write_rand = str(fio_data['jobs'][0]['write']['io_bytes'])
-        iops_read_rand = str(fio_data['jobs'][0]['read']['iops'])
-        iops_write_rand = str(fio_data['jobs'][0]['write']['iops'])
-        bw_read_rand = str(fio_data['jobs'][0]['read']['bw'])
-        bw_write_rand = str(fio_data['jobs'][0]['write']['bw'])
-        ticks_read_rand = str(fio_data['disk_util'][0]['read_ticks'])
-        ticks_write_rand = str(fio_data['disk_util'][0]['write_ticks'])
+        iops_read_random = str(fio_data['jobs'][0]['read']['iops'])
+        iops_write_random = str(fio_data['jobs'][0]['write']['iops'])
+        throughput_read_random = str(fio_data['jobs'][0]['read']['bw'])
+        throughput_write_random = str(fio_data['jobs'][0]['write']['bw'])
+        lat_read_random = str(fio_data['jobs'][0]['read']['lat']['mean'])
+        lat_write_random = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
         spider_egg_exterminator()
         print "\n\nCompleted random disk tests\n"
@@ -288,24 +315,19 @@ for x in range(iterations):
         fio_json = open(fio_json_file)
         fio_data = json.load(fio_json)
 
-        runtime_read_seq = str(fio_data['jobs'][0]['read']['runtime'])
-        runtime_write_seq = str(fio_data['jobs'][0]['write']['runtime'])
-        ops_read_seq = str(fio_data['disk_util'][0]['read_ios'])
-        ops_write_seq = str(fio_data['disk_util'][0]['write_ios'])
-        io_read_seq = str(fio_data['jobs'][0]['read']['io_bytes'])
-        io_write_seq = str(fio_data['jobs'][0]['write']['io_bytes'])
         iops_read_seq = str(fio_data['jobs'][0]['read']['iops'])
         iops_write_seq = str(fio_data['jobs'][0]['write']['iops'])
-        bw_read_seq = str(fio_data['jobs'][0]['read']['bw'])
-        bw_write_seq = str(fio_data['jobs'][0]['write']['bw'])
-        ticks_read_seq = str(fio_data['disk_util'][0]['read_ticks'])
-        ticks_write_seq = str(fio_data['disk_util'][0]['write_ticks'])
+        throughput_read_seq = str(fio_data['jobs'][0]['read']['bw'])
+        throughput_write_seq = str(fio_data['jobs'][0]['write']['bw'])
+        lat_read_seq = str(fio_data['jobs'][0]['read']['lat']['mean'])
+        lat_write_seq = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
         spider_egg_exterminator()
         print "\n\nCompleted sequential disk tests"
         os.chdir(script_dir)
 
     if iperf == 'y':
+        # Single-threaded test
         internal_net_csv_file = 'iperf_results.csv'
         sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
                   '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
@@ -313,8 +335,17 @@ for x in range(iterations):
         opener = open(internal_net_csv_file)
         csv_open = csv.reader(opener)
         for row in csv_open:
-            internal_network_data = (int(row[7]) / 1024) / 1024
-            internal_network_bandwidth = (int(row[8]) / 1024) / 1024
+            single_threaded_throughput = (int(row[8]) / 1024) / 1024
+        os.remove(internal_net_csv_file)
+
+        # Multi-threaded test
+        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time, '-P', cores,
+                  '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
+
+        opener = open(internal_net_csv_file)
+        csv_open = csv.reader(opener)
+        for row in csv_open:
+            multi_threaded_throughput = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
         print "\nCompleted internal network tests"
 
@@ -327,7 +358,6 @@ for x in range(iterations):
     if geekbench == 'y':
         Open_Processordata = Processordata(
             vm_id=vm_id,
-            cores_id=cores_id,
             os_id=os_id,
             processor=processor_info,
             performance=values['Total'],
@@ -366,7 +396,6 @@ for x in range(iterations):
 
         Open_Memorydata = Memorydata(
             vm_id=vm_id,
-            cores_id=cores_id,
             os_id=os_id,
             bandwidth=values['Stream Triad'],
             copy=values['Stream Copy'],
@@ -384,48 +413,39 @@ for x in range(iterations):
         if disk_type.lower() == "local":
             Open_Localdiskdata = Localdiskdata(
                 vm_id=vm_id,
-                cores_id=cores_id,
                 os_id=os_id,
-                iops_read_rand=iops_read_rand,
-                iops_write_rand=iops_write_rand,
-                io_read_seq=io_read_seq,
-                io_write_seq=io_write_seq,
-                runtime_read_rand=runtime_read_rand,
-                runtime_write_rand=runtime_write_rand,
-                io_read_rand=io_read_rand,
-                io_write_rand=io_write_rand,
-                bw_read_rand=bw_read_rand,
-                bw_write_rand=bw_write_rand,
+                iops_read_random=iops_read_random,
+                iops_write_random=iops_write_random,
+                throughput_read_random=throughput_read_random,
+                throughput_write_random=throughput_write_random,
                 iops_read_seq=iops_read_seq,
                 iops_write_seq=iops_write_seq,
-                runtime_read_seq=runtime_read_seq,
-                runtime_write_seq=runtime_write_seq,
-                bw_read_seq=bw_read_seq,
-                bw_write_seq=bw_write_seq)
+                throughput_read_seq=throughput_read_seq,
+                throughput_write_seq=throughput_write_seq,
+                latency_read_seq=lat_read_seq,
+                latency_write_seq=lat_write_seq,
+                latency_read_random=lat_read_random,
+                latency_write_random=lat_write_random)
             session.add(Open_Localdiskdata)
             session.commit()
             print "Finished transferring Local disk test results"
         elif disk_type.lower() == "block":
             Open_Blockdiskdata = Blockdiskdata(
                 vm_id=vm_id,
-                cores_id=cores_id,
+                disk_size_id=disk_size_id,
                 os_id=os_id,
-                iops_read_rand=iops_read_rand,
-                iops_write_rand=iops_write_rand,
-                io_read_seq=io_read_seq,
-                io_write_seq=io_write_seq,
-                runtime_read_rand=runtime_read_rand,
-                runtime_write_rand=runtime_write_rand,
-                io_read_rand=io_read_rand,
-                io_write_rand=io_write_rand,
-                bw_read_rand=bw_read_rand,
-                bw_write_rand=bw_write_rand,
+                iops_read_random=iops_read_random,
+                iops_write_random=iops_write_random,
+                throughput_read_random=throughput_read_random,
+                throughput_write_random=throughput_write_random,
                 iops_read_seq=iops_read_seq,
                 iops_write_seq=iops_write_seq,
-                runtime_read_seq=runtime_read_seq,
-                runtime_write_seq=runtime_write_seq,
-                bw_read_seq=bw_read_seq,
-                bw_write_seq=bw_write_seq)
+                throughput_read_seq=throughput_read_seq,
+                throughput_write_seq=throughput_write_seq,
+                latency_read_seq=lat_read_seq,
+                latency_write_seq=lat_write_seq,
+                latency_read_random=lat_read_random,
+                latency_write_random=lat_write_random)
             session.add(Open_Blockdiskdata)
             session.commit()
             print "Finished transferring Block disk test results"
@@ -433,10 +453,9 @@ for x in range(iterations):
     if iperf == 'y':
         Open_Internalnetworkdata = Internalnetworkdata(
             vm_id=vm_id,
-            cores_id=cores_id,
             os_id=os_id,
-            single_threaded_throughput=internal_network_data,
-            multi_threaded_throughput=internal_network_bandwidth)
+            single_threaded_throughput=single_threaded_throughput,
+            multi_threaded_throughput=multi_threaded_throughput)
         session.add(Open_Internalnetworkdata)
         session.commit()
 
