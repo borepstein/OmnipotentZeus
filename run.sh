@@ -1,4 +1,4 @@
 apt-get update
 apt-get install python-pip mysql-server libmysqlclient-dev python-dev python-lxml --yes
 pip install -r requirements.txt
-python base.py
+screen python base.py

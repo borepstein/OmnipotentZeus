@@ -1,17 +1,12 @@
 import pymysql
+from config import *
+from datetime import datetime
 from numpy import median, percentile
 
 
 class AggregateGenerator:
 
     def __init__(self):
-        # Database credentials
-        self.host = "192.168.20.42"
-        self.user = "root"
-        self.password = "inapp"
-        self.db = "perf_forecast"
-        self.term_list = ['month', 'year', 'lifetime']
-
         # Enable / disable aggregate data collection
         self.processordata = "y"
         self.memorydata = "y"
@@ -19,7 +14,10 @@ class AggregateGenerator:
         self.blockdiskdata = "y"
         self.internalnetworkdata = "y"
 
-        self.cur = self.db_connection(self.host, self.user, self.password, self.db)
+        self.term_list = ['month', 'year', 'lifetime']
+        self.timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+
+        self.cur = self.db_connection(db_host, db_user, db_password, db_name)
 
     def db_connection(self, host, user, password, db):
         self.con = pymysql.connect(host, user, password, db)
@@ -40,7 +38,7 @@ class AggregateGenerator:
                     self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_processoraggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_processoraggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -60,7 +58,7 @@ class AggregateGenerator:
                     self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_memoryaggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_memoryaggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -91,7 +89,7 @@ class AggregateGenerator:
                     self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_localdiskaggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_localdiskaggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -123,7 +121,7 @@ class AggregateGenerator:
                     self.cur.execute("SELECT vm_id, disk_size_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_blockdiskaggdata (vm_id, disk_size_id, os_id) VALUES (%s, %s, %s)" % (res['vm_id'], res['disk_size_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_blockdiskaggdata (vm_id, disk_size_id, os_id, timestamp) VALUES (%s, %s, %s, '%s')" % (res['vm_id'], res['disk_size_id'], res['os_id'], self.timestamp))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -144,7 +142,7 @@ class AggregateGenerator:
                     self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
                     res = self.cur.fetchone()
 
-                    self.cur.execute("INSERT INTO xiaoice_internalnetworkaggdata (vm_id, os_id) VALUES (%s, %s)" % (res['vm_id'], res['os_id']))
+                    self.cur.execute("INSERT INTO xiaoice_internalnetworkaggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
                     self.con.commit()
                     agg_id = self.cur.lastrowid
 
@@ -158,7 +156,6 @@ class AggregateGenerator:
                     pass
 
     def agg_data(self, term, table, field, vm_id):
-
         try:
             # Fetches aggregate data for the previous month
             if term is 'month':

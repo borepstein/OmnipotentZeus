@@ -1,3 +1,9 @@
+# DATABASE CREDENTIALS
+db_host = "192.168.20.42"
+db_user = "root"
+db_password = "inapp"
+db_name = "perf_forecast"
+
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
 geekbench = 'y'  # system tests
@@ -22,9 +28,8 @@ internal_net_time = '60'  # please enter the time, in seconds, that you want ipe
 # To specify the number of iterations this testing should complete, please input an integer for iterations.
 # Duration and duration value will limit the time the suite will be running for.
 # Either duration or number of iterations must complete in order for the testing to stop.
-sleeptime = 0
+sleeptime = 0  # in seconds
 iterations = 1
-# iterations = 5000000
 duration = 24
 duration_value = "hours"  # please enter seconds, minutes, hours, or days
 if duration_value.lower() == "seconds":
@@ -42,5 +47,5 @@ email = 'contact@cloudspectator.com'
 key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 
 # DIRECTORY
-# The directory that houses the Geekbench 3 suite and where all the tests will run
+# The directory that houses the Geekbench 3 suite
 geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"

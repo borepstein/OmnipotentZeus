@@ -1,3 +1,4 @@
+from config import *
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -114,6 +115,7 @@ class Internalnetworkdata(Base):
 class Processoraggdata(Base):
     __tablename__ = 'xiaoice_processoraggdata'
     id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
     vm_id = Column(Integer, nullable=False)
     os_id = Column(Integer, nullable=False)
     month_min = Column(Float(30), nullable=True)
@@ -136,6 +138,7 @@ class Processoraggdata(Base):
 class Memoryaggdata(Base):
     __tablename__ = 'xiaoice_memoryaggdata'
     id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
     vm_id = Column(Integer, nullable=False)
     os_id = Column(Integer, nullable=False)
     month_min = Column(Float(30), nullable=True)
@@ -158,6 +161,7 @@ class Memoryaggdata(Base):
 class Localdiskaggdata(Base):
     __tablename__ = 'xiaoice_localdiskaggdata'
     id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
     vm_id = Column(Integer, nullable=False)
     os_id = Column(Integer, nullable=False)
     iops_read_seq_month_min = Column(Float(30), nullable=True)
@@ -345,6 +349,7 @@ class Localdiskaggdata(Base):
 class Blockdiskaggdata(Base):
     __tablename__ = 'xiaoice_blockdiskaggdata'
     id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
     vm_id = Column(Integer, nullable=False)
     disk_size_id = Column(Integer, nullable=False)
     os_id = Column(Integer, nullable=False)
@@ -533,6 +538,7 @@ class Blockdiskaggdata(Base):
 class Internalnetworkaggdata(Base):
     __tablename__ = 'xiaoice_internalnetworkaggdata'
     id = Column(Integer, primary_key=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
     vm_id = Column(Integer, nullable=False)
     os_id = Column(Integer, nullable=False)
     single_threaded_throughput_month_min = Column(Float(30), nullable=True)
@@ -568,7 +574,7 @@ class Internalnetworkaggdata(Base):
 
 
 # DB connection format: "engine://user:password@host:port/database"
-Ignition = create_engine("mysql://root:inapp@localhost:3306/perf_forecast2")
+Ignition = create_engine("mysql://%s:%s@%s:3306/%s" % (db_user, db_password, db_host, db_name))
 
 # Create DB schema
 Base.metadata.create_all(Ignition)
