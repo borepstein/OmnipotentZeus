@@ -29,7 +29,7 @@ internal_net_time = '60'  # please enter the time, in seconds, that you want ipe
 # Duration and duration value will limit the time the suite will be running for.
 # Either duration or number of iterations must complete in order for the testing to stop.
 sleeptime = 0  # in seconds
-iterations = 1
+iterations = 2
 duration = 24
 duration_value = "hours"  # please enter seconds, minutes, hours, or days
 if duration_value.lower() == "seconds":
@@ -43,8 +43,8 @@ elif duration_value.lower() == "days":
 
 # GEEKBENCH LICENSE
 # Email and Key for unlocking the license
-email = 'contact@cloudspectator.com'
-key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
+gb_email = 'contact@cloudspectator.com'
+gb_key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 
 # DIRECTORY
 # The directory that houses the Geekbench 3 suite

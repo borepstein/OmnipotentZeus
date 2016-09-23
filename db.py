@@ -1,10 +1,17 @@
 from config import *
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime, create_engine
+from sqlalchemy import Table, MetaData, Column, Integer, String, Float, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
+metadata = MetaData()
+xiaoice_table = {}
+xiaoice_table['provider'] = Table('xiaoice_provider', metadata,
+    Column('id', Integer, primary_key=True),
+    Column('key', String),
+    Column('display', String),
+)
 
 class Processordata(Base):
     __tablename__ = 'xiaoice_processordata'
@@ -67,6 +74,18 @@ class Localdiskdata(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     vm_id = Column(Integer, nullable=False)
     os_id = Column(Integer, nullable=True)
+    iops_write_100_seq = Column(Float(30), nullable=True)
+    throughput_write_100_seq = Column(Float(30), nullable=True)
+    lat_write_100_seq = Column(Float(30), nullable=True)
+    iops_read_100_seq = Column(Float(30), nullable=True)
+    throughput_read_100_seq = Column(Float(30), nullable=True)
+    lat_read_100_seq = Column(Float(30), nullable=True)
+    iops_write_100_random = Column(Float(30), nullable=True)
+    throughput_write_100_random = Column(Float(30), nullable=True)
+    lat_write_100_random = Column(Float(30), nullable=True)
+    iops_read_100_random = Column(Float(30), nullable=True)
+    throughput_read_100_random = Column(Float(30), nullable=True)
+    lat_read_100_random = Column(Float(30), nullable=True)
     iops_read_seq = Column(Float(30), nullable=True)
     iops_write_seq = Column(Float(30), nullable=True)
     iops_read_random = Column(Float(30), nullable=True)
@@ -88,6 +107,18 @@ class Blockdiskdata(Base):
     vm_id = Column(Integer, nullable=False)
     disk_size_id = Column(Integer, nullable=True)
     os_id = Column(Integer, nullable=True)
+    iops_write_100_seq = Column(Float(30), nullable=True)
+    throughput_write_100_seq = Column(Float(30), nullable=True)
+    lat_write_100_seq = Column(Float(30), nullable=True)
+    iops_read_100_seq = Column(Float(30), nullable=True)
+    throughput_read_100_seq = Column(Float(30), nullable=True)
+    lat_read_100_seq = Column(Float(30), nullable=True)
+    iops_write_100_random = Column(Float(30), nullable=True)
+    throughput_write_100_random = Column(Float(30), nullable=True)
+    lat_write_100_random = Column(Float(30), nullable=True)
+    iops_read_100_random = Column(Float(30), nullable=True)
+    throughput_read_100_random = Column(Float(30), nullable=True)
+    lat_read_100_random = Column(Float(30), nullable=True)
     iops_read_seq = Column(Float(30), nullable=True)
     iops_write_seq = Column(Float(30), nullable=True)
     iops_read_random = Column(Float(30), nullable=True)
@@ -571,7 +602,6 @@ class Internalnetworkaggdata(Base):
     multi_threaded_throughput_lifetime_75 = Column(Float(30), nullable=True)
     multi_threaded_throughput_lifetime_max = Column(Float(30), nullable=True)
     multi_threaded_throughput_lifetime_median = Column(Float(30), nullable=True)
-
 
 # DB connection format: "engine://user:password@host:port/database"
 Ignition = create_engine("mysql://%s:%s@%s:3306/%s" % (db_user, db_password, db_host, db_name))

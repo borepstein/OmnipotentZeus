@@ -9,10 +9,10 @@ class AggregateGenerator:
     def __init__(self):
         # Enable / disable aggregate data collection
         self.processordata = "y"
-        self.memorydata = "y"
-        self.localdiskdata = "y"
-        self.blockdiskdata = "y"
-        self.internalnetworkdata = "y"
+        self.memorydata = "n"
+        self.localdiskdata = "n"
+        self.blockdiskdata = "n"
+        self.internalnetworkdata = "n"
 
         self.term_list = ['month', 'year', 'lifetime']
         self.timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
@@ -26,7 +26,7 @@ class AggregateGenerator:
 
     def generate_aggregates(self):
 
-        self.cur.execute("SELECT id from xiaoice_virtualmachine")
+        self.cur.execute("SELECT id FROM xiaoice_virtualmachine")
         results = self.cur.fetchall()
 
         for result in results:
