@@ -1,14 +1,14 @@
 # DATABASE CREDENTIALS
-db_host = "192.168.20.42"
-db_user = "root"
-db_password = "inapp"
-db_name = "perf_forecast"
+db_host = "104.131.53.14"
+db_user = "remote"
+db_password = "800BoylstonClouds"
+db_name = "forecast"
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
 geekbench = 'y'  # system tests
-fio = 'n'  # disk tests
-iperf = 'n'  # internal network tests
+fio = 'y'  # disk tests
+iperf = 'y'  # internal network tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information

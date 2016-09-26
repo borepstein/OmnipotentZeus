@@ -1,17 +1,55 @@
 from config import *
 from datetime import datetime
-from sqlalchemy import Table, MetaData, Column, Integer, String, Float, DateTime, create_engine
+from sqlalchemy import MetaData, Column, Integer, String, Float, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
-
 metadata = MetaData()
-xiaoice_table = {}
-xiaoice_table['provider'] = Table('xiaoice_provider', metadata,
-    Column('id', Integer, primary_key=True),
-    Column('key', String),
-    Column('display', String),
-)
+
+
+class Virtualmachine(Base):
+    __tablename__ = 'xiaoice_virtualmachine'
+    id = Column(Integer, primary_key=True)
+    key = Column(String)
+    display = Column(String)
+    location_id = Column(Integer)
+    provider_id = Column(Integer)
+
+
+class Provider(Base):
+    __tablename__ = 'xiaoice_provider'
+    id = Column(Integer, primary_key=True)
+    key = Column(String)
+    display = Column(String)
+
+
+class Location(Base):
+    __tablename__ = 'xiaoice_location'
+    id = Column(Integer, primary_key=True)
+    key = Column(String)
+    display = Column(String)
+
+
+class Operatingsystem(Base):
+    __tablename__ = 'xiaoice_operatingsystem'
+    id = Column(Integer, primary_key=True)
+    key = Column(String)
+    display = Column(String)
+
+
+class Cores(Base):
+    __tablename__ = 'xiaoice_cores'
+    id = Column(Integer, primary_key=True)
+    key = Column(String)
+    number = Column(String)
+
+
+class Disksizes(Base):
+    __tablename__ = 'xiaoice_disksizes'
+    id = Column(Integer, primary_key=True)
+    key = Column(String)
+    size = Column(String)
+
 
 class Processordata(Base):
     __tablename__ = 'xiaoice_processordata'
@@ -602,6 +640,7 @@ class Internalnetworkaggdata(Base):
     multi_threaded_throughput_lifetime_75 = Column(Float(30), nullable=True)
     multi_threaded_throughput_lifetime_max = Column(Float(30), nullable=True)
     multi_threaded_throughput_lifetime_median = Column(Float(30), nullable=True)
+
 
 # DB connection format: "engine://user:password@host:port/database"
 Ignition = create_engine("mysql://%s:%s@%s:3306/%s" % (db_user, db_password, db_host, db_name))

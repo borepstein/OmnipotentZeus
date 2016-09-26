@@ -1,18 +1,19 @@
 import os
 import csv
 import json
+import platform
 import subprocess as sub
 from config import *
-from collections import OrderedDict as od
 from datetime import datetime
 from time import sleep, time
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql import select
-from db import Base, Ignition, Processordata, Memorydata, Localdiskdata, Blockdiskdata, Internalnetworkdata, xiaoice_table
+from collections import OrderedDict as od
+from db import Base, Ignition, Processordata, Memorydata, Localdiskdata, Blockdiskdata, Internalnetworkdata, \
+    Virtualmachine, Provider, Location, Operatingsystem, Cores, Disksizes
 
 # Bind Ignition to the metadata of the Base class
 Base.metadata.bind = Ignition
-DBSession = sessionmaker(bind=Ignition)
+Session = sessionmaker(bind=Ignition)
 
 # ==================== GLOBAL INTRODUCTION ==================== #
 os.system('clear')
@@ -21,54 +22,6 @@ print "|    Omnipotent Hera     |"
 print "|          v1.0          |"
 print "|------------------------|"
 print "\n"
-
-# ==================== DUMMY JSON DATA ==================== #
-conn = Ignition.connect()
-
-def get_entity_id(provider_data, provider_name):
-    k = dict((d['key'], dict(d, index=index)) for (index, d) in enumerate(provider_data))
-    return k[provider_name]['id']
-
-s = select([xiaoice_table['provider']])
-results = conn.execute(s)
-provider_data = [(dict(row.items())) for row in results]
-
-provider_name = raw_input("\nPlease enter the Provider: ")
-provider_name = provider_name.lower()
-
-# provider_data = {
-#     1: "aws",
-#     2: "azure"
-# }
-
-provider_location_data = {
-    1: "us-east-1",
-    2: "us-west-1",
-    3: "us-west-2"
-}
-
-vm_data = {
-    1: "small",
-    2: "medium",
-    3: "big"
-}
-
-os_data = {
-    1: "linux",
-    2: "windows"
-}
-
-cores_data = {
-    1: "1",
-    2: "2",
-    3: "4"
-}
-
-disk_size_data = {
-    1: "100",
-    2: "500",
-    3: "1000"
-}
 
 # ==================== GLOBAL INSTALLER ==================== #
 if geekbench == 'y':
@@ -83,58 +36,80 @@ if fio == 'y':
 if iperf == 'y':
     os.system('apt-get install iperf')
 
+
 # ==================== RAW INPUT ==================== #
+def get_data(table, key):
+    session = Session()
+    id = session.query(table.id).filter(table.key == key).one().id
+    session.close()
+    return id
+
+
+def get_vm_data(table, vm_name, provider_id, location_id):
+    session = Session()
+    vm_id = session.query(table.id).filter(table.key == vm_name,
+                                           table.provider_id == provider_id,
+                                           table.location_id == location_id).one().id
+    session.close()
+    return vm_id
+
+
 # Provider name
 provider_name = raw_input("\nPlease enter the Provider: ")
 provider_name = provider_name.lower()
 
 try:
-    provider_id = get_entity_id(provider_data, provider_name)
+    provider_id = get_data(Provider, provider_name)
 except ValueError as e:
     print "\nInvalid data for Provider input"
     exit()
 
 # Location
-provider_location = raw_input("\nPlease enter the Provider location: ")
-provider_location = provider_location.lower()
+location_name = raw_input("\nPlease enter the Provider location: ")
+location_name = location_name.lower()
 
 try:
-    provider_location_id = provider_location_data.keys()[provider_location_data.values().index(provider_location)]
+    location_id = get_data(Location, location_name)
 except ValueError as e:
     print "\nInvalid data for Provider location"
     exit()
 
-# VM name
+# Virtual Machine
 vm_name = raw_input("\nPlease enter the VM name: ")
 vm_name = vm_name.lower()
 
 try:
-    vm_id = vm_data.keys()[vm_data.values().index(vm_name)]
+    vm_id = get_vm_data(Virtualmachine, vm_name, provider_id, location_id)
 except ValueError as e:
     print "\nInvalid data for VM input"
     exit()
 
 # Operating system
-os_name = raw_input("\nPlease enter the Operating system: ")
-os_name = os_name.lower()
+os_name = platform.system().lower()
 
 try:
-    os_id = os_data.keys()[os_data.values().index(os_name)]
+    os_id = get_data(Operatingsystem, os_name)
 except ValueError as e:
     print "\nInvalid data for OS input"
     exit()
 
-processor_info = ""
-# Getting CPU Amount
+# Fetch CPU amount
 v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
 v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
 v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
-cores = v3.communicate()[0]
-cores = cores.strip()
+core_count = v3.communicate()[0]
+core_count = core_count.strip()
+
+if core_count is '1':
+    core_type = 'single'
+elif core_count is '2':
+    core_type = 'dual'
+elif core_count is '4':
+    core_type = 'quad'
 
 # Cores
 try:
-    cores_id = cores_data.keys()[cores_data.values().index(cores)]
+    core_id = get_data(Cores, core_type)
 except ValueError as e:
     print "\nInvalid data for CPU cores"
     exit()
@@ -166,7 +141,7 @@ if fio == 'y':
     disk_size = disk_size.lower()
 
     try:
-        disk_size_id = disk_size_data.keys()[disk_size_data.values().index(disk_size)]
+        disk_size_id = get_data(Disksizes, disk_size)
     except ValueError as e:
         print "\nInvalid data for Disk sizes"
         exit()
@@ -275,56 +250,56 @@ for x in range(iterations):
             y = y + 1
         values = od(values)
 
-        session = DBSession()
+        session = Session()
         try:
             Open_Processordata = Processordata(
-                vm_id=vm_id,
-                os_id=os_id,
-                processor=processor_info,
-                performance=values['Total'],
-                runtime=values['Runtime'],
-                intmulti=values['Integer Multicore'],
-                floatmulti=values['Floating Point Multicore'],
-                totalmulti=values['Total'],
-                intsingle=values['Integer Singlecore'],
-                floatsingle=values['Floating Point Singlecore'],
-                totalsingle=values['Total Single'],
-                aes=values['AES'],
-                twofish=values['Twofish'],
-                sha1=values['SHA1'],
-                sha2=values['SHA2'],
-                bzipcompression=values['BZip2 Compress'],
-                bzipdecompression=values['BZip2 Decompress'],
-                jpegcompression=values['JPEG Compress'],
-                jpegdecompression=values['JPEG Decompress'],
-                pngcompression=values['PNG Compress'],
-                pngdecompression=values['PNG Decompress'],
-                sobel=values['Sobel'],
-                lua=values['Lua'],
-                dijkstra=values['Dijkstra'],
-                blackscholes=values['BlackScholes'].split(' ')[0],
-                mandelbrot=values['Mandelbrot'],
-                sharpenimage=values['Sharpen Filter'],
-                blurimage=values['Blur Filter'],
-                sgemm=values['SGEMM'],
-                dgemm=values['DGEMM'],
-                sfft=values['SFFT'],
-                dfft=values['DFFT'],
-                nbody=values['N-Body'],
-                raytrace=values['Ray Trace'])
+                    vm_id=vm_id,
+                    os_id=os_id,
+                    processor=processor_info,
+                    performance=values['Total'],
+                    runtime=values['Runtime'],
+                    intmulti=values['Integer Multicore'],
+                    floatmulti=values['Floating Point Multicore'],
+                    totalmulti=values['Total'],
+                    intsingle=values['Integer Singlecore'],
+                    floatsingle=values['Floating Point Singlecore'],
+                    totalsingle=values['Total Single'],
+                    aes=values['AES'],
+                    twofish=values['Twofish'],
+                    sha1=values['SHA1'],
+                    sha2=values['SHA2'],
+                    bzipcompression=values['BZip2 Compress'],
+                    bzipdecompression=values['BZip2 Decompress'],
+                    jpegcompression=values['JPEG Compress'],
+                    jpegdecompression=values['JPEG Decompress'],
+                    pngcompression=values['PNG Compress'],
+                    pngdecompression=values['PNG Decompress'],
+                    sobel=values['Sobel'],
+                    lua=values['Lua'],
+                    dijkstra=values['Dijkstra'],
+                    blackscholes=values['BlackScholes'].split(' ')[0],
+                    mandelbrot=values['Mandelbrot'],
+                    sharpenimage=values['Sharpen Filter'],
+                    blurimage=values['Blur Filter'],
+                    sgemm=values['SGEMM'],
+                    dgemm=values['DGEMM'],
+                    sfft=values['SFFT'],
+                    dfft=values['DFFT'],
+                    nbody=values['N-Body'],
+                    raytrace=values['Ray Trace'])
             session.add(Open_Processordata)
             session.commit()
 
             Open_Memorydata = Memorydata(
-                vm_id=vm_id,
-                os_id=os_id,
-                bandwidth=values['Stream Triad'],
-                copy=values['Stream Copy'],
-                scale=values['Stream Scale'],
-                add=values['Stream Add'],
-                triad=values['Stream Triad'],
-                memsingle=values['Memory Singlecore'],
-                memmulti=values['Memory Multicore'])
+                    vm_id=vm_id,
+                    os_id=os_id,
+                    bandwidth=values['Stream Triad'],
+                    copy=values['Stream Copy'],
+                    scale=values['Stream Scale'],
+                    add=values['Stream Add'],
+                    triad=values['Stream Triad'],
+                    memsingle=values['Memory Singlecore'],
+                    memmulti=values['Memory Multicore'])
             session.add(Open_Memorydata)
             session.commit()
             print "\nCompleted Geekbench test and transferred results to database"
@@ -339,10 +314,12 @@ for x in range(iterations):
 
         def fio_command_generator(option):
             global fio_command
-            fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
+            fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime,
+                           fio_direct,
                            '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
                            '-exitall']
             return fio_command
+
 
         def spider_egg_exterminator():
             fio_json.close()
@@ -354,6 +331,7 @@ for x in range(iterations):
                 except:
                     pass
 
+
         def clean_fio_json_result(fio_json_file):
             with open(fio_json_file, "r+") as f:
                 lines = f.readlines()
@@ -363,6 +341,7 @@ for x in range(iterations):
                         f.write(l)
                 f.truncate()
                 f.close()
+
 
         script_dir = os.getcwd()
         os.chmod(fio_path, 0775)
@@ -426,68 +405,68 @@ for x in range(iterations):
                 spider_egg_exterminator()
 
         os.chdir(script_dir)
-        session = DBSession()
+        session = Session()
         try:
             if disk_type.lower() == "local":
                 Open_Localdiskdata = Localdiskdata(
-                    vm_id=vm_id,
-                    os_id=os_id,
-                    iops_write_100_seq=iops_write_100_seq,
-                    throughput_write_100_seq=throughput_write_100_seq,
-                    lat_write_100_seq=lat_write_100_seq,
-                    iops_read_100_seq=iops_read_100_seq,
-                    throughput_read_100_seq=throughput_read_100_seq,
-                    lat_read_100_seq=lat_read_100_seq,
-                    iops_write_100_random=iops_write_100_random,
-                    throughput_write_100_random=throughput_write_100_random,
-                    lat_write_100_random=lat_write_100_random,
-                    iops_read_100_random=iops_read_100_random,
-                    throughput_read_100_random=throughput_read_100_random,
-                    lat_read_100_random=lat_read_100_random,
-                    iops_read_random=iops_read_random,
-                    iops_write_random=iops_write_random,
-                    throughput_read_random=throughput_read_random,
-                    throughput_write_random=throughput_write_random,
-                    iops_read_seq=iops_read_seq,
-                    iops_write_seq=iops_write_seq,
-                    throughput_read_seq=throughput_read_seq,
-                    throughput_write_seq=throughput_write_seq,
-                    latency_read_seq=lat_read_seq,
-                    latency_write_seq=lat_write_seq,
-                    latency_read_random=lat_read_random,
-                    latency_write_random=lat_write_random)
+                        vm_id=vm_id,
+                        os_id=os_id,
+                        iops_write_100_seq=iops_write_100_seq,
+                        throughput_write_100_seq=throughput_write_100_seq,
+                        lat_write_100_seq=lat_write_100_seq,
+                        iops_read_100_seq=iops_read_100_seq,
+                        throughput_read_100_seq=throughput_read_100_seq,
+                        lat_read_100_seq=lat_read_100_seq,
+                        iops_write_100_random=iops_write_100_random,
+                        throughput_write_100_random=throughput_write_100_random,
+                        lat_write_100_random=lat_write_100_random,
+                        iops_read_100_random=iops_read_100_random,
+                        throughput_read_100_random=throughput_read_100_random,
+                        lat_read_100_random=lat_read_100_random,
+                        iops_read_random=iops_read_random,
+                        iops_write_random=iops_write_random,
+                        throughput_read_random=throughput_read_random,
+                        throughput_write_random=throughput_write_random,
+                        iops_read_seq=iops_read_seq,
+                        iops_write_seq=iops_write_seq,
+                        throughput_read_seq=throughput_read_seq,
+                        throughput_write_seq=throughput_write_seq,
+                        latency_read_seq=lat_read_seq,
+                        latency_write_seq=lat_write_seq,
+                        latency_read_random=lat_read_random,
+                        latency_write_random=lat_write_random)
                 session.add(Open_Localdiskdata)
                 session.commit()
 
             elif disk_type.lower() == "block":
                 Open_Blockdiskdata = Blockdiskdata(
-                    vm_id=vm_id,
-                    disk_size_id=disk_size_id,
-                    os_id=os_id,
-                    iops_write_100_seq=iops_write_100_seq,
-                    throughput_write_100_seq=throughput_write_100_seq,
-                    lat_write_100_seq=lat_write_100_seq,
-                    iops_read_100_seq=iops_read_100_seq,
-                    throughput_read_100_seq=throughput_read_100_seq,
-                    lat_read_100_seq=lat_read_100_seq,
-                    iops_write_100_random=iops_write_100_random,
-                    throughput_write_100_random=throughput_write_100_random,
-                    lat_write_100_random=lat_write_100_random,
-                    iops_read_100_random=iops_read_100_random,
-                    throughput_read_100_random=throughput_read_100_random,
-                    lat_read_100_random=lat_read_100_random,
-                    iops_read_random=iops_read_random,
-                    iops_write_random=iops_write_random,
-                    throughput_read_random=throughput_read_random,
-                    throughput_write_random=throughput_write_random,
-                    iops_read_seq=iops_read_seq,
-                    iops_write_seq=iops_write_seq,
-                    throughput_read_seq=throughput_read_seq,
-                    throughput_write_seq=throughput_write_seq,
-                    latency_read_seq=lat_read_seq,
-                    latency_write_seq=lat_write_seq,
-                    latency_read_random=lat_read_random,
-                    latency_write_random=lat_write_random)
+                        vm_id=vm_id,
+                        disk_size_id=disk_size_id,
+                        os_id=os_id,
+                        iops_write_100_seq=iops_write_100_seq,
+                        throughput_write_100_seq=throughput_write_100_seq,
+                        lat_write_100_seq=lat_write_100_seq,
+                        iops_read_100_seq=iops_read_100_seq,
+                        throughput_read_100_seq=throughput_read_100_seq,
+                        lat_read_100_seq=lat_read_100_seq,
+                        iops_write_100_random=iops_write_100_random,
+                        throughput_write_100_random=throughput_write_100_random,
+                        lat_write_100_random=lat_write_100_random,
+                        iops_read_100_random=iops_read_100_random,
+                        throughput_read_100_random=throughput_read_100_random,
+                        lat_read_100_random=lat_read_100_random,
+                        iops_read_random=iops_read_random,
+                        iops_write_random=iops_write_random,
+                        throughput_read_random=throughput_read_random,
+                        throughput_write_random=throughput_write_random,
+                        iops_read_seq=iops_read_seq,
+                        iops_write_seq=iops_write_seq,
+                        throughput_read_seq=throughput_read_seq,
+                        throughput_write_seq=throughput_write_seq,
+                        latency_read_seq=lat_read_seq,
+                        latency_write_seq=lat_write_seq,
+                        latency_read_random=lat_read_random,
+                        latency_write_random=lat_write_random)
                 session.add(Open_Blockdiskdata)
                 session.commit()
                 print "\n\nCompleted FIO disk tests and transferred results to database"
@@ -511,7 +490,7 @@ for x in range(iterations):
         os.remove(internal_net_csv_file)
 
         # Multi-threaded test
-        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time, '-P', cores,
+        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time, '-P', core_count,
                   '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
 
         opener = open(internal_net_csv_file)
@@ -520,13 +499,13 @@ for x in range(iterations):
             multi_threaded_throughput = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
 
-        session = DBSession()
+        session = Session()
         try:
             Open_Internalnetworkdata = Internalnetworkdata(
-                vm_id=vm_id,
-                os_id=os_id,
-                single_threaded_throughput=single_threaded_throughput,
-                multi_threaded_throughput=multi_threaded_throughput)
+                    vm_id=vm_id,
+                    os_id=os_id,
+                    single_threaded_throughput=single_threaded_throughput,
+                    multi_threaded_throughput=multi_threaded_throughput)
             session.add(Open_Internalnetworkdata)
             session.commit()
             print "\nCompleted iperf internal network test and transferred results to database"
