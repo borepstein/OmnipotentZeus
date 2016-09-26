@@ -40,16 +40,24 @@ if iperf == 'y':
 # ==================== RAW INPUT ==================== #
 def get_data(table, key):
     session = Session()
-    id = session.query(table.id).filter(table.key == key).one().id
+    try:
+        id = session.query(table.id).filter(table.key == key).one().id
+    except Exception as e:
+        print "\n====== Program terminated due to invalid input ======\n"
+        exit()
     session.close()
     return id
 
 
 def get_vm_data(table, vm_name, provider_id, location_id):
     session = Session()
-    vm_id = session.query(table.id).filter(table.key == vm_name,
-                                           table.provider_id == provider_id,
-                                           table.location_id == location_id).one().id
+    try:
+        vm_id = session.query(table.id).filter(table.key == vm_name,
+                                               table.provider_id == provider_id,
+                                               table.location_id == location_id).one().id
+    except Exception as e:
+        print "\n====== Program terminated due to invalid input ======\n"
+        exit()
     session.close()
     return vm_id
 
@@ -57,41 +65,21 @@ def get_vm_data(table, vm_name, provider_id, location_id):
 # Provider name
 provider_name = raw_input("\nPlease enter the Provider: ")
 provider_name = provider_name.lower()
-
-try:
-    provider_id = get_data(Provider, provider_name)
-except ValueError as e:
-    print "\nInvalid data for Provider input"
-    exit()
+provider_id = get_data(Provider, provider_name)
 
 # Location
 location_name = raw_input("\nPlease enter the Provider location: ")
 location_name = location_name.lower()
-
-try:
-    location_id = get_data(Location, location_name)
-except ValueError as e:
-    print "\nInvalid data for Provider location"
-    exit()
+location_id = get_data(Location, location_name)
 
 # Virtual Machine
 vm_name = raw_input("\nPlease enter the VM name: ")
 vm_name = vm_name.lower()
-
-try:
-    vm_id = get_vm_data(Virtualmachine, vm_name, provider_id, location_id)
-except ValueError as e:
-    print "\nInvalid data for VM input"
-    exit()
+vm_id = get_vm_data(Virtualmachine, vm_name, provider_id, location_id)
 
 # Operating system
 os_name = platform.system().lower()
-
-try:
-    os_id = get_data(Operatingsystem, os_name)
-except ValueError as e:
-    print "\nInvalid data for OS input"
-    exit()
+os_id = get_data(Operatingsystem, os_name)
 
 # Fetch CPU amount
 v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
@@ -108,11 +96,7 @@ elif core_count is '4':
     core_type = 'quad'
 
 # Cores
-try:
-    core_id = get_data(Cores, core_type)
-except ValueError as e:
-    print "\nInvalid data for CPU cores"
-    exit()
+core_id = get_data(Cores, core_type)
 
 # RAM Amount
 r1 = sub.Popen(['cat', '/proc/meminfo'], stdout=sub.PIPE)
@@ -139,12 +123,7 @@ if fio == 'y':
     # Disk sizes
     disk_size = raw_input("\nPlease enter the Disk size: ")
     disk_size = disk_size.lower()
-
-    try:
-        disk_size_id = get_data(Disksizes, disk_size)
-    except ValueError as e:
-        print "\nInvalid data for Disk sizes"
-        exit()
+    disk_size_id = get_data(Disksizes, disk_size)
 
     fio_op_types = ['-rw=write', '-rw=read', '-rw=randwrite', '-rw=randread', '-rw=rw', '-rw=randrw']
 
@@ -302,7 +281,7 @@ for x in range(iterations):
                     memmulti=values['Memory Multicore'])
             session.add(Open_Memorydata)
             session.commit()
-            print "\nCompleted Geekbench test and transferred results to database"
+            print "\n====== Completed Geekbench test and transferred results to database ======"
         except Exception as e:
             session.rollback()
             raise e
@@ -469,7 +448,7 @@ for x in range(iterations):
                         latency_write_random=lat_write_random)
                 session.add(Open_Blockdiskdata)
                 session.commit()
-                print "\n\nCompleted FIO disk tests and transferred results to database"
+                print "\n\n====== Completed FIO disk tests and transferred results to database ======"
         except Exception as e:
             session.rollback()
             raise e
@@ -508,7 +487,7 @@ for x in range(iterations):
                     multi_threaded_throughput=multi_threaded_throughput)
             session.add(Open_Internalnetworkdata)
             session.commit()
-            print "\nCompleted iperf internal network test and transferred results to database"
+            print "\n====== Completed iperf internal network test and transferred results to database ======"
         except Exception as e:
             session.rollback()
             raise e
