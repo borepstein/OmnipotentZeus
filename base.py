@@ -43,7 +43,7 @@ def get_data(table, key):
     try:
         id = session.query(table.id).filter(table.key == key).one().id
     except Exception as e:
-        print "\n====== Program terminated due to invalid input ======\n"
+        print "\n------ Program terminated due to invalid input ------\n"
         exit()
     session.close()
     return id
@@ -56,7 +56,7 @@ def get_vm_data(table, vm_name, provider_id, location_id):
                                                table.provider_id == provider_id,
                                                table.location_id == location_id).one().id
     except Exception as e:
-        print "\n====== Program terminated due to invalid input ======\n"
+        print "\n------= Program terminated due to invalid input ------\n"
         exit()
     session.close()
     return vm_id
@@ -68,7 +68,7 @@ provider_name = provider_name.lower()
 provider_id = get_data(Provider, provider_name)
 
 # Location
-location_name = raw_input("\nPlease enter the Provider location: ")
+location_name = raw_input("\nPlease enter the Location: ")
 location_name = location_name.lower()
 location_id = get_data(Location, location_name)
 
@@ -117,7 +117,7 @@ if fio == 'y':
     elif disk_type.lower() == "block":
         fio_path = raw_input("\nPlease enter the Block storage path to run FIO test (Eg:- /home/mnt/): ")
     else:
-        print "\nInvalid entry for Disk type"
+        print "\n------ Invalid entry for Disk type ------"
         exit()
 
     # Disk sizes
@@ -281,7 +281,7 @@ for x in range(iterations):
                     memmulti=values['Memory Multicore'])
             session.add(Open_Memorydata)
             session.commit()
-            print "\n====== Completed Geekbench test and transferred results to database ======"
+            print "\n------ Completed Geekbench test and transferred results to database ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -448,7 +448,7 @@ for x in range(iterations):
                         latency_write_random=lat_write_random)
                 session.add(Open_Blockdiskdata)
                 session.commit()
-                print "\n\n====== Completed FIO disk tests and transferred results to database ======"
+                print "\n\n------ Completed FIO disk tests and transferred results to database ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -487,7 +487,7 @@ for x in range(iterations):
                     multi_threaded_throughput=multi_threaded_throughput)
             session.add(Open_Internalnetworkdata)
             session.commit()
-            print "\n====== Completed iperf internal network test and transferred results to database ======"
+            print "\n------ Completed iperf internal network test and transferred results to database ------"
         except Exception as e:
             session.rollback()
             raise e
