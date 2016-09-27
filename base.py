@@ -38,7 +38,7 @@ if iperf == 'y':
 
 
 # ==================== RAW INPUT ==================== #
-def get_data(table, key):
+def get_id(table, key):
     session = Session()
     try:
         id = session.query(table.id).filter(table.key == key).one().id
@@ -49,14 +49,14 @@ def get_data(table, key):
     return id
 
 
-def get_vm_data(table, vm_name, provider_id, location_id):
+def get_vm_id(table, vm_name, provider_id, location_id):
     session = Session()
     try:
         vm_id = session.query(table.id).filter(table.key == vm_name,
                                                table.provider_id == provider_id,
                                                table.location_id == location_id).one().id
     except Exception as e:
-        print "\n------= Program terminated due to invalid input ------\n"
+        print "\n------ Program terminated due to invalid input ------\n"
         exit()
     session.close()
     return vm_id
@@ -65,21 +65,21 @@ def get_vm_data(table, vm_name, provider_id, location_id):
 # Provider name
 provider_name = raw_input("\nPlease enter the Provider: ")
 provider_name = provider_name.lower()
-provider_id = get_data(Provider, provider_name)
+provider_id = get_id(Provider, provider_name)
 
 # Location
 location_name = raw_input("\nPlease enter the Location: ")
 location_name = location_name.lower()
-location_id = get_data(Location, location_name)
+location_id = get_id(Location, location_name)
 
 # Virtual Machine
 vm_name = raw_input("\nPlease enter the VM name: ")
 vm_name = vm_name.lower()
-vm_id = get_vm_data(Virtualmachine, vm_name, provider_id, location_id)
+vm_id = get_vm_id(Virtualmachine, vm_name, provider_id, location_id)
 
 # Operating system
 os_name = platform.system().lower()
-os_id = get_data(Operatingsystem, os_name)
+os_id = get_id(Operatingsystem, os_name)
 
 # Fetch CPU amount
 v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
@@ -96,7 +96,7 @@ elif core_count is '4':
     core_type = 'quad'
 
 # Cores
-core_id = get_data(Cores, core_type)
+core_id = get_id(Cores, core_type)
 
 # RAM Amount
 r1 = sub.Popen(['cat', '/proc/meminfo'], stdout=sub.PIPE)
@@ -123,7 +123,7 @@ if fio == 'y':
     # Disk sizes
     disk_size = raw_input("\nPlease enter the Disk size: ")
     disk_size = disk_size.lower()
-    disk_size_id = get_data(Disksizes, disk_size)
+    disk_size_id = get_id(Disksizes, disk_size)
 
     fio_op_types = ['-rw=write', '-rw=read', '-rw=randwrite', '-rw=randread', '-rw=rw', '-rw=randrw']
 
