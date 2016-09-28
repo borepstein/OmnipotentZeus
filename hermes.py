@@ -4,7 +4,6 @@ import json
 import os
 import csv
 import subprocess as sub
-import smtplib as smtp
 from time import sleep, time
 from collections import OrderedDict as od
 from prometheus import Base, Olympus
@@ -69,8 +68,7 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
         os.system('apt-get install sysbench')
 
 if fio == 'y':
-    fio_rand_rw = '-rw=randrw'  # randread for random read, randwrite for random write, and randrw to do both operations
-    fio_seq_rw = '-rw=rw'  # read for sequential read, write for sequential write, and rw to do both operations
+    fio_op_types = ['-rw=write', '-rw=read', '-rw=randwrite', '-rw=randread', '-rw=rw', '-rw=randrw']
 
     fio_blocksize = '-bs=' + blocksize + 'k'
     fio_filesize = '-size=' + filesize + "M"
@@ -138,7 +136,7 @@ provider_region = "N/A"
 vm_input = raw_input("Please enter the VM name (if no VM name, just say vCPU/RAM in GB (e.g., 2vCPU/4GB): ")
 vm_input = vm_input.lower()
 vmcount_input = raw_input(
-    "Which VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
+        "Which VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
 local_input = "0"
 block_input = "0"
 
@@ -243,14 +241,15 @@ for x in range(iterations):
         values = od(values)
         print "\ncompleted geekbench test"
 
+
     def fio_command_generator(option):
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
                        '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
                        '-exitall']
         print "\n"
-        print fio_command
         return fio_command
+
 
     def fio_async_command_generator(option):
         global fio_command
@@ -258,8 +257,8 @@ for x in range(iterations):
                        '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
                        '-iodepth=32', '-ioengine=libaio', '-exitall']
         print "\n"
-        print fio_command
         return fio_command
+
 
     def spider_egg_exterminator():
         fio_json.close()
@@ -271,6 +270,7 @@ for x in range(iterations):
             except:
                 pass
 
+
     def clean_fio_json_result(fio_json_file):
         with open(fio_json_file, "r+") as f:
             lines = f.readlines()
@@ -281,89 +281,131 @@ for x in range(iterations):
             f.truncate()
             f.close()
 
+
     if fio == 'y':
-        sub.call(fio_command_generator(fio_rand_rw))
-        clean_fio_json_result(fio_json_file)
-        fio_json = open(fio_json_file)
-        fio_data = json.load(fio_json)
 
-        runtime_read_rand = str(fio_data['jobs'][0]['read']['runtime'])
-        runtime_write_rand = str(fio_data['jobs'][0]['write']['runtime'])
-        ops_read_rand = str(fio_data['disk_util'][0]['read_ios'])
-        ops_write_rand = str(fio_data['disk_util'][0]['write_ios'])
-        io_read_rand = str(fio_data['jobs'][0]['read']['io_bytes'])
-        io_write_rand = str(fio_data['jobs'][0]['write']['io_bytes'])
-        iops_read_rand = str(fio_data['jobs'][0]['read']['iops'])
-        iops_write_rand = str(fio_data['jobs'][0]['write']['iops'])
-        bw_read_rand = str(fio_data['jobs'][0]['read']['bw'])
-        bw_write_rand = str(fio_data['jobs'][0]['write']['bw'])
-        ticks_read_rand = str(fio_data['disk_util'][0]['read_ticks'])
-        ticks_write_rand = str(fio_data['disk_util'][0]['write_ticks'])
+        for fio_op_type in fio_op_types:
 
-        spider_egg_exterminator()
-
-        if async_io == 'y':
-            sub.call(fio_async_command_generator(fio_rand_rw))
+            sub.call(fio_command_generator(fio_op_type))
             clean_fio_json_result(fio_json_file)
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
-            runtime_read_rand_async = str(fio_data['jobs'][0]['read']['runtime'])
-            runtime_write_rand_async = str(fio_data['jobs'][0]['write']['runtime'])
-            ops_read_rand_async = str(fio_data['disk_util'][0]['read_ios'])
-            ops_write_rand_async = str(fio_data['disk_util'][0]['write_ios'])
-            io_read_rand_async = str(fio_data['jobs'][0]['read']['io_bytes'])
-            io_write_rand_async = str(fio_data['jobs'][0]['write']['io_bytes'])
-            iops_read_rand_async = str(fio_data['jobs'][0]['read']['iops'])
-            iops_write_rand_async = str(fio_data['jobs'][0]['write']['iops'])
-            bw_read_rand_async = str(fio_data['jobs'][0]['read']['bw'])
-            bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
-            ticks_read_rand_async = str(fio_data['disk_util'][0]['read_ticks'])
-            ticks_write_rand_async = str(fio_data['disk_util'][0]['write_ticks'])
+            if fio_op_type is '-rw=write':
 
-            spider_egg_exterminator()
-        print "\n\ncompleted random disk tests"
+                iops_write_100_seq = str(fio_data['jobs'][0]['write']['iops'])
+                throughput_write_100_seq = str(fio_data['jobs'][0]['write']['bw'])
+                lat_write_100_seq = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
-        sub.call(fio_command_generator(fio_seq_rw))
-        clean_fio_json_result(fio_json_file)
-        fio_json = open(fio_json_file)
-        fio_data = json.load(fio_json)
+            elif fio_op_type is '-rw=read':
 
-        runtime_read_seq = str(fio_data['jobs'][0]['read']['runtime'])
-        runtime_write_seq = str(fio_data['jobs'][0]['write']['runtime'])
-        ops_read_seq = str(fio_data['disk_util'][0]['read_ios'])
-        ops_write_seq = str(fio_data['disk_util'][0]['write_ios'])
-        io_read_seq = str(fio_data['jobs'][0]['read']['io_bytes'])
-        io_write_seq = str(fio_data['jobs'][0]['write']['io_bytes'])
-        iops_read_seq = str(fio_data['jobs'][0]['read']['iops'])
-        iops_write_seq = str(fio_data['jobs'][0]['write']['iops'])
-        bw_read_seq = str(fio_data['jobs'][0]['read']['bw'])
-        bw_write_seq = str(fio_data['jobs'][0]['write']['bw'])
-        ticks_read_seq = str(fio_data['disk_util'][0]['read_ticks'])
-        ticks_write_seq = str(fio_data['disk_util'][0]['write_ticks'])
+                iops_read_100_seq = str(fio_data['jobs'][0]['read']['iops'])
+                throughput_read_100_seq = str(fio_data['jobs'][0]['read']['bw'])
+                lat_read_100_seq = str(fio_data['jobs'][0]['read']['lat']['mean'])
 
-        spider_egg_exterminator()
+                spider_egg_exterminator()
+
+            elif fio_op_type is '-rw=randwrite':
+
+                iops_write_100_rand = str(fio_data['jobs'][0]['write']['iops'])
+                throughput_write_100_rand = str(fio_data['jobs'][0]['write']['bw'])
+                lat_write_100_rand = str(fio_data['jobs'][0]['write']['lat']['mean'])
+
+            elif fio_op_type is '-rw=randread':
+
+                iops_read_100_rand = str(fio_data['jobs'][0]['read']['iops'])
+                throughput_read_100_rand = str(fio_data['jobs'][0]['read']['bw'])
+                lat_read_100_rand = str(fio_data['jobs'][0]['read']['lat']['mean'])
+
+                spider_egg_exterminator()
+
+            elif fio_op_type is '-rw=rw':
+                runtime_read_seq = str(fio_data['jobs'][0]['read']['runtime'])
+                runtime_write_seq = str(fio_data['jobs'][0]['write']['runtime'])
+                io_read_seq = str(fio_data['jobs'][0]['read']['io_bytes'])
+                io_write_seq = str(fio_data['jobs'][0]['write']['io_bytes'])
+                iops_read_seq = str(fio_data['jobs'][0]['read']['iops'])
+                iops_write_seq = str(fio_data['jobs'][0]['write']['iops'])
+                bw_read_seq = str(fio_data['jobs'][0]['read']['bw'])
+                bw_write_seq = str(fio_data['jobs'][0]['write']['bw'])
+
+                spider_egg_exterminator()
+
+            elif fio_op_type is '-rw=randrw':
+
+                runtime_read_rand = str(fio_data['jobs'][0]['read']['runtime'])
+                runtime_write_rand = str(fio_data['jobs'][0]['write']['runtime'])
+                io_read_rand = str(fio_data['jobs'][0]['read']['io_bytes'])
+                io_write_rand = str(fio_data['jobs'][0]['write']['io_bytes'])
+                iops_read_rand = str(fio_data['jobs'][0]['read']['iops'])
+                iops_write_rand = str(fio_data['jobs'][0]['write']['iops'])
+                bw_read_rand = str(fio_data['jobs'][0]['read']['bw'])
+                bw_write_rand = str(fio_data['jobs'][0]['write']['bw'])
+
+                spider_egg_exterminator()
+
         if async_io == 'y':
-            sub.call(fio_async_command_generator(fio_seq_rw))
-            clean_fio_json_result(fio_json_file)
-            fio_json = open(fio_json_file)
-            fio_data = json.load(fio_json)
 
-            runtime_read_seq_async = str(fio_data['jobs'][0]['read']['runtime'])
-            runtime_write_seq_async = str(fio_data['jobs'][0]['write']['runtime'])
-            ops_read_seq_async = str(fio_data['disk_util'][0]['read_ios'])
-            ops_write_seq_async = str(fio_data['disk_util'][0]['write_ios'])
-            io_read_seq_async = str(fio_data['jobs'][0]['read']['io_bytes'])
-            io_write_seq_async = str(fio_data['jobs'][0]['write']['io_bytes'])
-            iops_read_seq_async = str(fio_data['jobs'][0]['read']['iops'])
-            iops_write_seq_async = str(fio_data['jobs'][0]['write']['iops'])
-            bw_read_seq_async = str(fio_data['jobs'][0]['read']['bw'])
-            bw_write_seq_async = str(fio_data['jobs'][0]['write']['bw'])
-            ticks_read_seq_async = str(fio_data['disk_util'][0]['read_ticks'])
-            ticks_write_seq_async = str(fio_data['disk_util'][0]['write_ticks'])
+            for fio_op_type in fio_op_types:
 
-            spider_egg_exterminator()
-        print "\n\ncompleted sequential disk tests"
+                sub.call(fio_async_command_generator(fio_op_type))
+                clean_fio_json_result(fio_json_file)
+                fio_json = open(fio_json_file)
+                fio_data = json.load(fio_json)
+
+                if fio_op_type is '-rw=write':
+
+                    iops_write_100_seq_async = str(fio_data['jobs'][0]['write']['iops'])
+                    throughput_write_100_seq_async = str(fio_data['jobs'][0]['write']['bw'])
+                    lat_write_100_seq_async = str(fio_data['jobs'][0]['write']['lat']['mean'])
+
+                elif fio_op_type is '-rw=read':
+
+                    iops_read_100_seq_async = str(fio_data['jobs'][0]['read']['iops'])
+                    throughput_read_100_seq_async = str(fio_data['jobs'][0]['read']['bw'])
+                    lat_read_100_seq_async = str(fio_data['jobs'][0]['read']['lat']['mean'])
+
+                    spider_egg_exterminator()
+
+                elif fio_op_type is '-rw=randwrite':
+
+                    iops_write_100_rand_async = str(fio_data['jobs'][0]['write']['iops'])
+                    throughput_write_100_rand_async = str(fio_data['jobs'][0]['write']['bw'])
+                    lat_write_100_rand_async = str(fio_data['jobs'][0]['write']['lat']['mean'])
+
+                elif fio_op_type is '-rw=randread':
+
+                    iops_read_100_rand_async = str(fio_data['jobs'][0]['read']['iops'])
+                    throughput_read_100_rand_async = str(fio_data['jobs'][0]['read']['bw'])
+                    lat_read_100_rand_async = str(fio_data['jobs'][0]['read']['lat']['mean'])
+
+                    spider_egg_exterminator()
+
+                elif fio_op_type is '-rw=rw':
+                    runtime_read_seq_async = str(fio_data['jobs'][0]['read']['runtime'])
+                    runtime_write_seq_async = str(fio_data['jobs'][0]['write']['runtime'])
+                    io_read_seq_async = str(fio_data['jobs'][0]['read']['io_bytes'])
+                    io_write_seq_async = str(fio_data['jobs'][0]['write']['io_bytes'])
+                    iops_read_seq_async = str(fio_data['jobs'][0]['read']['iops'])
+                    iops_write_seq_async = str(fio_data['jobs'][0]['write']['iops'])
+                    bw_read_seq_async = str(fio_data['jobs'][0]['read']['bw'])
+                    bw_write_seq_async = str(fio_data['jobs'][0]['write']['bw'])
+
+                    spider_egg_exterminator()
+
+                elif fio_op_type is '-rw=randrw':
+
+                    runtime_read_rand_async = str(fio_data['jobs'][0]['read']['runtime'])
+                    runtime_write_rand_async = str(fio_data['jobs'][0]['write']['runtime'])
+                    io_read_rand_async = str(fio_data['jobs'][0]['read']['io_bytes'])
+                    io_write_rand_async = str(fio_data['jobs'][0]['write']['io_bytes'])
+                    iops_read_rand_async = str(fio_data['jobs'][0]['read']['iops'])
+                    iops_write_rand_async = str(fio_data['jobs'][0]['write']['iops'])
+                    bw_read_rand_async = str(fio_data['jobs'][0]['read']['bw'])
+                    bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
+
+                    spider_egg_exterminator()
+        print "\n\ncompleted disk tests"
 
     if iperf == 'y':
         internal_net_csv_file = 'iperf_results.csv'
@@ -391,31 +433,32 @@ for x in range(iterations):
         with open(ab_results) as f:
             lines = f.readlines()
             for l in lines:
-                if("Requests per second" in l):
+                if ("Requests per second" in l):
                     requests_per_sec = filter(None, l.split(" "))[3]
-                if("Time taken for tests:" in l):
+                if ("Time taken for tests:" in l):
                     time_taken = filter(None, l.split(" "))[4]
-                if("50%" in l):
+                if ("50%" in l):
                     percent_50 = filter(None, l.split(" "))[1]
-                if("66%" in l):
+                if ("66%" in l):
                     percent_66 = filter(None, l.split(" "))[1]
-                if("75%" in l):
+                if ("75%" in l):
                     percent_75 = filter(None, l.split(" "))[1]
-                if("80%" in l):
+                if ("80%" in l):
                     percent_80 = filter(None, l.split(" "))[1]
-                if("90%" in l):
+                if ("90%" in l):
                     percent_90 = filter(None, l.split(" "))[1]
-                if("95%" in l):
+                if ("95%" in l):
                     percent_95 = filter(None, l.split(" "))[1]
-                if("98%" in l):
+                if ("98%" in l):
                     percent_98 = filter(None, l.split(" "))[1]
-                if("99%" in l):
+                if ("99%" in l):
                     percent_99 = filter(None, l.split(" "))[1]
-                if("100%" in l):
+                if ("100%" in l):
                     percent_100 = filter(None, l.split(" "))[1]
 
         os.remove(ab_results)
         print "\ncompleted apachebench tests"
+
 
     def iozone_dummy_exterminator():
         for iozone_dummy in range(0, spider_hatchlings - 1):
@@ -424,6 +467,7 @@ for x in range(iterations):
                 os.remove(iozone_dummy_file)
             except:
                 pass
+
 
     def iozone_result_parser(result_file, target_var):
         with open(result_file) as f:
@@ -436,8 +480,8 @@ for x in range(iterations):
                     return target_res
                     break
 
-    if iozone == 'y':
 
+    if iozone == 'y':
         # Sequential Write, 64K requests, 32 threads:
         iozone_results = 'iozone_seq_write_results.txt'
         os.system('iozone %s -t %s -O -r %s -s %s -w -i 0 > %s' %
@@ -471,6 +515,7 @@ for x in range(iterations):
         iozone_dummy_exterminator()
         print "\ncompleted iozone tests"
 
+
     def sysbench_command_generator(sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs,
                                    sysbench_io_mode, sysbench_test_mode, sysbench_runtime, sysbench_results):
 
@@ -480,6 +525,7 @@ for x in range(iterations):
             sysbench_io_mode, sysbench_test_mode, sysbench_runtime, sysbench_results)
 
         return sysbench_command
+
 
     def sysbench_result_parser(sysbench_results, sysbench_test_mode):
         with open(sysbench_results) as f:
@@ -491,22 +537,22 @@ for x in range(iterations):
                     return res[0]
                     break
 
-    if sysbench == 'y':
 
+    if sysbench == 'y':
         sysbench_results = 'sysbench_results.txt'
 
         sysbench_test_mode = 'seqwr'
         sysbench_command = sysbench_command_generator(
-            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
-            sysbench_test_mode, sysbench_runtime, sysbench_results)
+                sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+                sysbench_test_mode, sysbench_runtime, sysbench_results)
         os.system(sysbench_command)
         sysbench_seq_write = sysbench_result_parser(sysbench_results, sysbench_test_mode)
         os.remove(sysbench_results)
 
         sysbench_test_mode = 'seqrd'
         sysbench_command = sysbench_command_generator(
-            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
-            sysbench_test_mode, sysbench_runtime, sysbench_results)
+                sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+                sysbench_test_mode, sysbench_runtime, sysbench_results)
         os.system(sysbench_command)
         sysbench_seq_read = sysbench_result_parser(sysbench_results, sysbench_test_mode)
         os.remove(sysbench_results)
@@ -515,16 +561,16 @@ for x in range(iterations):
 
         sysbench_test_mode = 'rndwr'
         sysbench_command = sysbench_command_generator(
-            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
-            sysbench_test_mode, sysbench_runtime, sysbench_results)
+                sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+                sysbench_test_mode, sysbench_runtime, sysbench_results)
         os.system(sysbench_command)
         sysbench_rand_write = sysbench_result_parser(sysbench_results, sysbench_test_mode)
         os.remove(sysbench_results)
 
         sysbench_test_mode = 'rndrd'
         sysbench_command = sysbench_command_generator(
-            sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
-            sysbench_test_mode, sysbench_runtime, sysbench_results)
+                sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
+                sysbench_test_mode, sysbench_runtime, sysbench_results)
         os.system(sysbench_command)
         sysbench_rand_read = sysbench_result_parser(sysbench_results, sysbench_test_mode)
         os.remove(sysbench_results)
@@ -541,37 +587,36 @@ for x in range(iterations):
         fio_numjobs = 0
         fio_direct_val = 0
 
-# ==================== GLOBAL TRANSMITTING ==================== #
+    # ==================== GLOBAL TRANSMITTING ==================== #
     # Transmit data back to Olympus
     print "\n\n"
     print "Transmitting to Olympus"
     print "\n\n"
     Open_Olympus = Olympus(
-        project=project_id,
-        uid=generated_uid,
-        provider=provider_input,
-        region=provider_region,
-        startdate=startdate_input,
-        iteration=iterator,
-        iteration_start_time=iteration_start_time,
-        vm=vm_input,
-        vmcount=vmcount_input,
-        vcpu=vcpu_input,
-        ram=ram_input,
-        local=local_input,
-        block=block_input,
-        disk_rand=fio_rw,
-        disk_seq=fio_seq,
-        disk_blocksize=fio_blocksize,
-        disk_filesize=fio_filesize,
-        disk_numjobs=fio_numjobs,
-        disk_direct=fio_direct_val)
+            project=project_id,
+            uid=generated_uid,
+            provider=provider_input,
+            region=provider_region,
+            startdate=startdate_input,
+            iteration=iterator,
+            iteration_start_time=iteration_start_time,
+            vm=vm_input,
+            vmcount=vmcount_input,
+            vcpu=vcpu_input,
+            ram=ram_input,
+            local=local_input,
+            block=block_input,
+            disk_rand=fio_rw,
+            disk_seq=fio_seq,
+            disk_blocksize=fio_blocksize,
+            disk_filesize=fio_filesize,
+            disk_numjobs=fio_numjobs,
+            disk_direct=fio_direct_val)
     session.add(Open_Olympus)
     session.commit()
     print "Basic information transfer complete"
 
     if geekbench == 'y':
-
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.processor: processor_info,
             Olympus.runtime: values['Runtime'],
@@ -624,12 +669,17 @@ for x in range(iterations):
             Olympus.runtime_read_rand: runtime_read_rand,
             Olympus.runtime_write_rand: runtime_write_rand,
             Olympus.bw_read_rand: bw_read_rand,
-            Olympus.bw_write_rand: bw_write_rand
+            Olympus.bw_write_rand: bw_write_rand,
+            Olympus.iops_read_100_rand: iops_read_100_rand,
+            Olympus.iops_write_100_rand: iops_write_100_rand,
+            Olympus.throughput_read_100_rand: throughput_read_100_rand,
+            Olympus.throughput_write_100_rand: throughput_write_100_rand,
+            Olympus.lat_read_100_rand: lat_read_100_rand,
+            Olympus.lat_write_100_rand: lat_write_100_rand
         })
         session.commit()
 
         if async_io == 'y':
-
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
                 Olympus.iops_read_rand_async: iops_read_rand_async,
                 Olympus.iops_write_rand_async: iops_write_rand_async,
@@ -638,7 +688,13 @@ for x in range(iterations):
                 Olympus.runtime_read_rand_async: runtime_read_rand_async,
                 Olympus.runtime_write_rand_async: runtime_write_rand_async,
                 Olympus.bw_read_rand_async: bw_read_rand_async,
-                Olympus.bw_write_rand_async: bw_write_rand_async
+                Olympus.bw_write_rand_async: bw_write_rand_async,
+                Olympus.iops_read_100_rand_async: iops_read_100_rand_async,
+                Olympus.iops_write_100_rand_async: iops_write_100_rand_async,
+                Olympus.throughput_read_100_rand_async: throughput_read_100_rand_async,
+                Olympus.throughput_write_100_rand_async: throughput_write_100_rand_async,
+                Olympus.lat_read_100_rand_async: lat_read_100_rand_async,
+                Olympus.lat_write_100_rand_async: lat_write_100_rand_async
             })
             session.commit()
 
@@ -652,7 +708,13 @@ for x in range(iterations):
             Olympus.runtime_read_seq: runtime_read_seq,
             Olympus.runtime_write_seq: runtime_write_seq,
             Olympus.bw_read_seq: bw_read_seq,
-            Olympus.bw_write_seq: bw_write_seq
+            Olympus.bw_write_seq: bw_write_seq,
+            Olympus.iops_read_100_seq: iops_read_100_seq,
+            Olympus.iops_write_100_seq: iops_write_100_seq,
+            Olympus.throughput_read_100_seq: throughput_read_100_seq,
+            Olympus.throughput_write_100_seq: throughput_write_100_seq,
+            Olympus.lat_read_100_seq: lat_read_100_seq,
+            Olympus.lat_write_100_seq: lat_write_100_seq
         })
         session.commit()
 
@@ -665,14 +727,19 @@ for x in range(iterations):
                 Olympus.runtime_read_seq_async: runtime_read_seq_async,
                 Olympus.runtime_write_seq_async: runtime_write_seq_async,
                 Olympus.bw_read_seq_async: bw_read_seq_async,
-                Olympus.bw_write_seq_async: bw_write_seq_async
+                Olympus.bw_write_seq_async: bw_write_seq_async,
+                Olympus.iops_read_100_seq_async: iops_read_100_seq_async,
+                Olympus.iops_write_100_seq_async: iops_write_100_seq_async,
+                Olympus.throughput_read_100_seq_async: throughput_read_100_seq_async,
+                Olympus.throughput_write_100_seq_async: throughput_write_100_seq_async,
+                Olympus.lat_read_100_seq_async: lat_read_100_seq_async,
+                Olympus.lat_write_100_seq_async: lat_write_100_seq_async
             })
             session.commit()
 
         print "Finished transferring disk sequential results"
 
     if iperf == 'y':
-
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.internal_network_data: internal_network_data,
             Olympus.internal_network_bandwidth: internal_network_bandwidth
@@ -681,7 +748,6 @@ for x in range(iterations):
         print "Finished transferring internal network test results"
 
     if apachebench == 'y':
-
         session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
             Olympus.hostname: ab_address,
             Olympus.concurrency_level: ab_concurrency,
