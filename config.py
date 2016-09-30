@@ -1,8 +1,13 @@
 # DATABASE CREDENTIALS
-db_host = "104.131.53.14"
-db_user = "remote"
-db_password = "800BoylstonClouds"
-db_name = "forecast"
+# db_host = "104.131.53.14"
+# db_user = "remote"
+# db_password = "800BoylstonClouds"
+# db_name = "forecast"
+
+db_host = "192.168.20.42"
+db_user = "root"
+db_password = "inapp"
+db_name = "perf_forecast"
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run

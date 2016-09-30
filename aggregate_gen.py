@@ -1,77 +1,158 @@
-import pymysql
-from config import *
 from datetime import datetime
 from numpy import median, percentile
+from sqlalchemy.orm import sessionmaker
+from db import Base, Ignition, Virtualmachine, Processordata, Processoraggdata, Memorydata, Memoryaggdata, \
+    Localdiskdata, Localdiskaggdata, Blockdiskdata, Blockdiskaggdata, Internalnetworkdata, Internalnetworkaggdata
+
+# Bind Ignition to the metadata of the Base class
+Base.metadata.bind = Ignition
+Session = sessionmaker(bind=Ignition)
 
 
-class AggregateGenerator:
+def log_error(e):
+    with open(log_file, "a") as log_handle:
+        log_handle.write("%s:" % datetime.now().strftime('%d%m%Y %H%M%S'))
+        log_handle.write("%s\n\n" % e)
+    log_handle.close()
+    return
 
-    def __init__(self):
-        # Enable / disable aggregate data collection
-        self.processordata = "y"
-        self.memorydata = "n"
-        self.localdiskdata = "n"
-        self.blockdiskdata = "n"
-        self.internalnetworkdata = "n"
 
-        self.term_list = ['month', 'year', 'lifetime']
-        self.timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+def generate_aggregates():
+    session = Session()
+    vms = session.query(Virtualmachine.id).all()
 
-        self.cur = self.db_connection(db_host, db_user, db_password, db_name)
+    for vm in vms:
+        if processordata == "y":
+            res = session.query(Processordata.vm_id, Processordata.os_id).filter(Processordata.vm_id == vm.id).first()
+            if res:
+                try:
+                    OpenProcessoraggdata = Processoraggdata(
+                        vm_id=res.vm_id,
+                        os_id=res.os_id,
+                        timestamp=timestamp
+                    )
+                    session.add(OpenProcessoraggdata)
+                    session.commit()
+                except Exception as e:
+                    log_error(e)
+                    print "\n------ Error while inserting into database ------"
 
-    def db_connection(self, host, user, password, db):
-        self.con = pymysql.connect(host, user, password, db)
-        cur = self.con.cursor(pymysql.cursors.DictCursor)
-        return cur
 
-    def generate_aggregates(self):
-
-        self.cur.execute("SELECT id FROM xiaoice_virtualmachine")
-        results = self.cur.fetchall()
-
-        for result in results:
-            if self.processordata == "y":
-                table = "xiaoice_processordata"
+                agg_id = OpenProcessoraggdata.id
+                data_table = "xiaoice_processordata"
+                agg_table = "xiaoice_processoraggdata"
                 field = "performance"
 
+                for term in term_list:
+                    output = agg_data(term, data_table, field, res.vm_id)
+                    if output:
+                        try:
+                            Ignition.execute("UPDATE %s SET %s_min = %s, %s_25 = %s, %s_75 = %s, %s_max = %s, %s_median = %s \
+                                              WHERE id = %s" % (agg_table, term, output['resultmin'], term, output['result25'],
+                                              term, output['result75'], term, output['resultmax'], term, output['resultmedian'],
+                                              agg_id))
+                        except Exception as e:
+                            log_error(e)
+                            print "\n------ Error while updating database ------"
+
+        if memorydata == "y":
+            res = session.query(Memorydata.vm_id, Memorydata.os_id).filter(Memorydata.vm_id == vm.id).first()
+            if res:
                 try:
-                    self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
-                    res = self.cur.fetchone()
-
-                    self.cur.execute("INSERT INTO xiaoice_processoraggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
-                    self.con.commit()
-                    agg_id = self.cur.lastrowid
-
-                    for term in self.term_list:
-                        output = self.agg_data(term, table, field, res['vm_id'])
-                        if output:
-                            self.cur.execute("UPDATE xiaoice_processoraggdata SET %s_min = %s, %s_25 = %s, %s_75 = %s, %s_max = %s, %s_median = %s WHERE id = %s" % (term, output['resultmin'], term, output['result25'], term, output['result75'], term, output['resultmax'], term, output['resultmedian'], agg_id))
-                            self.con.commit()
+                    OpenMemoryaggdata = Memoryaggdata(
+                        vm_id=res.vm_id,
+                        os_id=res.os_id,
+                        timestamp=timestamp
+                    )
+                    session.add(OpenMemoryaggdata)
+                    session.commit()
                 except Exception as e:
-                    pass
+                    log_error(e)
+                    print "\n------ Error while inserting into database ------"
 
-            if self.memorydata == "y":
-                table = "xiaoice_memorydata"
+                agg_id = OpenMemoryaggdata.id
+                data_table = "xiaoice_memorydata"
+                agg_table = "xiaoice_memoryaggdata"
                 field = "bandwidth"
 
+                for term in term_list:
+                    output = agg_data(term, data_table, field, res.vm_id)
+                    if output:
+                        try:
+                            Ignition.execute("UPDATE %s SET %s_min = %s, %s_25 = %s, %s_75 = %s, %s_max = %s, %s_median = %s \
+                                              WHERE id = %s" % (agg_table, term, output['resultmin'], term, output['result25'],
+                                              term, output['result75'], term, output['resultmax'], term, output['resultmedian'],
+                                              agg_id))
+                        except Exception as e:
+                            log_error(e)
+                            print "\n------ Error while updating database ------"
+
+        if localdiskdata == "y":
+            res = session.query(Localdiskdata.vm_id, Localdiskdata.os_id).filter(Localdiskdata.vm_id == vm.id).first()
+            if res:
                 try:
-                    self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
-                    res = self.cur.fetchone()
+                    OpenLocaldiskaggdata = Localdiskaggdata(
+                        vm_id=res.vm_id,
+                        os_id=res.os_id,
+                        timestamp=timestamp
+                    )
+                    session.add(OpenLocaldiskaggdata)
+                    session.commit()
+                except Exception as e:
+                    log_error(e)
+                    print "\n------ Error while inserting into database ------"
 
-                    self.cur.execute("INSERT INTO xiaoice_memoryaggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
-                    self.con.commit()
-                    agg_id = self.cur.lastrowid
+                agg_id = OpenLocaldiskaggdata.id
+                data_table = "xiaoice_localdiskdata"
+                agg_table = "xiaoice_localdiskaggdata"
 
-                    for term in self.term_list:
-                        output = self.agg_data(term, table, field, res['vm_id'])
+                fields = ['iops_read_seq',
+                          'iops_write_seq',
+                          'iops_read_random',
+                          'iops_write_random',
+                          'throughput_read_seq',
+                          'throughput_write_seq',
+                          'throughput_read_random',
+                          'throughput_write_random',
+                          'latency_read_seq',
+                          'latency_write_seq',
+                          'latency_read_random',
+                          'latency_write_random']
+
+                for field in fields:
+                    for term in term_list:
+                        output = agg_data(term, data_table, field, res.vm_id)
                         if output:
-                            self.cur.execute("UPDATE xiaoice_memoryaggdata SET %s_min = %s, %s_25 = %s, %s_75 = %s, %s_max = %s, %s_median = %s WHERE id = %s" % (term, output['resultmin'], term, output['result25'], term, output['result75'], term, output['resultmax'], term, output['resultmedian'], agg_id))
-                            self.con.commit()
-                except Exception as e:
-                    pass
+                            try:
+                                Ignition.execute("UPDATE %s SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (
+                                        agg_table, field, term, output['resultmin'], field, term, output['result25'], field, term,
+                                        output['result75'], field, term, output['resultmax'], field, term,
+                                        output['resultmedian'], agg_id))
 
-            if self.localdiskdata == "y":
-                table = "xiaoice_localdiskdata"
+                            except Exception as e:
+                                log_error(e)
+                                print "\n------ Error while updating database ------"
+
+        if blockdiskdata == "y":
+            res = session.query(Blockdiskdata.vm_id, Blockdiskdata.os_id, Blockdiskdata.disk_size_id).filter(Blockdiskdata.vm_id == vm.id).first()
+            if res:
+                try:
+                    OpenBlockdiskaggdata = Blockdiskaggdata(
+                        vm_id=res.vm_id,
+                        os_id=res.os_id,
+                        disk_size_id=res.disk_size_id,
+                        timestamp=timestamp
+                    )
+                    session.add(OpenBlockdiskaggdata)
+                    session.commit()
+                except Exception as e:
+                    log_error(e)
+                    print "\n------ Error while inserting into database ------"
+
+                agg_id = OpenLocaldiskaggdata.id
+                data_table = "xiaoice_blockdiskdata"
+                agg_table = "xiaoice_blockdiskaggdata"
+
                 fields = ['iops_read_seq',
                           'iops_write_seq',
                           'iops_read_random',
@@ -85,95 +166,78 @@ class AggregateGenerator:
                           'latency_read_random',
                           'latency_write_random']
 
+                for field in fields:
+                    for term in term_list:
+                        output = agg_data(term, data_table, field, res.vm_id)
+                        if output:
+                            try:
+                                Ignition.execute("UPDATE %s SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (
+                                        agg_table, field, term, output['resultmin'], field, term, output['result25'], field, term,
+                                        output['result75'], field, term, output['resultmax'], field, term,
+                                        output['resultmedian'], agg_id))
+
+                            except Exception as e:
+                                log_error(e)
+                                print "\n------ Error while updating database ------"
+
+        if internalnetworkdata == "y":
+            res = session.query(Internalnetworkdata.vm_id, Internalnetworkdata.os_id).filter(Internalnetworkdata.vm_id == vm.id).first()
+            if res:
                 try:
-                    self.cur.execute("SELECT vm_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
-                    res = self.cur.fetchone()
-
-                    self.cur.execute("INSERT INTO xiaoice_localdiskaggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
-                    self.con.commit()
-                    agg_id = self.cur.lastrowid
-
-                    for field in fields:
-                        for term in self.term_list:
-                            output = self.agg_data(term, table, field, res['vm_id'])
-                            if output:
-                                self.cur.execute("UPDATE xiaoice_localdiskaggdata SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (field, term, output['resultmin'], field, term, output['result25'], field, term, output['result75'], field, term, output['resultmax'], field, term, output['resultmedian'], agg_id))
-                                self.con.commit()
+                    OpenInternalnetworkaggdata = Internalnetworkaggdata(
+                        vm_id=res.vm_id,
+                        os_id=res.os_id,
+                        timestamp=timestamp
+                    )
+                    session.add(OpenInternalnetworkaggdata)
+                    session.commit()
                 except Exception as e:
-                    pass
+                    log_error(e)
+                    print "\n------ Error while inserting into database ------"
 
-            if self.blockdiskdata == "y":
-                table = "xiaoice_blockdiskdata"
-                fields = ['iops_read_seq',
-                          'iops_write_seq',
-                          'iops_read_random',
-                          'iops_write_random',
-                          'throughput_read_seq',
-                          'throughput_write_seq',
-                          'throughput_read_random',
-                          'throughput_write_random',
-                          'latency_read_seq',
-                          'latency_write_seq',
-                          'latency_read_random',
-                          'latency_write_random']
-
-                try:
-                    self.cur.execute("SELECT vm_id, disk_size_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
-                    res = self.cur.fetchone()
-
-                    self.cur.execute("INSERT INTO xiaoice_blockdiskaggdata (vm_id, disk_size_id, os_id, timestamp) VALUES (%s, %s, %s, '%s')" % (res['vm_id'], res['disk_size_id'], res['os_id'], self.timestamp))
-                    self.con.commit()
-                    agg_id = self.cur.lastrowid
-
-                    for field in fields:
-                        for term in self.term_list:
-                            output = self.agg_data(term, table, field, res['vm_id'])
-                            if output:
-                                self.cur.execute("UPDATE xiaoice_blockdiskaggdata SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (field, term, output['resultmin'], field, term, output['result25'], field, term, output['result75'], field, term, output['resultmax'], field, term, output['resultmedian'], agg_id))
-                                self.con.commit()
-                except Exception as e:
-                    pass
-
-            if self.internalnetworkdata == "y":
-                table = "xiaoice_internalnetworkdata"
+                agg_id = OpenProcessoraggdata.id
+                data_table = "xiaoice_internalnetworkdata"
+                agg_table = "xiaoice_internalnetworkaggdata"
                 fields = ['single_threaded_throughput', 'multi_threaded_throughput']
 
-                try:
-                    self.cur.execute("SELECT vm_id, cores_id, os_id FROM %s WHERE vm_id = %s" % (table, result['id']))
-                    res = self.cur.fetchone()
+                for field in fields:
+                    for term in term_list:
+                        output = agg_data(term, data_table, field, res.vm_id)
+                        if output:
+                            try:
+                                Ignition.execute("UPDATE %s SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (
+                                        agg_table, field, term, output['resultmin'], field, term, output['result25'], field, term,
+                                        output['result75'], field, term, output['resultmax'], field, term,
+                                        output['resultmedian'], agg_id))
 
-                    self.cur.execute("INSERT INTO xiaoice_internalnetworkaggdata (vm_id, os_id, timestamp) VALUES (%s, %s, '%s')" % (res['vm_id'], res['os_id'], self.timestamp))
-                    self.con.commit()
-                    agg_id = self.cur.lastrowid
+                            except Exception as e:
+                                log_error(e)
+                                print "\n------ Error while updating database ------"
 
-                    for field in fields:
-                        for term in self.term_list:
-                            output = self.agg_data(term, table, field, res['vm_id'])
-                            if output:
-                                self.cur.execute("UPDATE xiaoice_internalnetworkaggdata SET %s_%s_min = %s, %s_%s_25 = %s, %s_%s_75 = %s, %s_%s_max = %s, %s_%s_median = %s WHERE id = %s" % (field, term, output['resultmin'], field, term, output['result25'], field, term, output['result75'], field, term, output['resultmax'], field, term, output['resultmedian'], agg_id))
-                                self.con.commit()
-                except Exception as e:
-                    pass
 
-    def agg_data(self, term, table, field, vm_id):
+def agg_data(term, table, field, vm_id):
+    # Fetches aggregate data for the previous month
+    try:
+        if term is 'month':
+            results = Ignition.execute(
+                    "SELECT %s FROM %s WHERE YEAR(timestamp) = YEAR(CURDATE() - INTERVAL 1 MONTH) AND MONTH(timestamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) AND vm_id = %s" % (
+                        field, table, vm_id))
+        # Fetches aggregate data from one year back to current date
+        elif term is 'year':
+            results = Ignition.execute(
+                    "SELECT %s FROM %s WHERE timestamp BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND CURDATE() AND vm_id = %s" % (
+                        field, table, vm_id))
+        # Fetches aggregate data from the beginning to current date
+        elif term is 'lifetime':
+            results = Ignition.execute("SELECT %s FROM %s WHERE vm_id = %s" % (field, table, vm_id))
+    except Exception as e:
+        print "\n------ Error while fetching results from data table ------"
+
+    results = [d[field] for d in results if field in d]
+    results = filter(lambda x: x is not None, results)
+    output = {}
+    if results:
         try:
-            # Fetches aggregate data for the previous month
-            if term is 'month':
-                self.cur.execute("SELECT %s FROM %s WHERE YEAR(timestamp) = YEAR(CURDATE() - INTERVAL 1 MONTH) AND MONTH(timestamp) = MONTH(CURDATE() - INTERVAL 1 MONTH) AND vm_id = %s" % (field, table, vm_id))
-            # Fetches aggregate data from one year back to current date
-            elif term is 'year':
-                self.cur.execute("SELECT %s FROM %s WHERE timestamp BETWEEN DATE_SUB(CURDATE(), INTERVAL 1 YEAR) AND CURDATE() AND vm_id = %s" % (field, table, vm_id))
-            # Fetches aggregate data from the beginning to current date
-            elif term is 'lifetime':
-                self.cur.execute("SELECT %s FROM %s WHERE vm_id = %s" % (field, table, vm_id))
-        except Exception as e:
-            pass
-
-        results = self.cur.fetchall()
-        results = [d[field] for d in results if field in d]
-
-        output = {}
-        if results:
             output['resultmin'] = min(results)
             output['result25'] = percentile(results, 25)
             output['resultmedian'] = median(results)
@@ -181,8 +245,20 @@ class AggregateGenerator:
             output['resultmax'] = max(results)
             print "\n===== Table: %s ===== Field: %s ===== Term: %s =====\n" % (table, field, term)
             print "min,25th,median,75th,max"
-            print "%s,%s,%s,%s,%s" % (output['resultmin'], output['result25'], output['resultmedian'], output['result75'], output['resultmax'])
+            print "%s,%s,%s,%s,%s" % (
+                output['resultmin'], output['result25'], output['resultmedian'], output['result75'], output['resultmax'])
+        except Exception as e:
+            log_error(e)
         return output
 
-agg = AggregateGenerator()
-agg.generate_aggregates()
+
+# Enable / disable aggregate data collection
+processordata = "y"
+memorydata = "y"
+localdiskdata = "y"
+blockdiskdata = "y"
+internalnetworkdata = "y"
+log_file = "hera.log"
+term_list = ['month', 'year', 'lifetime']
+timestamp = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+generate_aggregates()

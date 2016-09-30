@@ -10,8 +10,8 @@ metadata = MetaData()
 class Virtualmachine(Base):
     __tablename__ = 'xiaoice_virtualmachine'
     id = Column(Integer, primary_key=True)
-    key = Column(String)
-    display = Column(String)
+    key = Column(String(255))
+    display = Column(String(255))
     location_id = Column(Integer)
     provider_id = Column(Integer)
 
@@ -19,36 +19,36 @@ class Virtualmachine(Base):
 class Provider(Base):
     __tablename__ = 'xiaoice_provider'
     id = Column(Integer, primary_key=True)
-    key = Column(String)
-    display = Column(String)
+    key = Column(String(255))
+    display = Column(String(255))
 
 
 class Location(Base):
     __tablename__ = 'xiaoice_location'
     id = Column(Integer, primary_key=True)
-    key = Column(String)
-    display = Column(String)
+    key = Column(String(255))
+    display = Column(String(255))
 
 
 class Operatingsystem(Base):
     __tablename__ = 'xiaoice_operatingsystem'
     id = Column(Integer, primary_key=True)
-    key = Column(String)
-    display = Column(String)
+    key = Column(String(255))
+    display = Column(String(255))
 
 
 class Cores(Base):
     __tablename__ = 'xiaoice_cores'
     id = Column(Integer, primary_key=True)
-    key = Column(String)
-    number = Column(String)
+    key = Column(String(255))
+    number = Column(String(255))
 
 
 class Disksizes(Base):
     __tablename__ = 'xiaoice_disksizes'
     id = Column(Integer, primary_key=True)
-    key = Column(String)
-    size = Column(String)
+    key = Column(String(255))
+    size = Column(String(255))
 
 
 class Processordata(Base):
