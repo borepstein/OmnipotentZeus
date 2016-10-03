@@ -1,14 +1,11 @@
-import pymysql
+from sqlalchemy.orm import sessionmaker
+from db import Base, Ignition, Virtualmachine
 
-db_host = "104.131.53.14"
-db_user = "remote"
-db_password = "800BoylstonClouds"
-db_name = "forecast"
+# Bind Ignition to the metadata of the Base class
+Base.metadata.bind = Ignition
+Session = sessionmaker(bind=Ignition)
 
-con = pymysql.connect(db_host, db_user, db_password, db_name)
-cur = con.cursor(pymysql.cursors.DictCursor)
-
-lst = ['t2.nano',
+vm_list = ['t2.nano',
        't2.micro',
        't2.small',
        't2.medium',
@@ -50,8 +47,15 @@ lst = ['t2.nano',
        'd2.8large',
        ]
 
-for i in lst:
-    for j in range(1, 4):
-        q = "INSERT INTO xiaoice_virtualmachine (`key`, display, location_id, provider_id) VALUES ('%s', '%s', %s, %s)" % (i, i, j, 1)
-        cur.execute(q)
-        con.commit()
+session = Session()
+
+for vm in vm_list:
+    for loc in range(1, 4):
+        OpenVirtualmachine = Virtualmachine(
+                key=vm,
+                display=vm,
+                location_id=loc,
+                provider_id=1
+        )
+        session.add(OpenVirtualmachine)
+        session.commit()

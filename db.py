@@ -1,4 +1,4 @@
-from config import *
+from conf import *
 from datetime import datetime
 from sqlalchemy import MetaData, Column, Integer, String, Float, DateTime, create_engine
 from sqlalchemy.ext.declarative import declarative_base

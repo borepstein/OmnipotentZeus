@@ -3,7 +3,7 @@ import csv
 import json
 import platform
 import subprocess as sub
-from config import *
+from conf import *
 from datetime import datetime
 from time import sleep, time
 from sqlalchemy.orm import sessionmaker
@@ -495,4 +495,4 @@ for x in range(iterations):
             session.close()
 
     iterator += 1
-    sleep(sleeptime)
+    sleep(sleep_time)
