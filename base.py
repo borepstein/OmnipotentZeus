@@ -29,7 +29,7 @@ if len(sys.argv) > 1:
         arg_list = sys.argv[1].split("=")
         if arg_list[0] == 'config_id':
             conf_id = int(arg_list[1])
-            conf_data = json.load(open('test-conf.json'))
+            conf_data = json.load(open('vm_conf.json'))
         else:
             print "\n------ Invalid command line argument. Try again. ------"
             exit()
