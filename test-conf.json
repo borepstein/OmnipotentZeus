@@ -1,0 +1,24 @@
+{
+  "config": [
+    {
+      "id": 1,
+      "provider": "aws",
+      "location": "us-east-1",
+      "vm_name": "t2.micro",
+      "disk_type": "local",
+      "fio_path": "/home/mnt/",
+      "disk_size": "500g",
+      "internal_net_ip": "0.0.0.0"
+    },
+    {
+      "id": 2,
+      "provider": "azure",
+      "location": "us-west-1",
+      "vm_name": "m4.large",
+      "disk_type": "block",
+      "fio_path": "/home/mnt/",
+      "disk_size": "1t",
+      "internal_net_ip": "0.0.0.0"
+    }
+  ]
+}

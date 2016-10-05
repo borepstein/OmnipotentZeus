@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 import json
 import platform
@@ -11,7 +12,6 @@ from collections import OrderedDict as od
 from db import Base, Ignition, Processordata, Memorydata, Localdiskdata, Blockdiskdata, Internalnetworkdata, \
     Virtualmachine, Provider, Location, Operatingsystem, Cores, Disksizes
 
-# Bind Ignition to the metadata of the Base class
 Base.metadata.bind = Ignition
 Session = sessionmaker(bind=Ignition)
 
@@ -22,6 +22,29 @@ print "|    Omnipotent Hera     |"
 print "|          v1.0          |"
 print "|------------------------|"
 print "\n"
+
+# ==================== FETCH CONFIG ID FROM COMMAND LINE ARGUMENT IF EXISTS ==================== #
+if len(sys.argv) > 1:
+    try:
+        arg_list = sys.argv[1].split("=")
+        if arg_list[0] == 'config_id':
+            conf_id = int(arg_list[1])
+            conf_data = json.load(open('test-conf.json'))
+        else:
+            print "\n------ Invalid command line argument. Try again. ------"
+            exit()
+
+        for item in conf_data['config']:
+            if item['id'] == conf_id:
+                provider_name = item['provider']
+                location_name = item['location']
+                vm_name = item['vm_name']
+                disk_type = item['disk_type']
+                fio_path = item['fio_path']
+                disk_size = item['disk_size']
+                internal_net_ip = item['internal_net_ip']
+    except Exception as e:
+        raise e
 
 # ==================== GLOBAL INSTALLER ==================== #
 if geekbench == 'y':
@@ -37,14 +60,30 @@ if iperf == 'y':
     os.system('apt-get install iperf')
 
 
-# ==================== RAW INPUT ==================== #
+# ==================== USER INPUT ==================== #
+def sanitize_input(entity_name, table):
+    while True:
+        user_input = raw_input("\nPlease enter the %s: " % entity_name)
+        if user_input == 'exit':
+            exit()
+        else:
+            user_input = user_input.lower()
+            id = get_id(table, user_input)
+
+            if id is False:
+                continue
+            else:
+                return id
+
+
 def get_id(table, key):
     session = Session()
     try:
         id = session.query(table.id).filter(table.key == key).one().id
     except Exception as e:
-        print "\n------ Program terminated due to invalid input ------\n"
-        exit()
+        print "\n------ Invalid input. Try again. ------"
+        return False
+
     session.close()
     return id
 
@@ -56,32 +95,50 @@ def get_vm_id(table, vm_name, provider_id, location_id):
                                                table.provider_id == provider_id,
                                                table.location_id == location_id).one().id
     except Exception as e:
-        print "\n------ Program terminated due to invalid input ------\n"
-        exit()
+        print "\n------ Invalid input. Try again. ------"
+        return False
+
     session.close()
     return vm_id
 
 
 # Provider name
-provider_name = raw_input("\nPlease enter the Provider: ")
-provider_name = provider_name.lower()
-provider_id = get_id(Provider, provider_name)
+if len(sys.argv) <= 1:
+    provider_id = sanitize_input('Provider', Provider)
+else:
+    provider_name = provider_name.lower()
+    provider_id = get_id(Provider, provider_name)
 
 # Location
-location_name = raw_input("\nPlease enter the Location: ")
-location_name = location_name.lower()
-location_id = get_id(Location, location_name)
+if len(sys.argv) <= 1:
+    location_id = sanitize_input('Location', Location)
+else:
+    location_name = location_name.lower()
+    location_id = get_id(Location, location_name)
 
 # Virtual Machine
-vm_name = raw_input("\nPlease enter the VM name: ")
-vm_name = vm_name.lower()
-vm_id = get_vm_id(Virtualmachine, vm_name, provider_id, location_id)
+if len(sys.argv) <= 1:
+    while True:
+        vm_name = raw_input("\nPlease enter the VM name: ")
+        if vm_name == 'exit':
+            exit()
+        else:
+            vm_name = vm_name.lower()
+            vm_id = get_vm_id(Virtualmachine, vm_name, provider_id, location_id)
+
+            if vm_id is False:
+                continue
+            else:
+                break
+else:
+    vm_name = vm_name.lower()
+    vm_id = get_vm_id(Virtualmachine, vm_name, provider_id, location_id)
 
 # Operating system
 os_name = platform.system().lower()
 os_id = get_id(Operatingsystem, os_name)
 
-# Fetch CPU amount
+# Get CPU
 v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
 v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
 v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
@@ -95,10 +152,10 @@ elif core_count is '2':
 elif core_count is '4':
     core_type = 'quad'
 
-# Cores
+# Get Cores
 core_id = get_id(Cores, core_type)
 
-# RAM Amount
+# Get RAM
 r1 = sub.Popen(['cat', '/proc/meminfo'], stdout=sub.PIPE)
 r2 = sub.Popen(['grep', 'MemTotal'], stdin=r1.stdout, stdout=sub.PIPE)
 memoutput = r2.communicate()[0]
@@ -110,20 +167,27 @@ for x in memoutput_list:
         ram_input = "%.2f" % mem_count
 
 if fio == 'y':
-    disk_type = raw_input("\nPlease enter the Disk type (local / block): ")
+    # Disk type
+    if len(sys.argv) <= 1:
+        while True:
+            disk_type = raw_input("\nPlease enter the Disk type (local / block): ")
+            if disk_type == 'exit':
+                exit()
+            elif disk_type.lower() == "local":
+                fio_path = raw_input("\nPlease enter the Local storage path to run FIO test (Eg:- /home/mnt/): ")
+                break
+            elif disk_type.lower() == "block":
+                fio_path = raw_input("\nPlease enter the Block storage path to run FIO test (Eg:- /home/mnt/): ")
+                break
+            else:
+                print "\n------ Invalid input. Try again. ------"
+                continue
 
-    if disk_type.lower() == "local":
-        fio_path = raw_input("\nPlease enter the Local storage path to run FIO test (Eg:- /home/mnt/): ")
-    elif disk_type.lower() == "block":
-        fio_path = raw_input("\nPlease enter the Block storage path to run FIO test (Eg:- /home/mnt/): ")
+    # Disk size
+    if len(sys.argv) <= 1:
+        disk_size_id = sanitize_input('Disk size', Disksizes)
     else:
-        print "\n------ Invalid entry for Disk type ------"
-        exit()
-
-    # Disk sizes
-    disk_size = raw_input("\nPlease enter the Disk size: ")
-    disk_size = disk_size.lower()
-    disk_size_id = get_id(Disksizes, disk_size)
+        disk_size_id = get_id(Disksizes, disk_size)
 
     fio_op_types = ['-rw=write', '-rw=read', '-rw=randwrite', '-rw=randread', '-rw=rw', '-rw=randrw']
 
@@ -140,7 +204,10 @@ if fio == 'y':
         fio_direct = '-direct=0'
 
 if iperf == 'y':
-    internal_net_ip = raw_input("\nPlease enter the IP address of the server you are trying to connect to: ")
+    # Internal network IP
+    if len(sys.argv) <= 1:
+        internal_net_ip = raw_input("\nPlease enter the IP address of the server you are trying to connect to: ")
+
     internal_net_csv = "C"
 
 # ==================== GLOBAL TESTING ==================== #
@@ -160,7 +227,6 @@ for x in range(iterations):
 
     # ==================== GEEKBENCH ==================== #
     if geekbench == 'y':
-        # Run Geekbench
         sub.call(['./geekbench_x86_64', '--no-upload', '--export-json', 'gb.json'])
 
         geekbench_json = open('gb.json')
@@ -168,7 +234,6 @@ for x in range(iterations):
         if iterator == 1:
             processor_info = str(data['metrics'][6]['value'])
 
-        # Parse results
         y = 0
         scores = {}
         for x in range(0, 13, 1):
