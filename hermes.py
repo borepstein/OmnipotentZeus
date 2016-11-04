@@ -1,20 +1,19 @@
-from projects.test import *
-from datetime import datetime
-import json
 import os
 import csv
+import json
 import subprocess as sub
+from projects.test import *
+from random import randint
 from time import sleep, time
+from datetime import datetime
 from collections import OrderedDict as od
 from prometheus import Base, Olympus
 from prometheus import Ignition
 from sqlalchemy.orm import sessionmaker
-from random import randint
 
 # Bind Ignition to the metadata of the Base class
 Base.metadata.bind = Ignition
-DBSession = sessionmaker(bind=Ignition)
-session = DBSession()
+Session = sessionmaker(bind=Ignition)
 
 # ==================== GLOBAL INTRODUCTION ==================== #
 os.system('clear')
@@ -99,12 +98,7 @@ if sysbench == 'y':
     sysbench_filesize = str(int(filesize) * int(numjobs)) + 'M'
     sysbench_numjobs = numjobs
     sysbench_runtime = runtime
-
-    if async_io == 'y':
-        sysbench_io_mode = 'async'
-    else:
-        sysbench_io_mode = 'sync'
-
+    sysbench_io_mode = 'sync'
     if direct_io == 'y':
         sysbench_direct = '--file-extra-flags=direct'
     else:
@@ -149,11 +143,15 @@ if fio == 'y':
     fio_rw = "Yes"
     fio_seq = "Yes"
 else:
-    fio_rw = "No"
-    fio_seq = "No"
+    fio_rw = "n/a"
+    fio_seq = "n/a"
+    fio_blocksize = 0
+    fio_filesize = 0
+    fio_numjobs = 0
+    fio_direct_val = 0
 
 if iperf == 'y':
-    internal_net_ip = raw_input('Please enter the IP address of the server you are trying to connect to: ')
+    internal_net_ip = raw_input('Please enter the IP address of the iperf server you are trying to connect to: ')
     internal_net_csv = "C"
 
 # ==================== GLOBAL TESTING ==================== #
@@ -169,6 +167,34 @@ for x in range(iterations):
     print "\n#######################################################\n"
 
     iteration_start_time = datetime.now().strftime('%Y-%m-%d %H:%M')
+    session = Session()
+    try:
+        Open_Olympus = Olympus(
+                project=project_id,
+                uid=generated_uid,
+                provider=provider_input,
+                region=provider_region,
+                startdate=startdate_input,
+                iteration=iterator,
+                iteration_start_time=iteration_start_time,
+                vm=vm_input,
+                vmcount=vmcount_input,
+                vcpu=vcpu_input,
+                ram=ram_input,
+                local=local_input,
+                block=block_input,
+                disk_rand=fio_rw,
+                disk_seq=fio_seq,
+                disk_blocksize=fio_blocksize,
+                disk_filesize=fio_filesize,
+                disk_numjobs=fio_numjobs,
+                disk_direct=fio_direct_val)
+        session.add(Open_Olympus)
+        session.commit()
+        print "Basic information transfer complete\n"
+    except Exception as e:
+        session.rollback()
+        raise e
 
     if geekbench == 'y':
         # Run Geekbench
@@ -239,7 +265,55 @@ for x in range(iterations):
                 values[key] = val
             y = y + 1
         values = od(values)
-        print "\ncompleted geekbench test"
+
+        session = Session()
+        try:
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.processor: processor_info,
+                Olympus.runtime: values['Runtime'],
+                Olympus.intmulti: values['Integer Multicore'],
+                Olympus.floatmulti: values['Floating Point Multicore'],
+                Olympus.memmulti: values['Memory Multicore'],
+                Olympus.intsingle: values['Integer Singlecore'],
+                Olympus.floatsingle: values['Floating Point Singlecore'],
+                Olympus.memsingle: values['Memory Singlecore'],
+                Olympus.totalmulti: values['Total'],
+                Olympus.totalsingle: values['Total Single'],
+                Olympus.aes: values['AES'],
+                Olympus.twofish: values['Twofish'],
+                Olympus.sha1: values['SHA1'],
+                Olympus.sha2: values['SHA2'],
+                Olympus.bzipcompression: values['BZip2 Compress'],
+                Olympus.bzipdecompression: values['BZip2 Decompress'],
+                Olympus.jpegcompression: values['JPEG Compress'],
+                Olympus.jpegdecompression: values['JPEG Decompress'],
+                Olympus.pngcompression: values['PNG Compress'],
+                Olympus.pngdecompression: values['PNG Decompress'],
+                Olympus.sobel: values['Sobel'],
+                Olympus.lua: values['Lua'],
+                Olympus.dijkstra: values['Dijkstra'],
+                Olympus.blackscholes: values['BlackScholes'],
+                Olympus.mandelbrot: values['Mandelbrot'],
+                Olympus.sharpenimage: values['Sharpen Filter'],
+                Olympus.blurimage: values['Blur Filter'],
+                Olympus.sgemm: values['SGEMM'],
+                Olympus.dgemm: values['DGEMM'],
+                Olympus.sfft: values['SFFT'],
+                Olympus.dfft: values['DFFT'],
+                Olympus.nbody: values['N-Body'],
+                Olympus.raytrace: values['Ray Trace'],
+                Olympus.copy: values['Stream Copy'],
+                Olympus.scale: values['Stream Scale'],
+                Olympus.add: values['Stream Add'],
+                Olympus.triad: values['Stream Triad']
+            })
+            session.commit()
+            print "\nCompleted Geekbench test"
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
 
     def fio_command_generator(option):
@@ -283,9 +357,7 @@ for x in range(iterations):
 
 
     if fio == 'y':
-
         for fio_op_type in fio_op_types:
-
             sub.call(fio_command_generator(fio_op_type))
             clean_fio_json_result(fio_json_file)
             fio_json = open(fio_json_file)
@@ -405,7 +477,89 @@ for x in range(iterations):
                     bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
 
                     spider_egg_exterminator()
-        print "\n\ncompleted disk tests"
+
+        session = Session()
+        try:
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.iops_read_rand: iops_read_rand,
+                Olympus.iops_write_rand: iops_write_rand,
+                Olympus.io_read_rand: io_read_rand,
+                Olympus.io_write_rand: io_write_rand,
+                Olympus.runtime_read_rand: runtime_read_rand,
+                Olympus.runtime_write_rand: runtime_write_rand,
+                Olympus.bw_read_rand: bw_read_rand,
+                Olympus.bw_write_rand: bw_write_rand,
+                Olympus.iops_read_100_rand: iops_read_100_rand,
+                Olympus.iops_write_100_rand: iops_write_100_rand,
+                Olympus.throughput_read_100_rand: throughput_read_100_rand,
+                Olympus.throughput_write_100_rand: throughput_write_100_rand,
+                Olympus.lat_read_100_rand: lat_read_100_rand,
+                Olympus.lat_write_100_rand: lat_write_100_rand
+            })
+            session.commit()
+
+            if async_io == 'y':
+                session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                    Olympus.iops_read_rand_async: iops_read_rand_async,
+                    Olympus.iops_write_rand_async: iops_write_rand_async,
+                    Olympus.io_read_rand_async: io_read_rand_async,
+                    Olympus.io_write_rand_async: io_write_rand_async,
+                    Olympus.runtime_read_rand_async: runtime_read_rand_async,
+                    Olympus.runtime_write_rand_async: runtime_write_rand_async,
+                    Olympus.bw_read_rand_async: bw_read_rand_async,
+                    Olympus.bw_write_rand_async: bw_write_rand_async,
+                    Olympus.iops_read_100_rand_async: iops_read_100_rand_async,
+                    Olympus.iops_write_100_rand_async: iops_write_100_rand_async,
+                    Olympus.throughput_read_100_rand_async: throughput_read_100_rand_async,
+                    Olympus.throughput_write_100_rand_async: throughput_write_100_rand_async,
+                    Olympus.lat_read_100_rand_async: lat_read_100_rand_async,
+                    Olympus.lat_write_100_rand_async: lat_write_100_rand_async
+                })
+                session.commit()
+            print "\n\nCompleted Fio Random disk tests"
+
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.iops_read_seq: iops_read_seq,
+                Olympus.iops_write_seq: iops_write_seq,
+                Olympus.io_read_seq: io_read_seq,
+                Olympus.io_write_seq: io_write_seq,
+                Olympus.runtime_read_seq: runtime_read_seq,
+                Olympus.runtime_write_seq: runtime_write_seq,
+                Olympus.bw_read_seq: bw_read_seq,
+                Olympus.bw_write_seq: bw_write_seq,
+                Olympus.iops_read_100_seq: iops_read_100_seq,
+                Olympus.iops_write_100_seq: iops_write_100_seq,
+                Olympus.throughput_read_100_seq: throughput_read_100_seq,
+                Olympus.throughput_write_100_seq: throughput_write_100_seq,
+                Olympus.lat_read_100_seq: lat_read_100_seq,
+                Olympus.lat_write_100_seq: lat_write_100_seq
+            })
+            session.commit()
+
+            if async_io == 'y':
+                session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                    Olympus.iops_read_seq_async: iops_read_seq_async,
+                    Olympus.iops_write_seq_async: iops_write_seq_async,
+                    Olympus.io_read_seq_async: io_read_seq_async,
+                    Olympus.io_write_seq_async: io_write_seq_async,
+                    Olympus.runtime_read_seq_async: runtime_read_seq_async,
+                    Olympus.runtime_write_seq_async: runtime_write_seq_async,
+                    Olympus.bw_read_seq_async: bw_read_seq_async,
+                    Olympus.bw_write_seq_async: bw_write_seq_async,
+                    Olympus.iops_read_100_seq_async: iops_read_100_seq_async,
+                    Olympus.iops_write_100_seq_async: iops_write_100_seq_async,
+                    Olympus.throughput_read_100_seq_async: throughput_read_100_seq_async,
+                    Olympus.throughput_write_100_seq_async: throughput_write_100_seq_async,
+                    Olympus.lat_read_100_seq_async: lat_read_100_seq_async,
+                    Olympus.lat_write_100_seq_async: lat_write_100_seq_async
+                })
+                session.commit()
+            print "\n\nCompleted Fio Sequential disk tests"
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
     if iperf == 'y':
         internal_net_csv_file = 'iperf_results.csv'
@@ -418,7 +572,20 @@ for x in range(iterations):
             internal_network_data = (int(row[7]) / 1024) / 1024
             internal_network_bandwidth = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
-        print "\ncompleted internal network tests"
+
+        session = Session()
+        try:
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.internal_network_data: internal_network_data,
+                Olympus.internal_network_bandwidth: internal_network_bandwidth
+            })
+            session.commit()
+            print "\nCompleted Iperf test"
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
     if apachebench == 'y':
         ab_results = "ab_results.txt"
@@ -457,7 +624,33 @@ for x in range(iterations):
                     percent_100 = filter(None, l.split(" "))[1]
 
         os.remove(ab_results)
-        print "\ncompleted apachebench tests"
+
+        session = Session()
+        try:
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.hostname: ab_address,
+                Olympus.concurrency_level: ab_concurrency,
+                Olympus.completed_requests: ab_requests,
+                Olympus.time_taken: time_taken,
+                Olympus.requests_per_sec: requests_per_sec,
+                Olympus.percent_50: percent_50,
+                Olympus.percent_66: percent_66,
+                Olympus.percent_75: percent_75,
+                Olympus.percent_80: percent_80,
+                Olympus.percent_90: percent_90,
+                Olympus.percent_95: percent_95,
+                Olympus.percent_98: percent_98,
+                Olympus.percent_99: percent_99,
+                Olympus.percent_100: percent_100
+            })
+
+            session.commit()
+            print "\nCompleted Apachebench test"
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
 
     def iozone_dummy_exterminator():
@@ -513,7 +706,25 @@ for x in range(iterations):
         os.remove(iozone_results)
 
         iozone_dummy_exterminator()
-        print "\ncompleted iozone tests"
+
+        session = Session()
+        try:
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.iozone_seq_writers: iozone_seq_writers,
+                Olympus.iozone_seq_rewriters: iozone_seq_rewriters,
+                Olympus.iozone_seq_readers: iozone_seq_readers,
+                Olympus.iozone_seq_rereaders: iozone_seq_rereaders,
+                Olympus.iozone_random_readers: iozone_random_readers,
+                Olympus.iozone_random_writers: iozone_random_writers,
+            })
+
+            session.commit()
+            print "\nCompleted Iozone test"
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
 
     def sysbench_command_generator(sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs,
@@ -541,6 +752,7 @@ for x in range(iterations):
     if sysbench == 'y':
         sysbench_results = 'sysbench_results.txt'
 
+        # Sequential Write
         sysbench_test_mode = 'seqwr'
         sysbench_command = sysbench_command_generator(
                 sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
@@ -549,6 +761,7 @@ for x in range(iterations):
         sysbench_seq_write = sysbench_result_parser(sysbench_results, sysbench_test_mode)
         os.remove(sysbench_results)
 
+        # Sequential Read
         sysbench_test_mode = 'seqrd'
         sysbench_command = sysbench_command_generator(
                 sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
@@ -559,6 +772,7 @@ for x in range(iterations):
         os.system('sysbench --test=fileio --file-total-size=%s --file-num=%s cleanup' %
                   (sysbench_filesize, sysbench_numjobs))
 
+        # Random Write
         sysbench_test_mode = 'rndwr'
         sysbench_command = sysbench_command_generator(
                 sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
@@ -567,6 +781,7 @@ for x in range(iterations):
         sysbench_rand_write = sysbench_result_parser(sysbench_results, sysbench_test_mode)
         os.remove(sysbench_results)
 
+        # Random Read
         sysbench_test_mode = 'rndrd'
         sysbench_command = sysbench_command_generator(
                 sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs, sysbench_io_mode,
@@ -577,225 +792,29 @@ for x in range(iterations):
         os.system('sysbench --test=fileio --file-total-size=%s --file-num=%s cleanup' %
                   (sysbench_filesize, sysbench_numjobs))
 
-        print "\ncompleted sysbench tests"
-
-    if fio == 'n':
-        fio_rw = "n/a"
-        fio_seq = "n/a"
-        fio_blocksize = 0
-        fio_filesize = 0
-        fio_numjobs = 0
-        fio_direct_val = 0
-
-    # ==================== GLOBAL TRANSMITTING ==================== #
-    # Transmit data back to Olympus
-    print "\n\n"
-    print "Transmitting to Olympus"
-    print "\n\n"
-    Open_Olympus = Olympus(
-            project=project_id,
-            uid=generated_uid,
-            provider=provider_input,
-            region=provider_region,
-            startdate=startdate_input,
-            iteration=iterator,
-            iteration_start_time=iteration_start_time,
-            vm=vm_input,
-            vmcount=vmcount_input,
-            vcpu=vcpu_input,
-            ram=ram_input,
-            local=local_input,
-            block=block_input,
-            disk_rand=fio_rw,
-            disk_seq=fio_seq,
-            disk_blocksize=fio_blocksize,
-            disk_filesize=fio_filesize,
-            disk_numjobs=fio_numjobs,
-            disk_direct=fio_direct_val)
-    session.add(Open_Olympus)
-    session.commit()
-    print "Basic information transfer complete"
-
-    if geekbench == 'y':
-        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.processor: processor_info,
-            Olympus.runtime: values['Runtime'],
-            Olympus.intmulti: values['Integer Multicore'],
-            Olympus.floatmulti: values['Floating Point Multicore'],
-            Olympus.memmulti: values['Memory Multicore'],
-            Olympus.intsingle: values['Integer Singlecore'],
-            Olympus.floatsingle: values['Floating Point Singlecore'],
-            Olympus.memsingle: values['Memory Singlecore'],
-            Olympus.totalmulti: values['Total'],
-            Olympus.totalsingle: values['Total Single'],
-            Olympus.aes: values['AES'],
-            Olympus.twofish: values['Twofish'],
-            Olympus.sha1: values['SHA1'],
-            Olympus.sha2: values['SHA2'],
-            Olympus.bzipcompression: values['BZip2 Compress'],
-            Olympus.bzipdecompression: values['BZip2 Decompress'],
-            Olympus.jpegcompression: values['JPEG Compress'],
-            Olympus.jpegdecompression: values['JPEG Decompress'],
-            Olympus.pngcompression: values['PNG Compress'],
-            Olympus.pngdecompression: values['PNG Decompress'],
-            Olympus.sobel: values['Sobel'],
-            Olympus.lua: values['Lua'],
-            Olympus.dijkstra: values['Dijkstra'],
-            Olympus.blackscholes: values['BlackScholes'],
-            Olympus.mandelbrot: values['Mandelbrot'],
-            Olympus.sharpenimage: values['Sharpen Filter'],
-            Olympus.blurimage: values['Blur Filter'],
-            Olympus.sgemm: values['SGEMM'],
-            Olympus.dgemm: values['DGEMM'],
-            Olympus.sfft: values['SFFT'],
-            Olympus.dfft: values['DFFT'],
-            Olympus.nbody: values['N-Body'],
-            Olympus.raytrace: values['Ray Trace'],
-            Olympus.copy: values['Stream Copy'],
-            Olympus.scale: values['Stream Scale'],
-            Olympus.add: values['Stream Add'],
-            Olympus.triad: values['Stream Triad']
-        })
-        session.commit()
-        print "Finished transferring geekbench results"
-
-    if fio == 'y':
-
-        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.iops_read_rand: iops_read_rand,
-            Olympus.iops_write_rand: iops_write_rand,
-            Olympus.io_read_rand: io_read_rand,
-            Olympus.io_write_rand: io_write_rand,
-            Olympus.runtime_read_rand: runtime_read_rand,
-            Olympus.runtime_write_rand: runtime_write_rand,
-            Olympus.bw_read_rand: bw_read_rand,
-            Olympus.bw_write_rand: bw_write_rand,
-            Olympus.iops_read_100_rand: iops_read_100_rand,
-            Olympus.iops_write_100_rand: iops_write_100_rand,
-            Olympus.throughput_read_100_rand: throughput_read_100_rand,
-            Olympus.throughput_write_100_rand: throughput_write_100_rand,
-            Olympus.lat_read_100_rand: lat_read_100_rand,
-            Olympus.lat_write_100_rand: lat_write_100_rand
-        })
-        session.commit()
-
-        if async_io == 'y':
+        session = Session()
+        try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-                Olympus.iops_read_rand_async: iops_read_rand_async,
-                Olympus.iops_write_rand_async: iops_write_rand_async,
-                Olympus.io_read_rand_async: io_read_rand_async,
-                Olympus.io_write_rand_async: io_write_rand_async,
-                Olympus.runtime_read_rand_async: runtime_read_rand_async,
-                Olympus.runtime_write_rand_async: runtime_write_rand_async,
-                Olympus.bw_read_rand_async: bw_read_rand_async,
-                Olympus.bw_write_rand_async: bw_write_rand_async,
-                Olympus.iops_read_100_rand_async: iops_read_100_rand_async,
-                Olympus.iops_write_100_rand_async: iops_write_100_rand_async,
-                Olympus.throughput_read_100_rand_async: throughput_read_100_rand_async,
-                Olympus.throughput_write_100_rand_async: throughput_write_100_rand_async,
-                Olympus.lat_read_100_rand_async: lat_read_100_rand_async,
-                Olympus.lat_write_100_rand_async: lat_write_100_rand_async
+                Olympus.sysbench_seq_write: sysbench_seq_write,
+                Olympus.sysbench_seq_read: sysbench_seq_read,
+                Olympus.sysbench_rand_write: sysbench_rand_write,
+                Olympus.sysbench_rand_read: sysbench_rand_read,
             })
+
             session.commit()
+            print "\nCompleted Sysbench test"
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
 
-        print "Finished transferring disk random results"
-
-        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.iops_read_seq: iops_read_seq,
-            Olympus.iops_write_seq: iops_write_seq,
-            Olympus.io_read_seq: io_read_seq,
-            Olympus.io_write_seq: io_write_seq,
-            Olympus.runtime_read_seq: runtime_read_seq,
-            Olympus.runtime_write_seq: runtime_write_seq,
-            Olympus.bw_read_seq: bw_read_seq,
-            Olympus.bw_write_seq: bw_write_seq,
-            Olympus.iops_read_100_seq: iops_read_100_seq,
-            Olympus.iops_write_100_seq: iops_write_100_seq,
-            Olympus.throughput_read_100_seq: throughput_read_100_seq,
-            Olympus.throughput_write_100_seq: throughput_write_100_seq,
-            Olympus.lat_read_100_seq: lat_read_100_seq,
-            Olympus.lat_write_100_seq: lat_write_100_seq
-        })
-        session.commit()
-
-        if async_io == 'y':
-            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-                Olympus.iops_read_seq_async: iops_read_seq_async,
-                Olympus.iops_write_seq_async: iops_write_seq_async,
-                Olympus.io_read_seq_async: io_read_seq_async,
-                Olympus.io_write_seq_async: io_write_seq_async,
-                Olympus.runtime_read_seq_async: runtime_read_seq_async,
-                Olympus.runtime_write_seq_async: runtime_write_seq_async,
-                Olympus.bw_read_seq_async: bw_read_seq_async,
-                Olympus.bw_write_seq_async: bw_write_seq_async,
-                Olympus.iops_read_100_seq_async: iops_read_100_seq_async,
-                Olympus.iops_write_100_seq_async: iops_write_100_seq_async,
-                Olympus.throughput_read_100_seq_async: throughput_read_100_seq_async,
-                Olympus.throughput_write_100_seq_async: throughput_write_100_seq_async,
-                Olympus.lat_read_100_seq_async: lat_read_100_seq_async,
-                Olympus.lat_write_100_seq_async: lat_write_100_seq_async
-            })
-            session.commit()
-
-        print "Finished transferring disk sequential results"
-
-    if iperf == 'y':
-        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.internal_network_data: internal_network_data,
-            Olympus.internal_network_bandwidth: internal_network_bandwidth
-        })
-        session.commit()
-        print "Finished transferring internal network test results"
-
-    if apachebench == 'y':
-        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.hostname: ab_address,
-            Olympus.concurrency_level: ab_concurrency,
-            Olympus.completed_requests: ab_requests,
-            Olympus.time_taken: time_taken,
-            Olympus.requests_per_sec: requests_per_sec,
-            Olympus.percent_50: percent_50,
-            Olympus.percent_66: percent_66,
-            Olympus.percent_75: percent_75,
-            Olympus.percent_80: percent_80,
-            Olympus.percent_90: percent_90,
-            Olympus.percent_95: percent_95,
-            Olympus.percent_98: percent_98,
-            Olympus.percent_99: percent_99,
-            Olympus.percent_100: percent_100
-        })
-
-        session.commit()
-        print "Finished transferring apache bench test results"
-
-    if iozone == 'y':
-        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.iozone_seq_writers: iozone_seq_writers,
-            Olympus.iozone_seq_rewriters: iozone_seq_rewriters,
-            Olympus.iozone_seq_readers: iozone_seq_readers,
-            Olympus.iozone_seq_rereaders: iozone_seq_rereaders,
-            Olympus.iozone_random_readers: iozone_random_readers,
-            Olympus.iozone_random_writers: iozone_random_writers,
-        })
-
-        session.commit()
-        print "Finished transferring iozone results"
-
-    if sysbench == 'y':
-        session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-            Olympus.sysbench_seq_write: sysbench_seq_write,
-            Olympus.sysbench_seq_read: sysbench_seq_read,
-            Olympus.sysbench_rand_write: sysbench_rand_write,
-            Olympus.sysbench_rand_read: sysbench_rand_read,
-        })
-
-        session.commit()
-        print "Finished transferring sysbench results"
-
-    print "\n\n"
-    print "All tests are successfully completed and the results are transferred to database"
-    print "\n\n"
+    print "\nIteration %s completed\n" % iterator
 
     iterator = iterator + 1
     # Any delay before the next round is executed
     sleep(sleeptime)
+
+print "----------------------------------------------------------------------------------"
+print " All tests are successfully completed and the results are transferred to database "
+print "----------------------------------------------------------------------------------"

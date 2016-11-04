@@ -1,7 +1,13 @@
 # CONFIGURATION INFORMATION
 
+# DATABASE CREDENTIALS
+db_host = "localhost"
+db_user = "root"
+db_password = "inapp"
+db_name = "omnipotentzeuslinux"
+
 # Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
-project_id = 'c-edgehosting-20151126'
+project_id = 'c-edgehosting-20161104'
 # Please enter the operating system
 operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
 
@@ -10,9 +16,9 @@ operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
 geekbench = 'y'  # system tests
 iperf = 'y'  # internal network tests
 fio = 'y'  # disk tests
-iozone = 'n'  # disk tests
-sysbench = 'n'  # disk tests
-apachebench = 'n'  # ApacheBench tests
+iozone = 'y'  # disk tests
+sysbench = 'y'  # disk tests
+apachebench = 'y'  # apachebench tests
 
 # DISK INFORMATION
 # If you selected yes for disk_rand or disk_seq, then you have to fill out this information
@@ -45,6 +51,7 @@ sleeptime = 0
 iterations = 5000000
 duration = 24
 duration_value = "hours"  # please enter seconds, minutes, hours, or days
+
 if duration_value.lower() == "seconds":
     duration = duration
 elif duration_value.lower() == "minutes":
