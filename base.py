@@ -1,5 +1,4 @@
 import os
-import sys
 import csv
 import json
 import platform
@@ -14,37 +13,31 @@ from db import Base, Ignition, Processordata, Memorydata, Localdiskdata, Blockdi
 
 Base.metadata.bind = Ignition
 Session = sessionmaker(bind=Ignition)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # ==================== GLOBAL INTRODUCTION ==================== #
 os.system('clear')
 print "|------------------------|"
 print "|    Omnipotent Hera     |"
-print "|          v1.0          |"
+print "|      v2016.11.01       |"
 print "|------------------------|"
 print "\n"
 
-# ==================== FETCH CONFIG ID FROM COMMAND LINE ARGUMENT IF EXISTS ==================== #
-if len(sys.argv) > 1:
-    try:
-        arg_list = sys.argv[1].split("=")
-        if arg_list[0] == 'config_id':
-            conf_id = int(arg_list[1])
-            conf_data = json.load(open('vm_conf.json'))
-        else:
-            print "\n------ Invalid command line argument. Try again. ------"
-            exit()
-
-        for item in conf_data['config']:
-            if item['id'] == conf_id:
-                provider_name = item['provider']
-                location_name = item['location']
-                vm_name = item['vm_name']
-                disk_type = item['disk_type']
-                fio_path = item['fio_path']
-                disk_size = item['disk_size']
-                internal_net_ip = item['internal_net_ip']
-    except Exception as e:
-        raise e
+# ==================== FETCH VM NAME FROM COMMAND LINE ARGUMENT IF EXISTS ==================== #
+vm = ''
+try:
+    vm_data = json.load(open(os.path.join(BASE_DIR, 'vm_conf.json')))
+    vm = vm_data['vm']
+    provider_name = vm_data['provider']
+    location_name = vm_data['location']
+    vm_type = vm_data['vm_type']
+    disk_type = vm_data['disk_type']
+    fio_path = vm_data['fio_path']
+    disk_size = vm_data['disk_size']
+    internal_net_ip = vm_data['iperf_server']
+except Exception as e:
+    print "\n------ VM configuration does not exist. ------"
+    exit()
 
 # ==================== GLOBAL INSTALLER ==================== #
 if geekbench == 'y':
@@ -103,36 +96,36 @@ def get_vm_id(table, vm_name, provider_id, location_id):
 
 
 # Provider name
-if len(sys.argv) <= 1:
+if vm == '':
     provider_id = sanitize_input('Provider', Provider)
 else:
     provider_name = provider_name.lower()
     provider_id = get_id(Provider, provider_name)
 
 # Location
-if len(sys.argv) <= 1:
+if vm == '':
     location_id = sanitize_input('Location', Location)
 else:
     location_name = location_name.lower()
     location_id = get_id(Location, location_name)
 
 # Virtual Machine
-if len(sys.argv) <= 1:
+if vm == '':
     while True:
-        vm_name = raw_input("\nPlease enter the VM name: ")
-        if vm_name == 'exit':
+        vm_type = raw_input("\nPlease enter the VM type: ")
+        if vm_type == 'exit':
             exit()
         else:
-            vm_name = vm_name.lower()
-            vm_id = get_vm_id(Virtualmachine, vm_name, provider_id, location_id)
+            vm_type = vm_type.lower()
+            vm_id = get_vm_id(Virtualmachine, vm_type, provider_id, location_id)
 
             if vm_id is False:
                 continue
             else:
                 break
 else:
-    vm_name = vm_name.lower()
-    vm_id = get_vm_id(Virtualmachine, vm_name, provider_id, location_id)
+    vm_type = vm_type.lower()
+    vm_id = get_vm_id(Virtualmachine, vm_type, provider_id, location_id)
 
 # Operating system
 os_name = platform.system().lower()
@@ -143,14 +136,24 @@ v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
 v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
 v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
 core_count = v3.communicate()[0]
-core_count = core_count.strip()
+core_count = int(core_count.strip())
 
-if core_count is '1':
+if core_count == 1:
     core_type = 'single'
-elif core_count is '2':
+elif core_count == 2:
     core_type = 'dual'
-elif core_count is '4':
+elif core_count == 4:
     core_type = 'quad'
+elif core_count == 8:
+    core_type = 'oct'
+elif core_count == 16:
+    core_type = 'sixteen'
+elif core_count == 30:
+    core_type = 'thirty'
+elif core_count == 32:
+    core_type = 'thirtytwo'
+elif core_count == 40:
+    core_type = 'forty'
 
 # Get Cores
 core_id = get_id(Cores, core_type)
@@ -168,23 +171,23 @@ for x in memoutput_list:
 
 if fio == 'y':
     # Disk type
-    if len(sys.argv) <= 1:
+    if vm == '':
         while True:
             disk_type = raw_input("\nPlease enter the Disk type (local / block): ")
             if disk_type == 'exit':
                 exit()
             elif disk_type.lower() == "local":
-                fio_path = raw_input("\nPlease enter the Local storage path to run FIO test (Eg:- /home/mnt/): ")
+                fio_path = raw_input("\nPlease enter the Local storage path to run FIO test (Eg:- /mnt/): ")
                 break
             elif disk_type.lower() == "block":
-                fio_path = raw_input("\nPlease enter the Block storage path to run FIO test (Eg:- /home/mnt/): ")
+                fio_path = raw_input("\nPlease enter the Block storage path to run FIO test (Eg:- /mnt/): ")
                 break
             else:
                 print "\n------ Invalid input. Try again. ------"
                 continue
 
     # Disk size
-    if len(sys.argv) <= 1:
+    if vm == '':
         disk_size_id = sanitize_input('Disk size', Disksizes)
     else:
         disk_size_id = get_id(Disksizes, disk_size)
@@ -205,7 +208,7 @@ if fio == 'y':
 
 if iperf == 'y':
     # Internal network IP
-    if len(sys.argv) <= 1:
+    if vm == '':
         internal_net_ip = raw_input("\nPlease enter the IP address of the server you are trying to connect to: ")
 
     internal_net_csv = "C"
@@ -522,8 +525,12 @@ for x in range(iterations):
 
     # ==================== IPERF ==================== #
     if iperf == 'y':
-        # Single-threaded test
         internal_net_csv_file = 'iperf_results.csv'
+
+        # Start iperf server on iperf server machine
+        os.system('ssh -i %s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@%s iperf -s -t %s' % (os.path.join(BASE_DIR, 'saltkey.pem'), internal_net_ip, int(internal_net_time) * 4))
+
+        # Start iperf client in single threaded mode
         sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
                   '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
 
@@ -533,8 +540,8 @@ for x in range(iterations):
             single_threaded_throughput = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
 
-        # Multi-threaded test
-        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time, '-P', core_count,
+        # Start iperf client in multi threaded mode
+        sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time, '-P', str(core_count),
                   '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
 
         opener = open(internal_net_csv_file)

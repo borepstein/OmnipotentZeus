@@ -1,8 +1,8 @@
 # DATABASE CREDENTIALS
-db_host = "192.168.20.42"
+db_host = "localhost"
 db_user = "root"
 db_password = "inapp"
-db_name = "perf_forecast"
+db_name = "forecast"
 
 # TESTS TO RUN
 geekbench = 'y'  # system tests
