@@ -349,7 +349,7 @@ for x in range(iterations):
                     memmulti=values['Memory Multicore'])
             session.add(Open_Memorydata)
             session.commit()
-            print "\n------ Completed Geekbench test and transferred results to database ------"
+            print "\n------ Completed Geekbench test ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -516,7 +516,7 @@ for x in range(iterations):
                         latency_write_random=lat_write_random)
                 session.add(Open_Blockdiskdata)
                 session.commit()
-                print "\n\n------ Completed FIO disk tests and transferred results to database ------"
+                print "\n\n------ Completed Fio test ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -559,12 +559,18 @@ for x in range(iterations):
                     multi_threaded_throughput=multi_threaded_throughput)
             session.add(Open_Internalnetworkdata)
             session.commit()
-            print "\n------ Completed iperf internal network test and transferred results to database ------"
+            print "\n------ Completed Iperf test ------"
         except Exception as e:
             session.rollback()
             raise e
         finally:
             session.close()
 
+    print "\nIteration %s completed\n" % iterator
+
     iterator += 1
     sleep(sleep_time)
+
+print "----------------------------------------------------------------------------------"
+print " All tests are successfully completed and the results are transferred to database "
+print "----------------------------------------------------------------------------------"
