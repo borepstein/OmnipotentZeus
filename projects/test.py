@@ -48,7 +48,7 @@ ab_path = "/admin"  # path
 # Duration and duration value will limit the time the suite will be running for.
 # Either duration or number of iterations must complete in order for the testing to stop.
 sleeptime = 0
-iterations = 2
+iterations = 10000
 duration = 24
 duration_value = "hours"  # please enter seconds, minutes, hours, or days
 
