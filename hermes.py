@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+import shutil
 import subprocess as sub
 from projects.test import *
 from random import randint
@@ -14,6 +15,9 @@ from sqlalchemy.orm import sessionmaker
 # Bind Ignition to the metadata of the Base class
 Base.metadata.bind = Ignition
 Session = sessionmaker(bind=Ignition)
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
+UTILS_DIR = os.path.join(BASE_DIR, 'utils')
+UTILS_DEB_DIR = os.path.join(BASE_DIR, 'utils/deb')
 
 # ==================== GLOBAL INTRODUCTION ==================== #
 os.system('clear')
@@ -29,16 +33,17 @@ spot testing, which is an archaic method that cannot apply to highly variable en
 
 # ==================== GLOBAL INSTALLER ==================== #
 if operating_system == 'centos' or operating_system == 'redhat':
+    if geekbench == 'y':
+        if not os.path.isfile(geekbench_install_dir + '/geekbench_x86_64'):
+            os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
+            os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
+        os.chdir(geekbench_install_dir)
+        sub.call(['./geekbench_x86_64', '-r', gb_email, gb_key])
     if fio == 'y':
         os.system('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
         os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
     if iperf == 'y':
         os.system('yum install iperf -y')
-    if geekbench == 'y':
-        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-        os.chdir('dist/Geekbench-3.1.2-Linux')
-        sub.call(['./geekbench_x86_64', '-r', email, key])
     if apachebench == 'y':
         os.system('yum install httpd-tools')
     if iozone == 'y':
@@ -48,26 +53,50 @@ if operating_system == 'centos' or operating_system == 'redhat':
         os.system('yum -y install sysbench')
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
-    if fio == 'y':
-        os.system('apt-get install fio --yes')
-    if iperf == 'y':
-        os.system('apt-get install iperf')
     if geekbench == 'y':
-        if not os.path.isfile(geekbench_install_dir + '/geekbench_x86_64'):
-            os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-            os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-        os.chdir(geekbench_install_dir)
-        sub.call(['./geekbench_x86_64', '-r', email, key])
-
+        gb_exe = '%s/%s' % (geekbench_install_dir, 'geekbench_x86_64')
+        gb_tar = 'Geekbench-3.1.2-Linux.tar.gz'
+        if not os.path.isfile(os.path.join(BASE_DIR, gb_exe)):
+            if not os.path.isfile(os.path.join(BASE_DIR, gb_tar)):
+                os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
+            os.system('tar -xvzf %s' % gb_tar)
+        sub.call([os.path.join(BASE_DIR, gb_exe), '-r', gb_email, gb_key])
+    if fio == 'y':
+        fio_exe = 'fio_2.1.3-1_amd64.deb'
+        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, fio_exe)):
+            os.system('apt-get install fio --yes')
+        else:
+            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, fio_exe))
+    if iperf == 'y':
+        iperf_exe = 'iperf3_3.1.3-1_amd64.deb'
+        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, iperf_exe)):
+            os.system('apt-get install iperf')
+        else:
+            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, iperf_exe))
     if apachebench == 'y':
-        os.system('apt-get install apache2-utils')
+        apachebench_exe = 'apache2-utils_2.4.7-1ubuntu4.13_amd64.deb'
+        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, apachebench_exe)):
+            os.system('apt-get install apache2-utils')
+        else:
+            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, apachebench_exe))
     if iozone == 'y':
-        os.system('apt-get install iozone3')
+        iozone_exe = 'iozone3_420-3_amd64.deb'
+        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, iozone_exe)):
+            os.system('apt-get install iozone3')
+        else:
+            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, iozone_exe))
     if sysbench == 'y':
-        os.system('apt-get install sysbench')
+        sysbench_exe = 'sysbench_0.4.12-1build2_amd64.deb'
+        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, sysbench_exe)):
+            os.system('apt-get install sysbench')
+        else:
+            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, sysbench_exe))
 
+# ==================== INITIALIZATION ==================== #
 if fio == 'y':
     fio_op_types = ['-rw=write', '-rw=read', '-rw=randwrite', '-rw=randread', '-rw=rw', '-rw=randrw']
+    fio_rw = "Yes"
+    fio_seq = "Yes"
 
     fio_blocksize = '-bs=' + blocksize + 'k'
     fio_filesize = '-size=' + filesize + "M"
@@ -82,6 +111,13 @@ if fio == 'y':
     else:
         fio_direct_val = "Cached"
         fio_direct = '-direct=0'
+else:
+    fio_rw = "n/a"
+    fio_seq = "n/a"
+    fio_blocksize = 0
+    fio_filesize = 0
+    fio_numjobs = 0
+    fio_direct_val = 0
 
 if iozone == 'y':
     spider_hatchlings = int(numjobs) + 1
@@ -104,14 +140,24 @@ if sysbench == 'y':
     else:
         sysbench_direct = ''
 
+if spec == 'y':
+    spec_tests = ['400.perlbench', '401.bzip2', '403.gcc', '429.mcf', '483.xalancbmk', '450.soplex', '482.sphinx3']
+
+    spec_result_dir = '/SPEC/CPU2006/result'
+    spec_output_dir = '/SPEC/CPU2006/output'
+    int_result_csv = 'CINT2006.001.ref.csv'
+    fp_result_csv = 'CFP2006.001.ref.csv'
+    csv_results = [int_result_csv, fp_result_csv]
+
 processor_info = ""
-# Getting CPU Amount
+
+# CPU Cores
 v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
 v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
 v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
-vcpu_input = v3.communicate()[0]
+cpu_count = v3.communicate()[0]
 
-# RAM Amount
+# RAM
 r1 = sub.Popen(['cat', '/proc/meminfo'], stdout=sub.PIPE)
 r2 = sub.Popen(['grep', 'MemTotal'], stdin=r1.stdout, stdout=sub.PIPE)
 memoutput = r2.communicate()[0]
@@ -127,10 +173,10 @@ provider_input = raw_input("\nPlease enter the provider's name: ")
 provider_input = provider_input.lower()
 provider_region = "N/A"
 
-vm_input = raw_input("Please enter the VM name (if no VM name, just say vCPU/RAM in GB (e.g., 2vCPU/4GB): ")
+vm_input = raw_input("\nPlease enter the VM name (if no VM name, just say vCPU/RAM in GB (e.g., 2vCPU/4GB): ")
 vm_input = vm_input.lower()
 vmcount_input = raw_input(
-        "Which VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
+        "\nWhich VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
 local_input = "0"
 block_input = "0"
 
@@ -139,19 +185,8 @@ startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
 random_uid = randint(0, 1000000)
 generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
 
-if fio == 'y':
-    fio_rw = "Yes"
-    fio_seq = "Yes"
-else:
-    fio_rw = "n/a"
-    fio_seq = "n/a"
-    fio_blocksize = 0
-    fio_filesize = 0
-    fio_numjobs = 0
-    fio_direct_val = 0
-
 if iperf == 'y':
-    internal_net_ip = raw_input('Please enter the IP address of the iperf server you are trying to connect to: ')
+    internal_net_ip = raw_input('\nPlease enter the IP address of the iperf server you are trying to connect to: ')
     internal_net_csv = "C"
 
 # ==================== GLOBAL TESTING ==================== #
@@ -179,7 +214,7 @@ for x in range(iterations):
                 iteration_start_time=iteration_start_time,
                 vm=vm_input,
                 vmcount=vmcount_input,
-                vcpu=vcpu_input,
+                vcpu=cpu_count,
                 ram=ram_input,
                 local=local_input,
                 block=block_input,
@@ -197,10 +232,11 @@ for x in range(iterations):
         raise e
 
     if geekbench == 'y':
+        gb_output = 'gb.json'
         # Run Geekbench
-        sub.call(['./geekbench_x86_64', '--no-upload', '--export-json', 'gb.json'])
+        sub.call([os.path.join(BASE_DIR, gb_exe), '--no-upload', '--export-json', gb_output])
 
-        geekbench_json = open('gb.json')
+        geekbench_json = open(gb_output)
         data = json.load(geekbench_json)
         if iterator == 1:
             processor_info = str(data['metrics'][6]['value'])
@@ -265,6 +301,7 @@ for x in range(iterations):
                 values[key] = val
             y = y + 1
         values = od(values)
+        os.remove(gb_output)
 
         session = Session()
         try:
@@ -308,7 +345,7 @@ for x in range(iterations):
                 Olympus.triad: values['Stream Triad']
             })
             session.commit()
-            print "\nCompleted Geekbench test"
+            print "\n------ Completed GEEKBENCH ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -363,12 +400,14 @@ for x in range(iterations):
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
+            # Sequential Write
             if fio_op_type is '-rw=write':
 
                 iops_write_100_seq = str(fio_data['jobs'][0]['write']['iops'])
                 throughput_write_100_seq = str(fio_data['jobs'][0]['write']['bw'])
                 lat_write_100_seq = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
+            # Sequential Read
             elif fio_op_type is '-rw=read':
 
                 iops_read_100_seq = str(fio_data['jobs'][0]['read']['iops'])
@@ -377,12 +416,14 @@ for x in range(iterations):
 
                 spider_egg_exterminator()
 
+            # Random Write
             elif fio_op_type is '-rw=randwrite':
 
                 iops_write_100_rand = str(fio_data['jobs'][0]['write']['iops'])
                 throughput_write_100_rand = str(fio_data['jobs'][0]['write']['bw'])
                 lat_write_100_rand = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
+            # Random Read
             elif fio_op_type is '-rw=randread':
 
                 iops_read_100_rand = str(fio_data['jobs'][0]['read']['iops'])
@@ -391,6 +432,7 @@ for x in range(iterations):
 
                 spider_egg_exterminator()
 
+            # Sequential Read Write
             elif fio_op_type is '-rw=rw':
                 runtime_read_seq = str(fio_data['jobs'][0]['read']['runtime'])
                 runtime_write_seq = str(fio_data['jobs'][0]['write']['runtime'])
@@ -403,6 +445,7 @@ for x in range(iterations):
 
                 spider_egg_exterminator()
 
+            # Random Read Write
             elif fio_op_type is '-rw=randrw':
 
                 runtime_read_rand = str(fio_data['jobs'][0]['read']['runtime'])
@@ -425,12 +468,14 @@ for x in range(iterations):
                 fio_json = open(fio_json_file)
                 fio_data = json.load(fio_json)
 
+                # Asynchronous Sequential Write
                 if fio_op_type is '-rw=write':
 
                     iops_write_100_seq_async = str(fio_data['jobs'][0]['write']['iops'])
                     throughput_write_100_seq_async = str(fio_data['jobs'][0]['write']['bw'])
                     lat_write_100_seq_async = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
+                # Asynchronous Sequential Read
                 elif fio_op_type is '-rw=read':
 
                     iops_read_100_seq_async = str(fio_data['jobs'][0]['read']['iops'])
@@ -439,12 +484,14 @@ for x in range(iterations):
 
                     spider_egg_exterminator()
 
+                # Asynchronous Random Write
                 elif fio_op_type is '-rw=randwrite':
 
                     iops_write_100_rand_async = str(fio_data['jobs'][0]['write']['iops'])
                     throughput_write_100_rand_async = str(fio_data['jobs'][0]['write']['bw'])
                     lat_write_100_rand_async = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
+                # Asynchronous Random Read
                 elif fio_op_type is '-rw=randread':
 
                     iops_read_100_rand_async = str(fio_data['jobs'][0]['read']['iops'])
@@ -453,6 +500,7 @@ for x in range(iterations):
 
                     spider_egg_exterminator()
 
+                # Asynchronous Sequential Read Write
                 elif fio_op_type is '-rw=rw':
                     runtime_read_seq_async = str(fio_data['jobs'][0]['read']['runtime'])
                     runtime_write_seq_async = str(fio_data['jobs'][0]['write']['runtime'])
@@ -465,6 +513,7 @@ for x in range(iterations):
 
                     spider_egg_exterminator()
 
+                # Asynchronous Random Read Write
                 elif fio_op_type is '-rw=randrw':
 
                     runtime_read_rand_async = str(fio_data['jobs'][0]['read']['runtime'])
@@ -516,7 +565,7 @@ for x in range(iterations):
                     Olympus.lat_write_100_rand_async: lat_write_100_rand_async
                 })
                 session.commit()
-            print "\n\nCompleted Fio Random disk tests"
+            print "\n------ Completed FIO Random disk tests ------"
 
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
                 Olympus.iops_read_seq: iops_read_seq,
@@ -554,7 +603,7 @@ for x in range(iterations):
                     Olympus.lat_write_100_seq_async: lat_write_100_seq_async
                 })
                 session.commit()
-            print "\n\nCompleted Fio Sequential disk tests"
+            print "\n------ Completed FIO Sequential disk tests ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -580,7 +629,7 @@ for x in range(iterations):
                 Olympus.internal_network_bandwidth: internal_network_bandwidth
             })
             session.commit()
-            print "\nCompleted Iperf test"
+            print "\n------ Completed IPERF ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -645,7 +694,7 @@ for x in range(iterations):
             })
 
             session.commit()
-            print "\nCompleted Apachebench test"
+            print "\n------ Completed APACHEBENCH ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -719,7 +768,7 @@ for x in range(iterations):
             })
 
             session.commit()
-            print "\nCompleted Iozone test"
+            print "\n------ Completed IOZONE ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -802,7 +851,105 @@ for x in range(iterations):
             })
 
             session.commit()
-            print "\nCompleted Sysbench test"
+            print "\n------ Completed SYSBENCH ------"
+        except Exception as e:
+            session.rollback()
+            raise e
+        finally:
+            session.close()
+
+    def run_spec_suite():
+        try:
+            spec_cmd = ['runspec', '--config', 'spec_test_config.cfg', '--tune', 'all', '--rate', cpu_count, '--noreportable',
+                        '--output_format', 'csv', '--iterations', '1']
+            spec_cmd.extend(spec_tests)
+            sub.call(spec_cmd)
+        except Exception as e:
+            raise e
+
+    def parse_spec_results():
+        os.chdir(spec_result_dir)
+
+        for csv_result in csv_results:
+            for item in spec_tests:
+                with open(csv_result, 'rb') as f:
+                    csv_handler = csv.reader(f)
+                    for row in csv_handler:
+                        if item in row:
+                            results["%s_base_copies" % item] = row[1] if row[1] is not None else ''
+                            results["%s_base_runtime" % item] = row[2] if row[2] is not None else ''
+                            results["%s_base_rate" % item] = row[3] if row[3] is not None else ''
+                            results["%s_peak_copies" % item] = row[6] if row[6] is not None else ''
+                            results["%s_peak_runtime" % item] = row[7] if row[7] is not None else ''
+                            results["%s_peak_rate" % item] = row[8] if row[8] is not None else ''
+                            break
+        return
+
+    if spec == 'y':
+        results = {}
+
+        if os.path.exists(spec_result_dir):
+            shutil.rmtree(spec_result_dir)
+
+        if not os.path.exists(spec_output_dir):
+            os.makedirs(spec_output_dir)
+
+        run_spec_suite()
+
+        # PARSE TEST RESULTS
+        os.system('cp %s/%s %s/%s_%s_INT.csv' % (spec_result_dir, int_result_csv, spec_output_dir, project_id, iterator))
+        os.system('cp %s/%s %s/%s_%s_FP.csv' % (spec_result_dir, fp_result_csv, spec_output_dir, project_id, iterator))
+        parse_spec_results()
+        shutil.rmtree(spec_result_dir)
+
+        session = Session()
+        try:
+            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.perlbench_base_copies: results['400.perlbench_base_copies'],
+                Olympus.perlbench_base_runtime: results['400.perlbench_base_runtime'],
+                Olympus.perlbench_base_rate: results['400.perlbench_base_rate'],
+                Olympus.perlbench_peak_copies: results['400.perlbench_peak_copies'],
+                Olympus.perlbench_peak_runtime: results['400.perlbench_peak_runtime'],
+                Olympus.perlbench_peak_rate: results['400.perlbench_peak_rate'],
+                Olympus.bzip2_base_copies: results['401.bzip2_base_copies'],
+                Olympus.bzip2_base_runtime: results['401.bzip2_base_runtime'],
+                Olympus.bzip2_base_rate: results['401.bzip2_base_rate'],
+                Olympus.bzip2_peak_copies: results['401.bzip2_peak_copies'],
+                Olympus.bzip2_peak_runtime: results['401.bzip2_peak_runtime'],
+                Olympus.bzip2_peak_rate: results['401.bzip2_peak_rate'],
+                Olympus.gcc_base_copies: results['403.gcc_base_copies'],
+                Olympus.gcc_base_runtime: results['403.gcc_base_runtime'],
+                Olympus.gcc_base_rate: results['403.gcc_base_rate'],
+                Olympus.gcc_peak_copies: results['403.gcc_peak_copies'],
+                Olympus.gcc_peak_runtime: results['403.gcc_peak_runtime'],
+                Olympus.gcc_peak_rate: results['403.gcc_peak_rate'],
+                Olympus.mcf_base_copies: results['429.mcf_base_copies'],
+                Olympus.mcf_base_runtime: results['429.mcf_base_runtime'],
+                Olympus.mcf_base_rate: results['429.mcf_base_rate'],
+                Olympus.mcf_peak_copies: results['429.mcf_peak_copies'],
+                Olympus.mcf_peak_runtime: results['429.mcf_peak_runtime'],
+                Olympus.mcf_peak_rate: results['429.mcf_peak_rate'],
+                Olympus.xalancbmk_base_copies: results['483.xalancbmk_base_copies'],
+                Olympus.xalancbmk_base_runtime: results['483.xalancbmk_base_runtime'],
+                Olympus.xalancbmk_base_rate: results['483.xalancbmk_base_rate'],
+                Olympus.xalancbmk_peak_copies: results['483.xalancbmk_peak_copies'],
+                Olympus.xalancbmk_peak_runtime: results['483.xalancbmk_peak_runtime'],
+                Olympus.xalancbmk_peak_rate: results['483.xalancbmk_peak_rate'],
+                Olympus.soplex_base_copies: results['450.soplex_base_copies'],
+                Olympus.soplex_base_runtime: results['450.soplex_base_runtime'],
+                Olympus.soplex_base_rate: results['450.soplex_base_rate'],
+                Olympus.soplex_peak_copies: results['450.soplex_peak_copies'],
+                Olympus.soplex_peak_runtime: results['450.soplex_peak_runtime'],
+                Olympus.soplex_peak_rate: results['450.soplex_peak_rate'],
+                Olympus.sphinx3_base_copies: results['482.sphinx3_base_copies'],
+                Olympus.sphinx3_base_runtime: results['482.sphinx3_base_runtime'],
+                Olympus.sphinx3_base_rate: results['482.sphinx3_base_rate'],
+                Olympus.sphinx3_peak_copies: results['482.sphinx3_peak_copies'],
+                Olympus.sphinx3_peak_runtime: results['482.sphinx3_peak_runtime'],
+                Olympus.sphinx3_peak_rate: results['482.sphinx3_peak_rate']
+            })
+            session.commit()
+            print "\n------ Completed SPEC ------"
         except Exception as e:
             session.rollback()
             raise e

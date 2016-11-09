@@ -1,27 +1,27 @@
 # CONFIGURATION INFORMATION
 
 # DATABASE CREDENTIALS
-db_host = "localhost"
-db_user = "root"
-db_password = "inapp"
-db_name = "omnipotentzeuslinux"
+db_host = "104.131.127.149"
+db_user = "2vcpu"
+db_password = "800BoylstonClouds"
+db_name = "zeuslinux"
 
-# Please enter the start date for this test in YYYYMMDD (e.g., 20150115 for January 15TH, 2015)
-project_id = 'c-edgehosting-20161104'
+# Please enter the start date for this test in YYYYMMDD (e.g., 20170130 for January 30TH, 2017)
+project_id = 'c-edgehosting-20161107'
 # Please enter the operating system
-operating_system = 'ubuntu'  # debian, ubuntu, redhat, or centos
+operating_system = 'ubuntu'  # ubuntu or centos
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-geekbench = 'y'  # system tests
-iperf = 'y'  # internal network tests
-fio = 'y'  # disk tests
-iozone = 'y'  # disk tests
-sysbench = 'y'  # disk tests
-apachebench = 'y'  # apachebench tests
+geekbench = 'y'  # system test
+iperf = 'y'  # internal network test
+fio = 'y'  # disk test
+iozone = 'y'  # disk test
+sysbench = 'y'  # disk test
+apachebench = 'y'  # apachebench test
+spec = 'y'  # system test
 
-# DISK INFORMATION
-# If you selected yes for disk_rand or disk_seq, then you have to fill out this information
+# DISK TEST INFORMATION
 blocksize = '4'  # please enter the block size in kilobytes
 filesize = '16'  # please enter the file size in megabytes
 numjobs = '8'  # please enter the number of copies of the test that you would like to run
@@ -48,7 +48,7 @@ ab_path = "/admin"  # path
 # Duration and duration value will limit the time the suite will be running for.
 # Either duration or number of iterations must complete in order for the testing to stop.
 sleeptime = 0
-iterations = 5000000
+iterations = 2
 duration = 24
 duration_value = "hours"  # please enter seconds, minutes, hours, or days
 
@@ -63,8 +63,8 @@ elif duration_value.lower() == "days":
 
 # GEEKBENCH LICENSE
 # Email and Key for unlocking the license
-email = 'contact@cloudspectator.com'
-key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
+gb_email = 'contact@cloudspectator.com'
+gb_key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 
 # DIRECTORY
 # The directory that houses the Geekbench 3 suite and where all the tests will run
