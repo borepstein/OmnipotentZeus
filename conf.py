@@ -1,10 +1,10 @@
 # CONFIGURATION INFORMATION
 
 # DATABASE CREDENTIALS
-db_host = "104.131.127.149"
-db_user = "2vcpu"
-db_password = "800BoylstonClouds"
-db_name = "zeuslinux"
+db_host = "HOST"
+db_user = "USER"
+db_password = "PASS"
+db_name = "DB"
 
 # PROJECT DETAILS
 project_id = 'c-edgehosting-20161107'  # Start date format is YYYYMMDD (e.g., 20170130 for January 30TH, 2017)
