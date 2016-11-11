@@ -1,5 +1,5 @@
 # Prometheus creates the database that will house all data. It is currently designed with a MySQL database engine.
-from projects.test import *
+from conf import *
 from sqlalchemy import MetaData, Column, Integer, String, Float, create_engine, __version__
 from sqlalchemy.ext.declarative import declarative_base
 

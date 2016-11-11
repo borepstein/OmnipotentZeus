@@ -2,9 +2,11 @@ import os
 import csv
 import json
 import shutil
+import socket
 import subprocess as sub
-from projects.test import *
+from conf import *
 from random import randint
+from urllib2 import urlopen
 from time import sleep, time
 from datetime import datetime
 from collections import OrderedDict as od
@@ -23,17 +25,19 @@ UTILS_DEB_DIR = os.path.join(BASE_DIR, 'utils/deb')
 os.system('clear')
 print "|------------------------|"
 print "|    Project Olympus     |"
-print "|         v1.5           |"
+print "|        v2016.11        |"
 print "|------------------------|"
-print ""
+print "\n"
 print "Project Olympus is designed to be a testbed for measuring virtual machine performance in a scalable, \
 cloud environment. The design of Olympus is its flexibility in continuous testing over time, rather than \
 spot testing, which is an archaic method that cannot apply to highly variable environments with multiple \
 (many of which are possibly uncontrolled) variables.\n\n"
+sleep(2)
 
 # ==================== GLOBAL INSTALLER ==================== #
 if operating_system == 'centos' or operating_system == 'redhat':
     if geekbench == 'y':
+        geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"
         if not os.path.isfile(geekbench_install_dir + '/geekbench_x86_64'):
             os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
             os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
@@ -54,6 +58,7 @@ if operating_system == 'centos' or operating_system == 'redhat':
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
     if geekbench == 'y':
+        geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"
         gb_exe = '%s/%s' % (geekbench_install_dir, 'geekbench_x86_64')
         gb_tar = 'Geekbench-3.1.2-Linux.tar.gz'
         if not os.path.isfile(os.path.join(BASE_DIR, gb_exe)):
@@ -91,8 +96,82 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
             os.system('apt-get install sysbench')
         else:
             os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, sysbench_exe))
+    if spec == 'y':
+        # spec_exe = 'cpu2006-1.2.iso'  # SPEC ISO file
+        # spec_mount = '/specisomount/cpu2006iso'  # Directory to mount SPEC ISO file
+        # spec_install_dir = '/SPEC/CPU2006'  # Directory to install SPEC
+        # spec_conf_file = 'spec_test_config.cfg'  # SPEC config file
+        #
+        # # Download SPEC ISO file if not found locally
+        # if not os.path.isfile(os.path.join(BASE_DIR, spec_exe)):
+        #     os.system('wget https://s3.amazonaws.com/vdbenchbuckettest/%s' % spec_exe)
+        #
+        # # Remove SPEC install directory if already exist
+        # if os.path.exists(spec_install_dir):
+        #     shutil.rmtree(spec_install_dir)
+        # os.makedirs(spec_install_dir)
+        #
+        # # Remove SPEC mount directory if already exist
+        # if os.path.exists(spec_mount):
+        #     shutil.rmtree(spec_mount)
+        # os.makedirs(spec_mount)
+        #
+        # os.system('mount -t iso9660 -o ro,exec cpu2006-1.2.iso %s' % spec_mount)  # Mount SPEC ISO
+        # os.chdir(spec_mount)
+        # os.system('./install.sh -d /SPEC/CPU2006')  # Install SPEC
+        #
+        # os.chdir(spec_install_dir)
+        # os.system(os.path.join(BASE_DIR, 'spec_source.sh'))  # Source shrc file
+        #
+        # os.system('umount %s' % spec_mount)  # Unmount SPEC ISO
+        # shutil.rmtree('/specisomount')  # Remove mount folder
+        #
+        # proc_model = os.system('cat /proc/cpuinfo | grep "model name" | head -1')  # Get Processor model
+        # cpu_arch = os.system('uname -p')  # Get CPU architecture
+        #
+        # print "\nYour Processor is: %s and Architecture is: %s. Please copy and paste the relevant configuration file that matches your machine from the list shown below: \n" % (
+        #     proc_model, cpu_arch)
+        #
+        # os.chdir('%s/config/' % spec_install_dir)
+        # os.system('ls Example*')  # List all the config files from the available list
+        #
+        # spec_conf = raw_input("\nPlease enter the relevant configuration file for SPEC: ")
+        #
+        # # Make sure SPEC configuration file does not exist already
+        # if os.path.exists(spec_conf_file):
+        #     os.remove(spec_conf_file)
+        # os.system('cp %s %s' % (spec_conf, spec_conf_file))  # Make a copy of the user selected configuration
+
+        os.system(os.path.join(BASE_DIR, 'spec_source.sh'))
 
 # ==================== INITIALIZATION ==================== #
+processor_info = ""
+
+# CPU Cores
+v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
+v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
+v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
+cpu_count = v3.communicate()[0]
+
+# RAM
+r1 = sub.Popen(['cat', '/proc/meminfo'], stdout=sub.PIPE)
+r2 = sub.Popen(['grep', 'MemTotal'], stdin=r1.stdout, stdout=sub.PIPE)
+memoutput = r2.communicate()[0]
+memoutput_list = memoutput.split(' ')
+for x in memoutput_list:
+    if x.isalnum():  # Converting from bytes to GB
+        mem_count = int(x)
+        mem_count = (mem_count / 1024.0 / 1024.0)
+        ram_input = "%.2f" % mem_count
+
+# Hostname
+try:
+    vm_hostname = socket.gethostname()
+    if not vm_hostname:
+        vm_hostname = urlopen('http://ip.42.pl/raw').read()
+except Exception as e:
+    vm_hostname = "N/A"
+
 if fio == 'y':
     fio_op_types = ['-rw=write', '-rw=read', '-rw=randwrite', '-rw=randread', '-rw=rw', '-rw=randrw']
     fio_rw = "Yes"
@@ -100,6 +179,7 @@ if fio == 'y':
 
     fio_blocksize = '-bs=' + blocksize + 'k'
     fio_filesize = '-size=' + filesize + "M"
+    numjobs = cpu_count  # Number of threads should be equal to number of CPUs
     spider_hatchlings = int(numjobs) + 1
     fio_numjobs = '-numjobs=' + numjobs
     fio_runtime = '-runtime=' + runtime
@@ -112,8 +192,8 @@ if fio == 'y':
         fio_direct_val = "Cached"
         fio_direct = '-direct=0'
 else:
-    fio_rw = "n/a"
-    fio_seq = "n/a"
+    fio_rw = "N/A"
+    fio_seq = "N/A"
     fio_blocksize = 0
     fio_filesize = 0
     fio_numjobs = 0
@@ -149,45 +229,27 @@ if spec == 'y':
     fp_result_csv = 'CFP2006.001.ref.csv'
     csv_results = [int_result_csv, fp_result_csv]
 
-processor_info = ""
-
-# CPU Cores
-v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
-v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
-v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
-cpu_count = v3.communicate()[0]
-
-# RAM
-r1 = sub.Popen(['cat', '/proc/meminfo'], stdout=sub.PIPE)
-r2 = sub.Popen(['grep', 'MemTotal'], stdin=r1.stdout, stdout=sub.PIPE)
-memoutput = r2.communicate()[0]
-memoutput_list = memoutput.split(' ')
-for x in memoutput_list:
-    if x.isalnum():  # Converting from bytes to GB
-        mem_count = int(x)
-        mem_count = (mem_count / 1024.0 / 1024.0)
-        ram_input = "%.2f" % mem_count
-
-# Collect information on the provider and VM environment
+# ================ COLLECT INFORMATION ON THE PROVIDER AND VM ENVIRONMENT =============== #
 provider_input = raw_input("\nPlease enter the provider's name: ")
 provider_input = provider_input.lower()
 provider_region = "N/A"
 
-vm_input = raw_input("\nPlease enter the VM name (if no VM name, just say vCPU/RAM in GB (e.g., 2vCPU/4GB): ")
-vm_input = vm_input.lower()
 vmcount_input = raw_input(
         "\nWhich VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
 local_input = "0"
 block_input = "0"
 
-startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
-# Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
-random_uid = randint(0, 1000000)
-generated_uid = provider_input + vm_input + startdate_input + str(random_uid)
+if fio == 'y':
+    fio_path = raw_input("\nPlease enter the storage path to run FIO (Eg:- /mnt/): ")
 
 if iperf == 'y':
     internal_net_ip = raw_input('\nPlease enter the IP address of the iperf server you are trying to connect to: ')
     internal_net_csv = "C"
+
+startdate_input = datetime.now().strftime('%Y%m%d-%H%M')
+# Generate a random number to add to the unique ID for this provider and VM combination in the test cycle
+random_uid = randint(0, 1000000)
+generated_uid = provider_input + vm_hostname + startdate_input + str(random_uid)
 
 # ==================== GLOBAL TESTING ==================== #
 iterator = 1
@@ -201,6 +263,7 @@ for x in range(iterations):
     print "Iteration: " + str(iterator)
     print "\n#######################################################\n"
 
+    os.chdir(BASE_DIR)
     iteration_start_time = datetime.now().strftime('%Y-%m-%d %H:%M')
     session = Session()
     try:
@@ -212,7 +275,7 @@ for x in range(iterations):
                 startdate=startdate_input,
                 iteration=iterator,
                 iteration_start_time=iteration_start_time,
-                vm=vm_input,
+                vm=vm_hostname,
                 vmcount=vmcount_input,
                 vcpu=cpu_count,
                 ram=ram_input,
@@ -241,7 +304,7 @@ for x in range(iterations):
         if iterator == 1:
             processor_info = str(data['metrics'][6]['value'])
 
-        # Parse results
+        # Parse Geekbench results
         y = 0
         scores = {}
         for x in range(0, 13, 1):
@@ -303,6 +366,7 @@ for x in range(iterations):
         values = od(values)
         os.remove(gb_output)
 
+        # Save Geekbench results to database
         session = Session()
         try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
@@ -354,6 +418,9 @@ for x in range(iterations):
 
 
     def fio_command_generator(option):
+        """
+        This function generates the command to run FIO from a set of input arguments and saves the output in txt format
+        """
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
                        '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
@@ -363,6 +430,10 @@ for x in range(iterations):
 
 
     def fio_async_command_generator(option):
+        """
+        This function generates the command to run FIO ASYNC from a set of input arguments and saves the output in txt
+        format
+        """
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
                        '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
@@ -372,6 +443,9 @@ for x in range(iterations):
 
 
     def spider_egg_exterminator():
+        """
+        This function deletes all dummy files created during FIO test
+        """
         fio_json.close()
         os.remove(fio_json_file)
         for baby_spiders in range(0, spider_hatchlings):
@@ -382,7 +456,10 @@ for x in range(iterations):
                 pass
 
 
-    def clean_fio_json_result(fio_json_file):
+    def convert_fio_json_result(fio_json_file):
+        """
+        This function converts the JSON output file to required format to fetch data easily
+        """
         with open(fio_json_file, "r+") as f:
             lines = f.readlines()
             f.seek(0)
@@ -394,9 +471,18 @@ for x in range(iterations):
 
 
     if fio == 'y':
+
+        os.chmod(fio_path, 0775)  # Set permission for the FIO path
+        os.chdir(fio_path)  # Change directory to FIO path
+
         for fio_op_type in fio_op_types:
+            # Run FIO
             sub.call(fio_command_generator(fio_op_type))
-            clean_fio_json_result(fio_json_file)
+
+            # Convert generated JSON output file to required format
+            convert_fio_json_result(fio_json_file)
+
+            # Parse FIO results
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
@@ -414,7 +500,7 @@ for x in range(iterations):
                 throughput_read_100_seq = str(fio_data['jobs'][0]['read']['bw'])
                 lat_read_100_seq = str(fio_data['jobs'][0]['read']['lat']['mean'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
             # Random Write
             elif fio_op_type is '-rw=randwrite':
@@ -430,7 +516,7 @@ for x in range(iterations):
                 throughput_read_100_rand = str(fio_data['jobs'][0]['read']['bw'])
                 lat_read_100_rand = str(fio_data['jobs'][0]['read']['lat']['mean'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
             # Sequential Read Write
             elif fio_op_type is '-rw=rw':
@@ -443,7 +529,7 @@ for x in range(iterations):
                 bw_read_seq = str(fio_data['jobs'][0]['read']['bw'])
                 bw_write_seq = str(fio_data['jobs'][0]['write']['bw'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
             # Random Read Write
             elif fio_op_type is '-rw=randrw':
@@ -457,14 +543,20 @@ for x in range(iterations):
                 bw_read_rand = str(fio_data['jobs'][0]['read']['bw'])
                 bw_write_rand = str(fio_data['jobs'][0]['write']['bw'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
+        # Run FIO Asynchronous mode if async_io is enabled
         if async_io == 'y':
 
             for fio_op_type in fio_op_types:
 
+                # Run FIO in Asynchronous mode
                 sub.call(fio_async_command_generator(fio_op_type))
-                clean_fio_json_result(fio_json_file)
+
+                # Convert generated JSON output file to required format
+                convert_fio_json_result(fio_json_file)
+
+                # Parse FIO async results
                 fio_json = open(fio_json_file)
                 fio_data = json.load(fio_json)
 
@@ -482,7 +574,7 @@ for x in range(iterations):
                     throughput_read_100_seq_async = str(fio_data['jobs'][0]['read']['bw'])
                     lat_read_100_seq_async = str(fio_data['jobs'][0]['read']['lat']['mean'])
 
-                    spider_egg_exterminator()
+                    spider_egg_exterminator()  # Delete dummy files created during FIO test
 
                 # Asynchronous Random Write
                 elif fio_op_type is '-rw=randwrite':
@@ -498,7 +590,7 @@ for x in range(iterations):
                     throughput_read_100_rand_async = str(fio_data['jobs'][0]['read']['bw'])
                     lat_read_100_rand_async = str(fio_data['jobs'][0]['read']['lat']['mean'])
 
-                    spider_egg_exterminator()
+                    spider_egg_exterminator()  # Delete dummy files created during FIO test
 
                 # Asynchronous Sequential Read Write
                 elif fio_op_type is '-rw=rw':
@@ -511,7 +603,7 @@ for x in range(iterations):
                     bw_read_seq_async = str(fio_data['jobs'][0]['read']['bw'])
                     bw_write_seq_async = str(fio_data['jobs'][0]['write']['bw'])
 
-                    spider_egg_exterminator()
+                    spider_egg_exterminator()  # Delete dummy files created during FIO test
 
                 # Asynchronous Random Read Write
                 elif fio_op_type is '-rw=randrw':
@@ -525,8 +617,11 @@ for x in range(iterations):
                     bw_read_rand_async = str(fio_data['jobs'][0]['read']['bw'])
                     bw_write_rand_async = str(fio_data['jobs'][0]['write']['bw'])
 
-                    spider_egg_exterminator()
+                    spider_egg_exterminator()  # Delete dummy files created during FIO test
 
+        os.chdir(BASE_DIR)  # Change directory back to script path
+
+        # Save FIO results to database
         session = Session()
         try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
@@ -543,31 +638,7 @@ for x in range(iterations):
                 Olympus.throughput_read_100_rand: throughput_read_100_rand,
                 Olympus.throughput_write_100_rand: throughput_write_100_rand,
                 Olympus.lat_read_100_rand: lat_read_100_rand,
-                Olympus.lat_write_100_rand: lat_write_100_rand
-            })
-            session.commit()
-
-            if async_io == 'y':
-                session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
-                    Olympus.iops_read_rand_async: iops_read_rand_async,
-                    Olympus.iops_write_rand_async: iops_write_rand_async,
-                    Olympus.io_read_rand_async: io_read_rand_async,
-                    Olympus.io_write_rand_async: io_write_rand_async,
-                    Olympus.runtime_read_rand_async: runtime_read_rand_async,
-                    Olympus.runtime_write_rand_async: runtime_write_rand_async,
-                    Olympus.bw_read_rand_async: bw_read_rand_async,
-                    Olympus.bw_write_rand_async: bw_write_rand_async,
-                    Olympus.iops_read_100_rand_async: iops_read_100_rand_async,
-                    Olympus.iops_write_100_rand_async: iops_write_100_rand_async,
-                    Olympus.throughput_read_100_rand_async: throughput_read_100_rand_async,
-                    Olympus.throughput_write_100_rand_async: throughput_write_100_rand_async,
-                    Olympus.lat_read_100_rand_async: lat_read_100_rand_async,
-                    Olympus.lat_write_100_rand_async: lat_write_100_rand_async
-                })
-                session.commit()
-            print "\n------ Completed FIO Random disk tests ------"
-
-            session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                Olympus.lat_write_100_rand: lat_write_100_rand,
                 Olympus.iops_read_seq: iops_read_seq,
                 Olympus.iops_write_seq: iops_write_seq,
                 Olympus.io_read_seq: io_read_seq,
@@ -587,6 +658,20 @@ for x in range(iterations):
 
             if async_io == 'y':
                 session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
+                    Olympus.iops_read_rand_async: iops_read_rand_async,
+                    Olympus.iops_write_rand_async: iops_write_rand_async,
+                    Olympus.io_read_rand_async: io_read_rand_async,
+                    Olympus.io_write_rand_async: io_write_rand_async,
+                    Olympus.runtime_read_rand_async: runtime_read_rand_async,
+                    Olympus.runtime_write_rand_async: runtime_write_rand_async,
+                    Olympus.bw_read_rand_async: bw_read_rand_async,
+                    Olympus.bw_write_rand_async: bw_write_rand_async,
+                    Olympus.iops_read_100_rand_async: iops_read_100_rand_async,
+                    Olympus.iops_write_100_rand_async: iops_write_100_rand_async,
+                    Olympus.throughput_read_100_rand_async: throughput_read_100_rand_async,
+                    Olympus.throughput_write_100_rand_async: throughput_write_100_rand_async,
+                    Olympus.lat_read_100_rand_async: lat_read_100_rand_async,
+                    Olympus.lat_write_100_rand_async: lat_write_100_rand_async,
                     Olympus.iops_read_seq_async: iops_read_seq_async,
                     Olympus.iops_write_seq_async: iops_write_seq_async,
                     Olympus.io_read_seq_async: io_read_seq_async,
@@ -603,7 +688,7 @@ for x in range(iterations):
                     Olympus.lat_write_100_seq_async: lat_write_100_seq_async
                 })
                 session.commit()
-            print "\n------ Completed FIO Sequential disk tests ------"
+            print "\n------ Completed FIO ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -612,9 +697,12 @@ for x in range(iterations):
 
     if iperf == 'y':
         internal_net_csv_file = 'iperf_results.csv'
+
+        # Run iperf
         sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
                   '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
 
+        # Parse iperf results
         opener = open(internal_net_csv_file)
         csv_open = csv.reader(opener)
         for row in csv_open:
@@ -622,6 +710,7 @@ for x in range(iterations):
             internal_network_bandwidth = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
 
+        # Save iperf results to database
         session = Session()
         try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
@@ -644,8 +733,11 @@ for x in range(iterations):
         if ab_path:
             ab_address = ab_address + ab_path
 
+        # Run Apachebench
         sub.call(['ab', '-q', '-n', ab_requests, '-c', ab_concurrency, '-s', ab_timeout,
                   '-e', ab_results, ab_address], stdout=open(ab_results, "w"))
+
+        # Parse Apachebench results
         with open(ab_results) as f:
             lines = f.readlines()
             for l in lines:
@@ -674,6 +766,7 @@ for x in range(iterations):
 
         os.remove(ab_results)
 
+        # Save Apachebench results to database
         session = Session()
         try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
@@ -703,6 +796,9 @@ for x in range(iterations):
 
 
     def iozone_dummy_exterminator():
+        """
+        This function deletes all dummy files created during IOZONE test
+        """
         for iozone_dummy in range(0, spider_hatchlings - 1):
             iozone_dummy_file = "iozone.DUMMY." + str(iozone_dummy)
             try:
@@ -712,6 +808,9 @@ for x in range(iterations):
 
 
     def iozone_result_parser(result_file, target_var):
+        """
+        This function parses IOZONE results from txt output
+        """
         with open(result_file) as f:
             lines = f.readlines()
             for l in lines:
@@ -724,7 +823,7 @@ for x in range(iterations):
 
 
     if iozone == 'y':
-        # Sequential Write, 64K requests, 32 threads:
+        # Sequential Write
         iozone_results = 'iozone_seq_write_results.txt'
         os.system('iozone %s -t %s -O -r %s -s %s -w -i 0 > %s' %
                   (iozone_direct, iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
@@ -734,7 +833,7 @@ for x in range(iterations):
         iozone_seq_rewriters = iozone_result_parser(iozone_results, target_var)
         os.remove(iozone_results)
 
-        # Sequential Read, 64K requests, 32 threads:
+        # Sequential Read
         iozone_results = 'iozone_seq_read_results.txt'
         os.system('iozone %s -t %s -M -O -r %s -s %s -w -i 1 > %s' %
                   (iozone_direct, iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
@@ -744,7 +843,7 @@ for x in range(iterations):
         iozone_seq_rereaders = iozone_result_parser(iozone_results, target_var)
         os.remove(iozone_results)
 
-        # Random Read / Write, 4K requests, 32 threads:
+        # Random Read / Write
         iozone_results = 'iozone_rand_results.txt'
         os.system('iozone %s -t %s -M -O -r %s -s %s -w -i 2 > %s' %
                   (iozone_direct, iozone_numjobs, iozone_blocksize, iozone_filesize, iozone_results))
@@ -754,8 +853,9 @@ for x in range(iterations):
         iozone_random_writers = iozone_result_parser(iozone_results, target_var)
         os.remove(iozone_results)
 
-        iozone_dummy_exterminator()
+        iozone_dummy_exterminator()  # Delete dummy files created during IOZONE test
 
+        # Save IOZONE results to database
         session = Session()
         try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
@@ -778,6 +878,9 @@ for x in range(iterations):
 
     def sysbench_command_generator(sysbench_direct, sysbench_filesize, sysbench_blocksize, sysbench_numjobs,
                                    sysbench_io_mode, sysbench_test_mode, sysbench_runtime, sysbench_results):
+        """
+        This function generates the command to run Sysbench from a set of arguments and saves the output in txt format
+        """
 
         sysbench_command = 'sysbench %s --test=fileio --file-total-size=%s --file-block-size=%s \
         --file-num=%s --num-threads=%s --file-io-mode=%s --file-test-mode=%s --max-time=%s run > %s' % (
@@ -788,6 +891,9 @@ for x in range(iterations):
 
 
     def sysbench_result_parser(sysbench_results, sysbench_test_mode):
+        """
+        This function parses Sysbench results from txt output
+        """
         with open(sysbench_results) as f:
             lines = f.readlines()
             target = 'Requests/sec'
@@ -837,17 +943,20 @@ for x in range(iterations):
                 sysbench_test_mode, sysbench_runtime, sysbench_results)
         os.system(sysbench_command)
         sysbench_rand_read = sysbench_result_parser(sysbench_results, sysbench_test_mode)
+
+        # Remove Sysbench output file and all the dummy files created during the test
         os.remove(sysbench_results)
         os.system('sysbench --test=fileio --file-total-size=%s --file-num=%s cleanup' %
                   (sysbench_filesize, sysbench_numjobs))
 
+        # Save Sysbench results to database
         session = Session()
         try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
                 Olympus.sysbench_seq_write: sysbench_seq_write,
                 Olympus.sysbench_seq_read: sysbench_seq_read,
                 Olympus.sysbench_rand_write: sysbench_rand_write,
-                Olympus.sysbench_rand_read: sysbench_rand_read,
+                Olympus.sysbench_rand_read: sysbench_rand_read
             })
 
             session.commit()
@@ -858,9 +967,14 @@ for x in range(iterations):
         finally:
             session.close()
 
+
     def run_spec_suite():
+        """
+        This function runs SPEC test and saves output in csv format
+        """
         try:
-            spec_cmd = ['runspec', '--config', 'spec_test_config.cfg', '--tune', 'all', '--rate', cpu_count, '--noreportable',
+            spec_cmd = ['runspec', '--config', 'spec_test_config.cfg', '--tune', 'all', '--rate', cpu_count,
+                        '--noreportable',
                         '--output_format', 'csv', '--iterations', '1']
             spec_cmd.extend(spec_tests)
             sub.call(spec_cmd)
@@ -868,6 +982,9 @@ for x in range(iterations):
             raise e
 
     def parse_spec_results():
+        """
+        This function parses SPEC results from csv output
+        """
         os.chdir(spec_result_dir)
 
         for csv_result in csv_results:
@@ -885,6 +1002,7 @@ for x in range(iterations):
                             break
         return
 
+
     if spec == 'y':
         results = {}
 
@@ -894,14 +1012,17 @@ for x in range(iterations):
         if not os.path.exists(spec_output_dir):
             os.makedirs(spec_output_dir)
 
+        # Run SPEC
         run_spec_suite()
 
-        # PARSE TEST RESULTS
-        os.system('cp %s/%s %s/%s_%s_INT.csv' % (spec_result_dir, int_result_csv, spec_output_dir, project_id, iterator))
+        # Parse SPEC results
+        os.system(
+                'cp %s/%s %s/%s_%s_INT.csv' % (spec_result_dir, int_result_csv, spec_output_dir, project_id, iterator))
         os.system('cp %s/%s %s/%s_%s_FP.csv' % (spec_result_dir, fp_result_csv, spec_output_dir, project_id, iterator))
         parse_spec_results()
         shutil.rmtree(spec_result_dir)
 
+        # Save SPEC results to database
         session = Session()
         try:
             session.query(Olympus).filter(Olympus.id == Open_Olympus.id).update({
@@ -958,9 +1079,12 @@ for x in range(iterations):
 
     print "\nIteration %s completed\n" % iterator
 
-    iterator = iterator + 1
-    # Any delay before the next round is executed
-    sleep(sleeptime)
+    iterator += 1
+    sleep(sleeptime)  # Any delay before the next round is executed
+
+# Remove Geekbench dist folder
+os.chdir(BASE_DIR)
+shutil.rmtree('dist')
 
 print "----------------------------------------------------------------------------------"
 print " All tests are successfully completed and the results are transferred to database "
