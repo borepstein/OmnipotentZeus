@@ -8,10 +8,11 @@
 <P>```g. SPEC```
 
 <P><B>1. Open conf.py and make necessary configuration changes</B></P>
+<P><B>Note: </B>Uncomment SPEC installation lines in run_ubuntu.sh or run_centos.sh, if you wish to run teh SPEC CPU 2006 test.
 
 <P><B>2. Install dependencies and run the script</B></P>
-<P>```cd omnipotentzeus```</P>
+<P>```cd omnipotentzeus```
 <P>For Debian based machines, run:</P>
-<P>```sudo ./run_ubuntu.sh```</P>
+<P>```sudo ./run_ubuntu.sh```
 <P>For RHEL based machines, run:</P>
-<P>```sudo ./run_centos.sh```</P>
+<P>```sudo ./run_centos.sh```

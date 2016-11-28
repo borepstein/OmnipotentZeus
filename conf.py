@@ -1,10 +1,10 @@
 # CONFIGURATION INFORMATION
 
 # DATABASE CREDENTIALS
-db_host = "104.131.127.149"
-db_user = "2vcpu"
-db_password = "800BoylstonClouds"
-db_name = "zeuslinux"
+db_host = "HOST"
+db_user = "USERNAME"
+db_password = "PASSWORD"
+db_name = "DATABASE"
 
 # PROJECT DETAILS
 project_id = 'c-edgehosting-20161107'  # Start date format is YYYYMMDD (e.g., 20170130 for January 30TH, 2017)
@@ -12,13 +12,13 @@ operating_system = 'ubuntu'  # Please enter the operating system (ubuntu or cent
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-geekbench = 'y'  # System test
-iperf = 'y'  # Internal network test
-fio = 'y'  # Disk test
-iozone = 'y'  # Disk test
-sysbench = 'y'  # Disk test
-apachebench = 'y'  # Apachebench test
-spec = 'y'  # System test
+geekbench = 'n'  # System test
+iperf = 'n'  # Internal network test
+fio = 'n'  # Disk test
+iozone = 'n'  # Disk test
+sysbench = 'n'  # Disk test
+apachebench = 'n'  # Apachebench test
+spec = 'n'  # System test
 
 # DISK TEST INFORMATION
 blocksize = '4'  # Block size in kilobytes
