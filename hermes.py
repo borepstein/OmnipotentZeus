@@ -20,11 +20,12 @@ Session = sessionmaker(bind=Ignition)
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 UTILS_DIR = os.path.join(BASE_DIR, 'utils')
 UTILS_DEB_DIR = os.path.join(BASE_DIR, 'utils/deb')
+UTILS_RPM_DIR = os.path.join(BASE_DIR, 'utils/rpm')
 
 # ==================== GLOBAL INTRODUCTION ==================== #
 os.system('clear')
 print "|------------------------|"
-print "|    Project Olympus     |"
+print "|    Omnipotent Zeus     |"
 print "|        v2016.11        |"
 print "|------------------------|"
 print "\n"
@@ -44,17 +45,37 @@ if operating_system == 'centos' or operating_system == 'redhat':
         os.chdir(geekbench_install_dir)
         sub.call(['./geekbench_x86_64', '-r', gb_email, gb_key])
     if fio == 'y':
-        os.system('wget http://pkgs.repoforge.org/fio/fio-2.1.10-1.el6.rf.x86_64.rpm')
-        os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
+        fio_exe = 'fio-2.1.10-1.el6.rf.x86_64.rpm'
+        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, fio_exe)):
+            os.system("wget ftp://rpmfind.net/linux/dag/redhat/el6/en/x86_64/dag/RPMS/fio-2.1.10-1.el6.rf.x86_64.rpm")
+            os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
+        else:
+            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, fio_exe)))
     if iperf == 'y':
-        os.system('yum install iperf -y')
+        iperf_exe = 'iperf3-3.1.3-1.fc24.x86_64.rpm'
+        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, iperf_exe)):
+            os.system('yum install iperf -y')
+        else:
+            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, iperf_exe)))
     if apachebench == 'y':
-        os.system('yum install httpd-tools')
+        apachebench_exe = 'httpd-tools-2.4.23-4.fc25.x86_64.rpm'
+        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, apachebench_exe)):
+            os.system('yum install httpd-tools')
+        else:
+            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, apachebench_exe)))
     if iozone == 'y':
-        os.system("wget http://www.iozone.org/src/current/iozone-3-338.i386.rpm")
-        os.system("rpm -ivh iozone-3-338.i386.rpm")
+        iozone_exe = "iozone-3-338.i386.rpm"
+        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, iozone_exe)):
+            os.system("wget http://www.iozone.org/src/current/iozone-3-338.i386.rpm")
+            os.system("rpm -ivh iozone-3-338.i386.rpm")
+        else:
+            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, iozone_exe)))
     if sysbench == 'y':
-        os.system('yum -y install sysbench')
+        sysbench_exe = "sysbench-0.4.12-14.fc24.x86_64.rpm"
+        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, sysbench_exe)):
+            os.system('yum -y install sysbench')
+        else:
+            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, sysbench_exe)))
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
     if geekbench == 'y':
@@ -96,53 +117,6 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
             os.system('apt-get install sysbench')
         else:
             os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, sysbench_exe))
-    if spec == 'y':
-        # spec_exe = 'cpu2006-1.2.iso'  # SPEC ISO file
-        # spec_mount = '/specisomount/cpu2006iso'  # Directory to mount SPEC ISO file
-        # spec_install_dir = '/SPEC/CPU2006'  # Directory to install SPEC
-        # spec_conf_file = 'spec_test_config.cfg'  # SPEC config file
-        #
-        # # Download SPEC ISO file if not found locally
-        # if not os.path.isfile(os.path.join(BASE_DIR, spec_exe)):
-        #     os.system('wget https://s3.amazonaws.com/vdbenchbuckettest/%s' % spec_exe)
-        #
-        # # Remove SPEC install directory if already exist
-        # if os.path.exists(spec_install_dir):
-        #     shutil.rmtree(spec_install_dir)
-        # os.makedirs(spec_install_dir)
-        #
-        # # Remove SPEC mount directory if already exist
-        # if os.path.exists(spec_mount):
-        #     shutil.rmtree(spec_mount)
-        # os.makedirs(spec_mount)
-        #
-        # os.system('mount -t iso9660 -o ro,exec cpu2006-1.2.iso %s' % spec_mount)  # Mount SPEC ISO
-        # os.chdir(spec_mount)
-        # os.system('./install.sh -d /SPEC/CPU2006')  # Install SPEC
-        #
-        # os.chdir(spec_install_dir)
-        # os.system(os.path.join(BASE_DIR, 'spec_source.sh'))  # Source shrc file
-        #
-        # os.system('umount %s' % spec_mount)  # Unmount SPEC ISO
-        # shutil.rmtree('/specisomount')  # Remove mount folder
-        #
-        # proc_model = os.system('cat /proc/cpuinfo | grep "model name" | head -1')  # Get Processor model
-        # cpu_arch = os.system('uname -p')  # Get CPU architecture
-        #
-        # print "\nYour Processor is: %s and Architecture is: %s. Please copy and paste the relevant configuration file that matches your machine from the list shown below: \n" % (
-        #     proc_model, cpu_arch)
-        #
-        # os.chdir('%s/config/' % spec_install_dir)
-        # os.system('ls Example*')  # List all the config files from the available list
-        #
-        # spec_conf = raw_input("\nPlease enter the relevant configuration file for SPEC: ")
-        #
-        # # Make sure SPEC configuration file does not exist already
-        # if os.path.exists(spec_conf_file):
-        #     os.remove(spec_conf_file)
-        # os.system('cp %s %s' % (spec_conf, spec_conf_file))  # Make a copy of the user selected configuration
-
-        os.system(os.path.join(BASE_DIR, 'spec_source.sh'))
 
 # ==================== INITIALIZATION ==================== #
 processor_info = ""
@@ -260,7 +234,7 @@ for x in range(iterations):
         break
 
     print "\n#######################################################\n"
-    print "Iteration: " + str(iterator)
+    print "                    Iteration: " + str(iterator)
     print "\n#######################################################\n"
 
     os.chdir(BASE_DIR)
@@ -310,36 +284,36 @@ for x in range(iterations):
         for x in range(0, 13, 1):
             z = str(data['sections'][0]['workloads'][y]['name'])
             scores[z] = str(data['sections'][0]['workloads'][y]['results'][1]['rate_string'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 10, 1):
             z = str(data['sections'][1]['workloads'][y]['name'])
             scores[z] = str(data['sections'][1]['workloads'][y]['results'][1]['rate_string'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 4, 1):
             z = str(data['sections'][2]['workloads'][y]['name'])
             scores[z] = str(data['sections'][2]['workloads'][y]['results'][1]['rate_string'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 3, 1):
             z = str(data['sections'][y]['name']) + " Multicore"
             scores[z] = str(data['sections'][y]['multicore_score'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 3, 1):
             z = str(data['sections'][y]['name']) + " Singlecore"
             scores[z] = str(data['sections'][y]['score'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 1):
             z = "Total"
             scores[z] = str(data['multicore_score'])
-            y = y + 1
+            y += 1
         for x in range(0, 1):
             z = "Total Single"
             scores[z] = str(data['score'])
-            y = y + 1
+            y += 1
         for x in range(0, 1):
             z = "Runtime"
             scores[z] = str(data['runtime'])
@@ -360,6 +334,8 @@ for x in range(iterations):
                 values[key] = float(val[:-11]) * 1024
             elif "Mpairs/sec" in val:
                 values[key] = float(val[:-11])
+            elif " " in val:
+                values[key] = float(val.split()[0])
             else:
                 values[key] = val
             y = y + 1
@@ -416,28 +392,14 @@ for x in range(iterations):
         finally:
             session.close()
 
-
+    # ==================== FIO ==================== #
     def fio_command_generator(option):
         """
         This function generates the command to run FIO from a set of input arguments and saves the output in txt format
         """
         global fio_command
         fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
-                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
-                       '-exitall']
-        print "\n"
-        return fio_command
-
-
-    def fio_async_command_generator(option):
-        """
-        This function generates the command to run FIO ASYNC from a set of input arguments and saves the output in txt
-        format
-        """
-        global fio_command
-        fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
-                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
-                       '-iodepth=32', '-ioengine=libaio', '-exitall']
+                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting', '-exitall']
         print "\n"
         return fio_command
 

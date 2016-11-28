@@ -1,5 +1,13 @@
 #!/bin/bash
 
+apt-add-repository multiverse
+apt-get update
+apt-get install build-essential
+apt-get install wget python-pip mysql-server libmysqlclient-dev libaio1 python-dev python-lxml --yes
+pip install sqlalchemy
+
+##--------------------- SPEC Installation and Configuration START ----------------------##
+
 if [[ ! -f cpu2006-1.2.iso ]] ; then
     wget https://s3.amazonaws.com/vdbenchbuckettest/cpu2006-1.2.iso
 fi
@@ -28,3 +36,7 @@ echo ""
 rm spec_test_config.cfg
 cp $spec_conf spec_test_config.cfg
 cd $MYPATH
+
+##---------------------- SPEC Installation and Configuration END -----------------------##
+
+python hermes.py
