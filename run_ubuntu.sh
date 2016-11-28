@@ -4,6 +4,7 @@ apt-add-repository multiverse
 apt-get update
 apt-get install build-essential
 apt-get install wget python-pip mysql-server libmysqlclient-dev libaio1 python-dev python-lxml --yes
+pip install mysql-python
 pip install sqlalchemy
 
 ## Uncomment the below lines if you are using SPEC CPU 2006 ##
@@ -40,4 +41,4 @@ pip install sqlalchemy
 
 ##---------------------- SPEC Installation and Configuration END -----------------------##
 
-python hermes.py
+screen python hermes.py

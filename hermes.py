@@ -19,7 +19,6 @@ Base.metadata.bind = Ignition
 Session = sessionmaker(bind=Ignition)
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 UTILS_DIR = os.path.join(BASE_DIR, 'utils')
-UTILS_DEB_DIR = os.path.join(BASE_DIR, 'utils/deb')
 UTILS_RPM_DIR = os.path.join(BASE_DIR, 'utils/rpm')
 
 # ==================== GLOBAL INTRODUCTION ==================== #
@@ -39,11 +38,13 @@ sleep(2)
 if operating_system == 'centos' or operating_system == 'redhat':
     if geekbench == 'y':
         geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"
-        if not os.path.isfile(geekbench_install_dir + '/geekbench_x86_64'):
-            os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-            os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-        os.chdir(geekbench_install_dir)
-        sub.call(['./geekbench_x86_64', '-r', gb_email, gb_key])
+        gb_exe = '%s/%s' % (geekbench_install_dir, 'geekbench_x86_64')
+        gb_tar = 'Geekbench-3.1.2-Linux.tar.gz'
+        if not os.path.isfile(os.path.join(BASE_DIR, gb_exe)):
+            if not os.path.isfile(os.path.join(BASE_DIR, gb_tar)):
+                os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
+            os.system('tar -xvzf %s' % gb_tar)
+        sub.call([os.path.join(BASE_DIR, gb_exe), '-r', gb_email, gb_key])
     if fio == 'y':
         fio_exe = 'fio-2.1.10-1.el6.rf.x86_64.rpm'
         if not os.path.isfile(os.path.join(UTILS_RPM_DIR, fio_exe)):
@@ -52,17 +53,9 @@ if operating_system == 'centos' or operating_system == 'redhat':
         else:
             os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, fio_exe)))
     if iperf == 'y':
-        iperf_exe = 'iperf3-3.1.3-1.fc24.x86_64.rpm'
-        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, iperf_exe)):
-            os.system('yum install iperf -y')
-        else:
-            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, iperf_exe)))
+        os.system('yum install iperf -y')
     if apachebench == 'y':
-        apachebench_exe = 'httpd-tools-2.4.23-4.fc25.x86_64.rpm'
-        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, apachebench_exe)):
-            os.system('yum install httpd-tools')
-        else:
-            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, apachebench_exe)))
+        os.system('yum install httpd-tools')
     if iozone == 'y':
         iozone_exe = "iozone-3-338.i386.rpm"
         if not os.path.isfile(os.path.join(UTILS_RPM_DIR, iozone_exe)):
@@ -71,11 +64,7 @@ if operating_system == 'centos' or operating_system == 'redhat':
         else:
             os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, iozone_exe)))
     if sysbench == 'y':
-        sysbench_exe = "sysbench-0.4.12-14.fc24.x86_64.rpm"
-        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, sysbench_exe)):
-            os.system('yum -y install sysbench')
-        else:
-            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, sysbench_exe)))
+        os.system('yum -y install sysbench')
 
 if operating_system == 'ubuntu' or operating_system == 'debian':
     if geekbench == 'y':
@@ -88,35 +77,15 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
             os.system('tar -xvzf %s' % gb_tar)
         sub.call([os.path.join(BASE_DIR, gb_exe), '-r', gb_email, gb_key])
     if fio == 'y':
-        fio_exe = 'fio_2.1.3-1_amd64.deb'
-        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, fio_exe)):
-            os.system('apt-get install fio --yes')
-        else:
-            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, fio_exe))
+        os.system('apt-get install fio --yes')
     if iperf == 'y':
-        iperf_exe = 'iperf3_3.1.3-1_amd64.deb'
-        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, iperf_exe)):
-            os.system('apt-get install iperf')
-        else:
-            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, iperf_exe))
+        os.system('apt-get install iperf')
     if apachebench == 'y':
-        apachebench_exe = 'apache2-utils_2.4.7-1ubuntu4.13_amd64.deb'
-        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, apachebench_exe)):
-            os.system('apt-get install apache2-utils')
-        else:
-            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, apachebench_exe))
+        os.system('apt-get install apache2-utils')
     if iozone == 'y':
-        iozone_exe = 'iozone3_420-3_amd64.deb'
-        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, iozone_exe)):
-            os.system('apt-get install iozone3')
-        else:
-            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, iozone_exe))
+        os.system('apt-get install iozone3')
     if sysbench == 'y':
-        sysbench_exe = 'sysbench_0.4.12-1build2_amd64.deb'
-        if not os.path.isfile(os.path.join(UTILS_DEB_DIR, sysbench_exe)):
-            os.system('apt-get install sysbench')
-        else:
-            os.system('sudo dpkg -i %s' % os.path.join(UTILS_DEB_DIR, sysbench_exe))
+        os.system('apt-get install sysbench')
 
 # ==================== INITIALIZATION ==================== #
 processor_info = ""
