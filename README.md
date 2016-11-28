@@ -1,19 +1,20 @@
-**Description:** This package is designed to be a testbed for measuring virtual machine performance in a scalable, cloud environment. It uses the following tests:</P>
+**Description:** This package is designed to be a testbed for measuring virtual machine performance in scalable cloud environments for Linux platforms. It uses a single table called ‘olympus’ for storing test results. It uses the following tests:
 
-```1. Geekbench```
+```- Geekbench```
 
-```2. iperf```
+```- iperf```
 
-```3. FIO```
+```- FIO```
 
-```4. iozone```
+```- iozone```
 
-```5. Sysbench```
+```- Sysbench```
 
-```6. Apachebench```
+```- Apachebench```
 
-```7. SPEC```
+```- SPEC```
 
+**Instructions:**
 
 **1. Open conf.py and make necessary configuration changes**
 
