@@ -404,6 +404,19 @@ for x in range(iterations):
         return fio_command
 
 
+    def fio_async_command_generator(option):
+        """
+        This function generates the command to run FIO ASYNC from a set of input arguments and saves the output in txt
+        format
+        """
+        global fio_command
+        fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
+                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
+                       '-iodepth=32', '-ioengine=libaio', '-exitall']
+        print "\n"
+        return fio_command
+
+
     def spider_egg_exterminator():
         """
         This function deletes all dummy files created during FIO test
