@@ -1,18 +1,19 @@
 **Description:** This package is designed to be a testbed for measuring virtual machine performance in a scalable, cloud environment. It uses the following tests:</P>
 
-```a. Geekbench```
+```1. Geekbench```
 
-```b. iperf```
+```2. iperf```
 
-```c. FIO```
+```3. FIO```
 
-```d. iozone```
+```4. iozone```
 
-```e. Sysbench```
+```5. Sysbench```
 
-```f. Apachebench```
+```6. Apachebench```
 
-```g. SPEC```
+```7. SPEC```
+
 
 **1. Open conf.py and make necessary configuration changes**
 
