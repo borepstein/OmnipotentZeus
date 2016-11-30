@@ -643,7 +643,7 @@ class Internalnetworkaggdata(Base):
 
 
 # DB connection format: "engine://user:password@host:port/database"
-Ignition = create_engine("mysql://%s:%s@%s:3306/%s" % (db_user, db_password, db_host, db_name))
+Ignition = create_engine("mysql://%s:%s@%s:3306/%s" % (db_user, db_password, db_host, db_name), pool_recycle=30)
 
 # Create DB schema
 Base.metadata.create_all(Ignition)

@@ -1,6 +1,7 @@
 import os
 import csv
 import json
+import shutil
 import platform
 import subprocess as sub
 from conf import *
@@ -19,11 +20,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 os.system('clear')
 print "|------------------------|"
 print "|    Omnipotent Hera     |"
-print "|      v2016.11.01       |"
+print "|        v2016.11        |"
 print "|------------------------|"
 print "\n"
 
-# ==================== FETCH VM NAME FROM COMMAND LINE ARGUMENT IF EXISTS ==================== #
+# ==================== FETCH VM CONFIGURATION ==================== #
 vm = ''
 try:
     vm_data = json.load(open(os.path.join(BASE_DIR, 'vm_conf.json')))
@@ -40,18 +41,34 @@ except Exception as e:
     exit()
 
 # ==================== GLOBAL INSTALLER ==================== #
-if geekbench == 'y':
-    if not os.path.isfile(geekbench_install_dir + '/geekbench_x86_64'):
-        os.system("wget http://geekbench.s3.amazonaws.com/Geekbench-3.1.2-Linux.tar.gz")
-        os.system("tar -xvzf Geekbench-3.1.2-Linux.tar.gz")
-    os.chdir(geekbench_install_dir)
-    sub.call(['./geekbench_x86_64', '-r', gb_email, gb_key])
+if operating_system == 'centos' or operating_system == 'redhat':
+    if geekbench == 'y':
+        geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"
+        gb_exe = '%s/%s' % (geekbench_install_dir, 'geekbench_x86_64')
+        gb_tar = 'Geekbench-3.1.2-Linux.tar.gz'
+        os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
+        os.system('tar -xvzf %s' % gb_tar)
+        os.remove(gb_tar)
+        sub.call([os.path.join(BASE_DIR, gb_exe), '-r', gb_email, gb_key])
+    if fio == 'y':
+        os.system("wget ftp://rpmfind.net/linux/dag/redhat/el6/en/x86_64/dag/RPMS/fio-2.1.10-1.el6.rf.x86_64.rpm")
+        os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
+    if iperf == 'y':
+        os.system('yum install iperf -y')
 
-if fio == 'y':
-    os.system('apt-get install fio --yes')
-if iperf == 'y':
-    os.system('apt-get install iperf')
-
+if operating_system == 'ubuntu' or operating_system == 'debian':
+    if geekbench == 'y':
+        geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"
+        gb_exe = '%s/%s' % (geekbench_install_dir, 'geekbench_x86_64')
+        gb_tar = 'Geekbench-3.1.2-Linux.tar.gz'
+        os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
+        os.system('tar -xvzf %s' % gb_tar)
+        os.remove(gb_tar)
+        sub.call([os.path.join(BASE_DIR, gb_exe), '-r', gb_email, gb_key])
+    if fio == 'y':
+        os.system('apt-get install fio --yes')
+    if iperf == 'y':
+        os.system('apt-get install iperf')
 
 # ==================== USER INPUT ==================== #
 def sanitize_input(entity_name, table):
@@ -127,11 +144,11 @@ else:
     vm_type = vm_type.lower()
     vm_id = get_vm_id(Virtualmachine, vm_type, provider_id, location_id)
 
-# Operating system
+# Operating System
 os_name = platform.system().lower()
 os_id = get_id(Operatingsystem, os_name)
 
-# Get CPU
+# CPU Cores
 v1 = sub.Popen(['cat', '/proc/cpuinfo'], stdout=sub.PIPE)
 v2 = sub.Popen(['grep', 'processor'], stdin=v1.stdout, stdout=sub.PIPE)
 v3 = sub.Popen(['wc', '-l'], stdin=v2.stdout, stdout=sub.PIPE)
@@ -158,7 +175,7 @@ elif core_count == 40:
 # Get Cores
 core_id = get_id(Cores, core_type)
 
-# Get RAM
+# RAM
 r1 = sub.Popen(['cat', '/proc/meminfo'], stdout=sub.PIPE)
 r2 = sub.Popen(['grep', 'MemTotal'], stdin=r1.stdout, stdout=sub.PIPE)
 memoutput = r2.communicate()[0]
@@ -230,48 +247,51 @@ for x in range(iterations):
 
     # ==================== GEEKBENCH ==================== #
     if geekbench == 'y':
-        sub.call(['./geekbench_x86_64', '--no-upload', '--export-json', 'gb.json'])
+        gb_output = 'gb.json'
+        # Run Geekbench
+        sub.call([os.path.join(BASE_DIR, gb_exe), '--no-upload', '--export-json', gb_output])
 
-        geekbench_json = open('gb.json')
+        geekbench_json = open(gb_output)
         data = json.load(geekbench_json)
         if iterator == 1:
             processor_info = str(data['metrics'][6]['value'])
 
+        # Parse Geekbench results
         y = 0
         scores = {}
         for x in range(0, 13, 1):
             z = str(data['sections'][0]['workloads'][y]['name'])
             scores[z] = str(data['sections'][0]['workloads'][y]['results'][1]['rate_string'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 10, 1):
             z = str(data['sections'][1]['workloads'][y]['name'])
             scores[z] = str(data['sections'][1]['workloads'][y]['results'][1]['rate_string'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 4, 1):
             z = str(data['sections'][2]['workloads'][y]['name'])
             scores[z] = str(data['sections'][2]['workloads'][y]['results'][1]['rate_string'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 3, 1):
             z = str(data['sections'][y]['name']) + " Multicore"
             scores[z] = str(data['sections'][y]['multicore_score'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 3, 1):
             z = str(data['sections'][y]['name']) + " Singlecore"
             scores[z] = str(data['sections'][y]['score'])
-            y = y + 1
+            y += 1
         y = 0
         for x in range(0, 1):
             z = "Total"
             scores[z] = str(data['multicore_score'])
-            y = y + 1
+            y += 1
         for x in range(0, 1):
             z = "Total Single"
             scores[z] = str(data['score'])
-            y = y + 1
+            y += 1
         for x in range(0, 1):
             z = "Runtime"
             scores[z] = str(data['runtime'])
@@ -292,11 +312,15 @@ for x in range(iterations):
                 values[key] = float(val[:-11]) * 1024
             elif "Mpairs/sec" in val:
                 values[key] = float(val[:-11])
+            elif " " in val:
+                values[key] = float(val.split()[0])
             else:
                 values[key] = val
             y = y + 1
         values = od(values)
+        os.remove(gb_output)
 
+        # Save Geekbench results to database
         session = Session()
         try:
             Open_Processordata = Processordata(
@@ -349,86 +373,103 @@ for x in range(iterations):
                     memmulti=values['Memory Multicore'])
             session.add(Open_Memorydata)
             session.commit()
-            print "\n------ Completed Geekbench test ------"
+            print "\n------ Completed GEEKBENCH ------"
         except Exception as e:
             session.rollback()
             raise e
         finally:
             session.close()
 
+
     # ==================== FIO ==================== #
+    def fio_command_generator(option):
+        """
+        This function generates the command to run FIO from a set of input arguments and saves the output in txt format
+        """
+        global fio_command
+        fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime, fio_direct,
+                       '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting', '-exitall']
+        print "\n"
+        return fio_command
+
+
+    def spider_egg_exterminator():
+        """
+        This function deletes all dummy files created during FIO test
+        """
+        fio_json.close()
+        os.remove(fio_json_file)
+        for baby_spiders in range(0, spider_hatchlings):
+            spideregg_file = "spider_eggs." + str(baby_spiders) + ".0"
+            try:
+                os.remove(spideregg_file)
+            except:
+                pass
+
+
+    def convert_fio_json_result(fio_json_file):
+        """
+        This function converts the JSON output file to required format to fetch data easily
+        """
+        with open(fio_json_file, "r+") as f:
+            lines = f.readlines()
+            f.seek(0)
+            for l in lines:
+                if "fio:" not in l:
+                    f.write(l)
+            f.truncate()
+            f.close()
+
+
     if fio == 'y':
 
-        def fio_command_generator(option):
-            global fio_command
-            fio_command = ['fio', option, fio_filename, fio_blocksize, fio_filesize, fio_numjobs, fio_runtime,
-                           fio_direct,
-                           '-output-format=json', '-output=fio.json', '-time_based', '-group_reporting',
-                           '-exitall']
-            return fio_command
-
-
-        def spider_egg_exterminator():
-            fio_json.close()
-            os.remove(fio_json_file)
-            for baby_spiders in range(0, spider_hatchlings):
-                spideregg_file = "spider_eggs." + str(baby_spiders) + ".0"
-                try:
-                    os.remove(spideregg_file)
-                except:
-                    pass
-
-
-        def clean_fio_json_result(fio_json_file):
-            with open(fio_json_file, "r+") as f:
-                lines = f.readlines()
-                f.seek(0)
-                for l in lines:
-                    if "fio:" not in l:
-                        f.write(l)
-                f.truncate()
-                f.close()
-
-
-        script_dir = os.getcwd()
-        os.chmod(fio_path, 0775)
-        os.chdir(fio_path)
+        os.chmod(fio_path, 0775)  # Set permission for the FIO path
+        os.chdir(fio_path)  # Change directory to FIO path
 
         for fio_op_type in fio_op_types:
-
+            # Run FIO
             sub.call(fio_command_generator(fio_op_type))
-            clean_fio_json_result(fio_json_file)
+
+            # Convert generated JSON output file to required format
+            convert_fio_json_result(fio_json_file)
+
+            # Parse FIO results
             fio_json = open(fio_json_file)
             fio_data = json.load(fio_json)
 
+            # Sequential Write
             if fio_op_type is '-rw=write':
 
                 iops_write_100_seq = str(fio_data['jobs'][0]['write']['iops'])
                 throughput_write_100_seq = str(fio_data['jobs'][0]['write']['bw'])
                 lat_write_100_seq = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
+            # Sequential Read
             elif fio_op_type is '-rw=read':
 
                 iops_read_100_seq = str(fio_data['jobs'][0]['read']['iops'])
                 throughput_read_100_seq = str(fio_data['jobs'][0]['read']['bw'])
                 lat_read_100_seq = str(fio_data['jobs'][0]['read']['lat']['mean'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
+            # Random Write
             elif fio_op_type is '-rw=randwrite':
 
                 iops_write_100_random = str(fio_data['jobs'][0]['write']['iops'])
                 throughput_write_100_random = str(fio_data['jobs'][0]['write']['bw'])
                 lat_write_100_random = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
+            # Random Read
             elif fio_op_type is '-rw=randread':
 
                 iops_read_100_random = str(fio_data['jobs'][0]['read']['iops'])
                 throughput_read_100_random = str(fio_data['jobs'][0]['read']['bw'])
                 lat_read_100_random = str(fio_data['jobs'][0]['read']['lat']['mean'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
+            # Sequential Read Write
             elif fio_op_type is '-rw=rw':
 
                 iops_read_random = str(fio_data['jobs'][0]['read']['iops'])
@@ -438,8 +479,9 @@ for x in range(iterations):
                 lat_read_random = str(fio_data['jobs'][0]['read']['lat']['mean'])
                 lat_write_random = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
+            # Random Read Write
             elif fio_op_type is '-rw=randrw':
 
                 iops_read_seq = str(fio_data['jobs'][0]['read']['iops'])
@@ -449,9 +491,11 @@ for x in range(iterations):
                 lat_read_seq = str(fio_data['jobs'][0]['read']['lat']['mean'])
                 lat_write_seq = str(fio_data['jobs'][0]['write']['lat']['mean'])
 
-                spider_egg_exterminator()
+                spider_egg_exterminator()  # Delete dummy files created during FIO test
 
-        os.chdir(script_dir)
+        os.chdir(BASE_DIR)  # Change directory back to script path
+
+        # Save FIO results to database
         session = Session()
         try:
             if disk_type.lower() == "local":
@@ -516,7 +560,7 @@ for x in range(iterations):
                         latency_write_random=lat_write_random)
                 session.add(Open_Blockdiskdata)
                 session.commit()
-                print "\n\n------ Completed Fio test ------"
+                print "\n\n------ Completed FIO ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -528,12 +572,14 @@ for x in range(iterations):
         internal_net_csv_file = 'iperf_results.csv'
 
         # Start iperf server on iperf server machine
-        os.system('ssh -i %s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@%s iperf -s -t %s' % (os.path.join(BASE_DIR, 'saltkey.pem'), internal_net_ip, int(internal_net_time) * 4))
+        os.system('ssh -i %s -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ubuntu@%s screen -md iperf -s' % (
+        os.path.join(BASE_DIR, 'saltkey.pem'), internal_net_ip))
 
         # Start iperf client in single threaded mode
         sub.call(['iperf', '-c', internal_net_ip, '-t', internal_net_time,
                   '-y', internal_net_csv], stdout=open(internal_net_csv_file, "w"))
 
+        # Parse iperf results
         opener = open(internal_net_csv_file)
         csv_open = csv.reader(opener)
         for row in csv_open:
@@ -550,6 +596,7 @@ for x in range(iterations):
             multi_threaded_throughput = (int(row[8]) / 1024) / 1024
         os.remove(internal_net_csv_file)
 
+        # Save iperf results to database
         session = Session()
         try:
             Open_Internalnetworkdata = Internalnetworkdata(
@@ -559,7 +606,7 @@ for x in range(iterations):
                     multi_threaded_throughput=multi_threaded_throughput)
             session.add(Open_Internalnetworkdata)
             session.commit()
-            print "\n------ Completed Iperf test ------"
+            print "\n------ Completed IPERF ------"
         except Exception as e:
             session.rollback()
             raise e
@@ -569,7 +616,11 @@ for x in range(iterations):
     print "\nIteration %s completed\n" % iterator
 
     iterator += 1
-    sleep(sleep_time)
+    sleep(sleep_time)  # Any delay before the next round is executed
+
+# Remove Geekbench dist folder
+os.chdir(BASE_DIR)
+shutil.rmtree('dist')
 
 print "----------------------------------------------------------------------------------"
 print " All tests are successfully completed and the results are transferred to database "

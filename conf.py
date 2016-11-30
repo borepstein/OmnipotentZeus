@@ -1,8 +1,13 @@
+# CONFIGURATION INFORMATION
+
 # DATABASE CREDENTIALS
-db_host = "localhost"
-db_user = "root"
-db_password = "inapp"
-db_name = "forecast"
+db_host = "HOST"
+db_user = "USERNAME"
+db_password = "PASSWORD"
+db_name = "DATABASE"
+
+# Operating System
+operating_system = "ubuntu"
 
 # TESTS TO RUN
 geekbench = 'y'  # system tests
@@ -20,10 +25,11 @@ direct_io = 'y'  # if direct I/O is required (bypass cache), please mark y
 internal_net_time = '60'  # please enter the time, in seconds, that you want iperf to run
 
 # TIMING
-iterations = 2
-sleep_time = 0  # in seconds
-duration = 24
-duration_value = "hours"  # please enter seconds, minutes, hours, or days
+# Either duration or number of iterations must complete in order for the testing to stop.
+sleeptime = 0  # Adjust the time in between iterations, input a sleeptime (in seconds).
+iterations = 10000  # Specify the number of iterations this testing should complete,
+duration = 24  # Duration and duration value will limit the time the suite will be running for.
+duration_value = "hours"  # Please enter seconds, minutes, hours, or days
 
 if duration_value.lower() == "seconds":
     duration = duration
@@ -37,6 +43,3 @@ elif duration_value.lower() == "days":
 # GEEKBENCH LICENSE
 gb_email = 'contact@cloudspectator.com'
 gb_key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
-
-# GEEKBENCH DIRECTORY
-geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"

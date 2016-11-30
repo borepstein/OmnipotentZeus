@@ -1,4 +1,4 @@
-/dist
-Geekbench-3.1.2-Linux.tar.gz
 *.pyc
 .idea
+/dist
+Geekbench-3.1.2-Linux.tar.gz
