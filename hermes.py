@@ -18,8 +18,6 @@ from sqlalchemy.orm import sessionmaker
 Base.metadata.bind = Ignition
 Session = sessionmaker(bind=Ignition)
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-UTILS_DIR = os.path.join(BASE_DIR, 'utils')
-UTILS_RPM_DIR = os.path.join(BASE_DIR, 'utils/rpm')
 
 # ==================== GLOBAL INTRODUCTION ==================== #
 os.system('clear')
@@ -40,29 +38,20 @@ if operating_system == 'centos' or operating_system == 'redhat':
         geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"
         gb_exe = '%s/%s' % (geekbench_install_dir, 'geekbench_x86_64')
         gb_tar = 'Geekbench-3.1.2-Linux.tar.gz'
-        if not os.path.isfile(os.path.join(BASE_DIR, gb_exe)):
-            if not os.path.isfile(os.path.join(BASE_DIR, gb_tar)):
-                os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
-            os.system('tar -xvzf %s' % gb_tar)
+        os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
+        os.system('tar -xvzf %s' % gb_tar)
+        os.remove(gb_tar)
         sub.call([os.path.join(BASE_DIR, gb_exe), '-r', gb_email, gb_key])
     if fio == 'y':
-        fio_exe = 'fio-2.1.10-1.el6.rf.x86_64.rpm'
-        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, fio_exe)):
-            os.system("wget ftp://rpmfind.net/linux/dag/redhat/el6/en/x86_64/dag/RPMS/fio-2.1.10-1.el6.rf.x86_64.rpm")
-            os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
-        else:
-            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, fio_exe)))
+        os.system("wget ftp://rpmfind.net/linux/dag/redhat/el6/en/x86_64/dag/RPMS/fio-2.1.10-1.el6.rf.x86_64.rpm")
+        os.system('rpm -iv fio-2.1.10-1.el6.rf.x86_64.rpm')
     if iperf == 'y':
         os.system('yum install iperf -y')
     if apachebench == 'y':
         os.system('yum install httpd-tools')
     if iozone == 'y':
-        iozone_exe = "iozone-3-338.i386.rpm"
-        if not os.path.isfile(os.path.join(UTILS_RPM_DIR, iozone_exe)):
-            os.system("wget http://www.iozone.org/src/current/iozone-3-338.i386.rpm")
-            os.system("rpm -ivh iozone-3-338.i386.rpm")
-        else:
-            os.system('rpm -iv %s' % (os.path.join(UTILS_RPM_DIR, iozone_exe)))
+        os.system("wget http://www.iozone.org/src/current/iozone-3-338.i386.rpm")
+        os.system("rpm -ivh iozone-3-338.i386.rpm")
     if sysbench == 'y':
         os.system('yum -y install sysbench')
 
@@ -71,10 +60,9 @@ if operating_system == 'ubuntu' or operating_system == 'debian':
         geekbench_install_dir = "dist/Geekbench-3.1.2-Linux"
         gb_exe = '%s/%s' % (geekbench_install_dir, 'geekbench_x86_64')
         gb_tar = 'Geekbench-3.1.2-Linux.tar.gz'
-        if not os.path.isfile(os.path.join(BASE_DIR, gb_exe)):
-            if not os.path.isfile(os.path.join(BASE_DIR, gb_tar)):
-                os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
-            os.system('tar -xvzf %s' % gb_tar)
+        os.system('wget http://geekbench.s3.amazonaws.com/%s' % gb_tar)
+        os.system('tar -xvzf %s' % gb_tar)
+        os.remove(gb_tar)
         sub.call([os.path.join(BASE_DIR, gb_exe), '-r', gb_email, gb_key])
     if fio == 'y':
         os.system('apt-get install fio --yes')

@@ -12,9 +12,9 @@ operating_system = 'ubuntu'  # Please enter the operating system (ubuntu or cent
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-geekbench = 'n'  # System test
-iperf = 'n'  # Internal network test
-fio = 'n'  # Disk test
+geekbench = 'y'  # System test
+iperf = 'y'  # Internal network test
+fio = 'y'  # Disk test
 iozone = 'n'  # Disk test
 sysbench = 'n'  # Disk test
 apachebench = 'n'  # Apachebench test
@@ -40,7 +40,7 @@ ab_path = "/admin"  # Path
 
 # TIMING
 # Either duration or number of iterations must complete in order for the testing to stop.
-sleeptime = 0  # Adjust the time in between runs, input a sleeptime (in seconds).
+sleeptime = 0  # Adjust the time in between iterations, input a sleeptime (in seconds).
 iterations = 10000  # Specify the number of iterations this testing should complete,
 duration = 24  # Duration and duration value will limit the time the suite will be running for.
 duration_value = "hours"  # Please enter seconds, minutes, hours, or days
