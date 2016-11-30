@@ -20,7 +20,7 @@
 
 **Note:** Uncomment SPEC installation lines in ```run_ubuntu.sh``` or ```run_centos.sh```, if you wish to run teh SPEC CPU 2006 test.
 
-**2. Install dependencies and run the script**
+**2. Run the script**
 
 ```cd omnipotentzeus```
 
