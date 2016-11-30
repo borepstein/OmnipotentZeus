@@ -42,7 +42,7 @@ http://downloads.sourceforge.net/gnuwin32/wget-1.11.4-1-setup.exe
 
 **6. Open conf.py and make necessary configuration changes**
 
-**7. Install dependencies and run the script**
+**7. Run the script**
 
 ```
 cd omnipotentzeus-windows
