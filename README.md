@@ -44,9 +44,9 @@ http://downloads.sourceforge.net/gnuwin32/wget-1.11.4-1-setup.exe
 
 **7. Install dependencies and run the script**
 
-```cd omnipotentzeus-windows```
+```cd omnipotentzeus-windows
 
-```run_win.bat```
+run_win.bat```
 
 **Note:** The default installation path for Geekbench is ```C:\Program Files (x86)``` and for FIO is ```C:\Program Files```
 
