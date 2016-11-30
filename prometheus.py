@@ -1,14 +1,14 @@
 # Prometheus creates the database that will house all data. It is currently designed with a MySQL database engine.
-from sqlalchemy import Column, Integer, String, Float, create_engine, __version__
+from conf import *
+from sqlalchemy import MetaData, Column, Integer, String, Float, create_engine, __version__
 from sqlalchemy.ext.declarative import declarative_base
 
 # Check which version of SQLAlchemy is currently being used.
 print "Current SQLAlchemy Version: " + __version__
-
 Base = declarative_base()
+metadata = MetaData()
 
 
-# Creating the table using SQLAlchemy's Table and Column objects.
 class Olympus(Base):
     __tablename__ = 'olympus'
     id = Column(Integer, primary_key=True)
@@ -146,13 +146,54 @@ class Olympus(Base):
     pm_disk_mark = Column(Float(30), nullable=True)
     pm_three_d_graphics_mark = Column(Float(30), nullable=True)
     pm_passmark_rating = Column(Float(30), nullable=True)
+    perlbench_base_copies = Column(String(20), nullable=False)
+    perlbench_base_runtime = Column(String(20), nullable=False)
+    perlbench_base_rate = Column(String(20), nullable=False)
+    perlbench_peak_copies = Column(String(20), nullable=False)
+    perlbench_peak_runtime = Column(String(20), nullable=False)
+    perlbench_peak_rate = Column(String(20), nullable=False)
+    bzip2_base_copies = Column(String(20), nullable=False)
+    bzip2_base_runtime = Column(String(20), nullable=False)
+    bzip2_base_rate = Column(String(20), nullable=False)
+    bzip2_peak_copies = Column(String(20), nullable=False)
+    bzip2_peak_runtime = Column(String(20), nullable=False)
+    bzip2_peak_rate = Column(String(20), nullable=False)
+    gcc_base_copies = Column(String(20), nullable=False)
+    gcc_base_runtime = Column(String(20), nullable=False)
+    gcc_base_rate = Column(String(20), nullable=False)
+    gcc_peak_copies = Column(String(20), nullable=False)
+    gcc_peak_runtime = Column(String(20), nullable=False)
+    gcc_peak_rate = Column(String(20), nullable=False)
+    mcf_base_copies = Column(String(20), nullable=False)
+    mcf_base_runtime = Column(String(20), nullable=False)
+    mcf_base_rate = Column(String(20), nullable=False)
+    mcf_peak_copies = Column(String(20), nullable=False)
+    mcf_peak_runtime = Column(String(20), nullable=False)
+    mcf_peak_rate = Column(String(20), nullable=False)
+    xalancbmk_base_copies = Column(String(20), nullable=False)
+    xalancbmk_base_runtime = Column(String(20), nullable=False)
+    xalancbmk_base_rate = Column(String(20), nullable=False)
+    xalancbmk_peak_copies = Column(String(20), nullable=False)
+    xalancbmk_peak_runtime = Column(String(20), nullable=False)
+    xalancbmk_peak_rate = Column(String(20), nullable=False)
+    soplex_base_copies = Column(String(20), nullable=False)
+    soplex_base_runtime = Column(String(20), nullable=False)
+    soplex_base_rate = Column(String(20), nullable=False)
+    soplex_peak_copies = Column(String(20), nullable=False)
+    soplex_peak_runtime = Column(String(20), nullable=False)
+    soplex_peak_rate = Column(String(20), nullable=False)
+    sphinx3_base_copies = Column(String(20), nullable=False)
+    sphinx3_base_runtime = Column(String(20), nullable=False)
+    sphinx3_base_rate = Column(String(20), nullable=False)
+    sphinx3_peak_copies = Column(String(20), nullable=False)
+    sphinx3_peak_runtime = Column(String(20), nullable=False)
+    sphinx3_peak_rate = Column(String(20), nullable=False)
+
 
 # Create an object, db, to act as the connect to the database.
 # The SQLEngine object is used to open the connection, which is what is being used in the db variable.
-# Format for create_engine is "engine://user:password@host:port/database"
-# Ignition = create_engine("mysql+pymysql://2vcpu:800BoylstonClouds@104.131.127.149:3306/omnipotentzeuswin")
-Ignition = create_engine("mysql+pymysql://root:inapp@localhost:3306/omnipotentzeus")
-
+# Format for create_engine is "mysql+pymysql://user:password@host:port/database"
+Ignition = create_engine("mysql+pymysql://%s:%s@%s:3306/%s" % (db_user, db_password, db_host, db_name), pool_recycle=30)
 
 # Holds all the database metadata.
 Base.metadata.create_all(Ignition)

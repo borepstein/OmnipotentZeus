@@ -1,22 +1,27 @@
 # CONFIGURATION INFORMATION
 
-# Please enter the start date for this test in YYYYMMDD (e.g., 20160617 for June 17TH, 2016)
-project_id = 'c-edgehosting-20151210'
+# DATABASE CREDENTIALS
+db_host = "HOST"
+db_user = "USERNAME"
+db_password = "PASSWORD"
+db_name = "DATABASE"
+
+# Please enter the start date for this test in YYYYMMDD (e.g., 20170130 for January 30TH, 2017)
+project_id = 'c-edgehosting-20161107'
 # Please enter the operating system
 operating_system = 'windows'  # windows
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
-geekbench = 'y'  # system tests
-iperf = 'y'  # internal network tests
-fio = 'y'  # disk tests
-
-iozone = 'n'  # disk tests
-sysbench = 'n'  # disk tests
-passmark = 'n'  # disk tests
+geekbench = 'n'  # system test
+iperf = 'n'  # internal network test
+fio = 'n'  # disk test
+iozone = 'n'  # disk test
+sysbench = 'n'  # disk test
+passmark = 'n'  # disk test
+spec = 'n'  # system test
 
 # DISK TEST INFORMATION
-# If you selected yes for disk tests, then you have to fill out this information
 blocksize = '4'  # please enter the block size in kilobytes
 filesize = '16'  # please enter the file size in megabytes
 numjobs = '8'  # please enter the number of copies of the test that you would like to run
@@ -29,15 +34,12 @@ async_io = 'y'  # Set y to enable asynchronous tests
 internal_net_time = '60'  # please enter the time, in seconds, that you want iperf to run
 
 # TIMING
-# Timing variables to help keep the sequence of events.
-# To adjust the time in between runs, input a sleeptime (in seconds).
-# To specify the number of iterations this testing should complete, please input an integer for iterations.
-# Duration and duration value will limit the time the suite will be running for.
 # Either duration or number of iterations must complete in order for the testing to stop.
-sleeptime = 0
-iterations = 1
-duration = 15
-duration_value = "minutes"  # please enter seconds, minutes, hours, or days
+sleeptime = 0  # Adjust the time in between iterations, input a sleeptime (in seconds).
+iterations = 10000  # Specify the number of iterations this testing should complete,
+duration = 24  # Duration and duration value will limit the time the suite will be running for.
+duration_value = "hours"  # Please enter seconds, minutes, hours, or days
+
 if duration_value.lower() == "seconds":
     duration = duration
 elif duration_value.lower() == "minutes":
@@ -52,8 +54,8 @@ elif duration_value.lower() == "days":
 email = 'contact@cloudspectator.com'
 key = 'tqw3g-d4myf-mqy2u-zifzg-wzidc-yo7mp-dulwf-5zsu7-yggfs'
 
-# DIRECTORY
+# DIRECTORIES
 geekbench_install_dir = 'C:\Program Files (x86)'
-fio_install_dir = 'C:\Program Files (x86)'
+fio_install_dir = 'C:\Program Files'
 iozone_install_dir = 'C:\Program Files (x86)\Benchmarks\Iozone3_414'
 passmark_install_dir = 'C:\Program Files (x86)'
