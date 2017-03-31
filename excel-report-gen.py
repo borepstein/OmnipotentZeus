@@ -11,220 +11,37 @@ import argparse
 import shutil
 import socket
 import xlsxwriter
+from openpyxl import load_workbook
 import xml.etree.ElementTree as ET
 import sqlalchemy
-
-# local imports
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import MetaData, Table, Column, Integer, String, Float, create_engine, __version__
 from sqlalchemy.ext.declarative import declarative_base
 
 # constants
 NUM_ARGS = 2
-XML_DATABASE_TAG="database"
+XML_SOURCE_TAG="source"
+XML_XLSX_TAG="xlsx"
+XML_FNAME_TAG="fname"
+XML_PERF_DATA_SOURCE_TAG="perf_datasource"
+XML_PRICING_DATA_SOURCE_TAG="pricing_datasource"
+XML_XLSX_DATA_SOURCE_TAG="xlsx_report"
 XML_DB_SERVER_TAG="db_server"
 XML_HOST_ADDRESS_TAG="host"
 XML_USER_TAG="user"
 XML_PASSWORD_TAG="password"
 XML_DB_TAG="db"
 XML_PORT_TAG="port"
+XML_TABLE_TAG="table"
+XML_WORK_SHEET_TAG="worksheet"
+XML_NAME_TAG="name"
 MYSQL_DEFAULT_PORT=3306
+XSLX_SERVERS_WS_NAME="Servers"
+XSLX_PRICES_WS_NAME="Prices"
+XSLX_RAW_WS_NAME="Raw"
+
 
 # end constants
-
-# duplicate for prometheus.py declarations
-
-Base = declarative_base()
-metadata = MetaData()
-tablename = 'olympus'
-
-'''
-class Olympus(Base):
-    __tablename__ = tablename
-    id = Column(Integer, primary_key=True)
-    project = Column(String(30), nullable=False)
-    uid = Column(String(50), nullable=False)
-    provider = Column(String(30), nullable=False)
-    region = Column(String(30), nullable=False)
-    startdate = Column(String(30), nullable=False)
-    iteration = Column(Integer, nullable=False)
-    iteration_start_time = Column(String(50), nullable=False)
-    processor = Column(String(100), nullable=True)
-    vm = Column(String(30), nullable=False)
-    vmcount = Column(Integer, nullable=False)
-    vcpu = Column(Integer, nullable=False)
-    ram = Column(Float(30), nullable=False)
-    local = Column(Integer, nullable=False)
-    block = Column(Integer, nullable=False)
-    disk_rand = Column(String(10), nullable=True)
-    disk_seq = Column(String(10), nullable=True)
-    disk_blocksize = Column(String(20), nullable=True)
-    disk_filesize = Column(String(20), nullable=True)
-    disk_numjobs = Column(String(20), nullable=True)
-    disk_direct = Column(String(20), nullable=True)
-    runtime = Column(Float(30), nullable=True)
-    intmulti = Column(Integer, nullable=True)
-    floatmulti = Column(Integer, nullable=True)
-    memmulti = Column(Integer, nullable=True)
-    intsingle = Column(Integer, nullable=True)
-    floatsingle = Column(Integer, nullable=True)
-    memsingle = Column(Integer, nullable=True)
-    totalmulti = Column(Integer, nullable=True)
-    totalsingle = Column(Integer, nullable=True)
-    aes = Column(Float(30), nullable=True)
-    twofish = Column(Float(30), nullable=True)
-    sha1 = Column(Float(30), nullable=True)
-    sha2 = Column(Float(30), nullable=True)
-    bzipcompression = Column(Float(30), nullable=True)
-    bzipdecompression = Column(Float(30), nullable=True)
-    jpegcompression = Column(Float(30), nullable=True)
-    jpegdecompression = Column(Float(30), nullable=True)
-    pngcompression = Column(Float(30), nullable=True)
-    pngdecompression = Column(Float(30), nullable=True)
-    sobel = Column(Float(30), nullable=True)
-    lua = Column(Float(30), nullable=True)
-    dijkstra = Column(Float(30), nullable=True)
-    blackscholes = Column(String(50), nullable=True)
-    mandelbrot = Column(Float(30), nullable=True)
-    sharpenimage = Column(Float(30), nullable=True)
-    blurimage = Column(Float(30), nullable=True)
-    sgemm = Column(Float(30), nullable=True)
-    dgemm = Column(Float(30), nullable=True)
-    sfft = Column(Float(30), nullable=True)
-    dfft = Column(Float(30), nullable=True)
-    nbody = Column(Float(30), nullable=True)
-    raytrace = Column(Float(30), nullable=True)
-    copy = Column(Float(30), nullable=True)
-    scale = Column(Float(30), nullable=True)
-    add = Column(Float(30), nullable=True)
-    triad = Column(Float(30), nullable=True)
-    runtime_read_seq = Column(Float(30), nullable=True)
-    runtime_write_seq = Column(Float(30), nullable=True)
-    io_read_seq = Column(Float(30), nullable=True)
-    io_write_seq = Column(Float(30), nullable=True)
-    iops_read_seq = Column(Float(30), nullable=True)
-    iops_write_seq = Column(Float(30), nullable=True)
-    bw_read_seq = Column(Float(30), nullable=True)
-    bw_write_seq = Column(Float(30), nullable=True)
-    iops_read_100_seq = Column(Float(30), nullable=True)
-    iops_write_100_seq = Column(Float(30), nullable=True)
-    throughput_read_100_seq = Column(Float(30), nullable=True)
-    throughput_write_100_seq = Column(Float(30), nullable=True)
-    lat_read_100_seq = Column(Float(30), nullable=True)
-    lat_write_100_seq = Column(Float(30), nullable=True)
-    runtime_read_seq_async = Column(Float(30), nullable=True)
-    runtime_write_seq_async = Column(Float(30), nullable=True)
-    io_read_seq_async = Column(Float(30), nullable=True)
-    io_write_seq_async = Column(Float(30), nullable=True)
-    iops_read_seq_async = Column(Float(30), nullable=True)
-    iops_write_seq_async = Column(Float(30), nullable=True)
-    bw_read_seq_async = Column(Float(30), nullable=True)
-    bw_write_seq_async = Column(Float(30), nullable=True)
-    iops_read_100_seq_async = Column(Float(30), nullable=True)
-    iops_write_100_seq_async = Column(Float(30), nullable=True)
-    throughput_read_100_seq_async = Column(Float(30), nullable=True)
-    throughput_write_100_seq_async = Column(Float(30), nullable=True)
-    lat_read_100_seq_async = Column(Float(30), nullable=True)
-    lat_write_100_seq_async = Column(Float(30), nullable=True)
-    runtime_read_rand = Column(Float(30), nullable=True)
-    runtime_write_rand = Column(Float(30), nullable=True)
-    io_read_rand = Column(Float(30), nullable=True)
-    io_write_rand = Column(Float(30), nullable=True)
-    iops_read_rand = Column(Float(30), nullable=True)
-    iops_write_rand = Column(Float(30), nullable=True)
-    bw_read_rand = Column(Float(30), nullable=True)
-    bw_write_rand = Column(Float(30), nullable=True)
-    iops_read_100_rand = Column(Float(30), nullable=True)
-    iops_write_100_rand = Column(Float(30), nullable=True)
-    throughput_read_100_rand = Column(Float(30), nullable=True)
-    throughput_write_100_rand = Column(Float(30), nullable=True)
-    lat_read_100_rand = Column(Float(30), nullable=True)
-    lat_write_100_rand = Column(Float(30), nullable=True)
-    runtime_read_rand_async = Column(Float(30), nullable=True)
-    runtime_write_rand_async = Column(Float(30), nullable=True)
-    io_read_rand_async = Column(Float(30), nullable=True)
-    io_write_rand_async = Column(Float(30), nullable=True)
-    iops_read_rand_async = Column(Float(30), nullable=True)
-    iops_write_rand_async = Column(Float(30), nullable=True)
-    bw_read_rand_async = Column(Float(30), nullable=True)
-    bw_write_rand_async = Column(Float(30), nullable=True)
-    iops_read_100_rand_async = Column(Float(30), nullable=True)
-    iops_write_100_rand_async = Column(Float(30), nullable=True)
-    throughput_read_100_rand_async = Column(Float(30), nullable=True)
-    throughput_write_100_rand_async = Column(Float(30), nullable=True)
-    lat_read_100_rand_async = Column(Float(30), nullable=True)
-    lat_write_100_rand_async = Column(Float(30), nullable=True)
-    internal_network_data = Column(Float(30), nullable=True)
-    internal_network_bandwidth = Column(Float(30), nullable=True)
-    hostname = Column(String(100), nullable=True)
-    concurrency_level = Column(Integer, nullable=True)
-    completed_requests = Column(Integer, nullable=True)
-    time_taken = Column(Float(30), nullable=True)
-    requests_per_sec = Column(Float(30), nullable=True)
-    percent_50 = Column(Integer, nullable=True)
-    percent_66 = Column(Integer, nullable=True)
-    percent_75 = Column(Integer, nullable=True)
-    percent_80 = Column(Integer, nullable=True)
-    percent_90 = Column(Integer, nullable=True)
-    percent_95 = Column(Integer, nullable=True)
-    percent_98 = Column(Integer, nullable=True)
-    percent_99 = Column(Integer, nullable=True)
-    percent_100 = Column(Integer, nullable=True)
-    iozone_seq_writers = Column(Float(30), nullable=True)
-    iozone_seq_rewriters = Column(Float(30), nullable=True)
-    iozone_seq_readers = Column(Float(30), nullable=True)
-    iozone_seq_rereaders = Column(Float(30), nullable=True)
-    iozone_random_readers = Column(Float(30), nullable=True)
-    iozone_random_writers = Column(Float(30), nullable=True)
-    sysbench_seq_write = Column(Float(30), nullable=True)
-    sysbench_seq_read = Column(Float(30), nullable=True)
-    sysbench_rand_write = Column(Float(30), nullable=True)
-    sysbench_rand_read = Column(Float(30), nullable=True)
-    perlbench_base_copies = Column(String(20), nullable=True)
-    perlbench_base_runtime = Column(String(20), nullable=True)
-    perlbench_base_rate = Column(String(20), nullable=True)
-    perlbench_peak_copies = Column(String(20), nullable=True)
-    perlbench_peak_runtime = Column(String(20), nullable=True)
-    perlbench_peak_rate = Column(String(20), nullable=True)
-    bzip2_base_copies = Column(String(20), nullable=True)
-    bzip2_base_runtime = Column(String(20), nullable=True)
-    bzip2_base_rate = Column(String(20), nullable=True)
-    bzip2_peak_copies = Column(String(20), nullable=True)
-    bzip2_peak_runtime = Column(String(20), nullable=True)
-    bzip2_peak_rate = Column(String(20), nullable=True)
-    gcc_base_copies = Column(String(20), nullable=True)
-    gcc_base_runtime = Column(String(20), nullable=True)
-    gcc_base_rate = Column(String(20), nullable=True)
-    gcc_peak_copies = Column(String(20), nullable=True)
-    gcc_peak_runtime = Column(String(20), nullable=True)
-    gcc_peak_rate = Column(String(20), nullable=True)
-    mcf_base_copies = Column(String(20), nullable=True)
-    mcf_base_runtime = Column(String(20), nullable=True)
-    mcf_base_rate = Column(String(20), nullable=True)
-    mcf_peak_copies = Column(String(20), nullable=True)
-    mcf_peak_runtime = Column(String(20), nullable=True)
-    mcf_peak_rate = Column(String(20), nullable=True)
-    xalancbmk_base_copies = Column(String(20), nullable=True)
-    xalancbmk_base_runtime = Column(String(20), nullable=True)
-    xalancbmk_base_rate = Column(String(20), nullable=True)
-    xalancbmk_peak_copies = Column(String(20), nullable=True)
-    xalancbmk_peak_runtime = Column(String(20), nullable=True)
-    xalancbmk_peak_rate = Column(String(20), nullable=True)
-    soplex_base_copies = Column(String(20), nullable=True)
-    soplex_base_runtime = Column(String(20), nullable=True)
-    soplex_base_rate = Column(String(20), nullable=True)
-    soplex_peak_copies = Column(String(20), nullable=True)
-    soplex_peak_runtime = Column(String(20), nullable=True)
-    soplex_peak_rate = Column(String(20), nullable=True)
-    sphinx3_base_copies = Column(String(20), nullable=True)
-    sphinx3_base_runtime = Column(String(20), nullable=True)
-    sphinx3_base_rate = Column(String(20), nullable=True)
-    sphinx3_peak_copies = Column(String(20), nullable=True)
-    sphinx3_peak_runtime = Column(String(20), nullable=True)
-    sphinx3_peak_rate = Column(String(20), nullable=True)
-'''
-
-# end duplicate for prometheus.py declarations
 
 # class ArgHandler
 class ArgHandler():
@@ -260,12 +77,15 @@ class PerfDataHandler():
     __dbEngine = None
     __dbSession = None
     __dbTable = None
+    __metadata = MetaData()
+    __inputFileHandler = None
     
     def __init__(self): pass
 
-    # __init__(self, dcConnParams)
-    def __init__(self, dbConnParams):
-        self.__dbConnectParams = dbConnParams
+    # __init__(self, inputFileHandler)
+    def __init__(self, inputFileHandler):
+        self.__inputFileHandler = inputFileHandler
+        self.__dbConnectParams =  inputFileHandler.getDBConnectParams()
         self.establishDBConnection()
         self.establishDBSession()
         self.establishDBTable()
@@ -291,8 +111,12 @@ class PerfDataHandler():
     def establishDBTable(self):
         if self.__dbEngine is None: return
 
-        metadata.reflect(bind=self.__dbEngine)
-        self.__dbTable = Table(tablename, metadata)
+        if self.__metadata is None: return
+    
+        self.__metadata.reflect(bind=self.__dbEngine)
+        self.__dbTable = Table(self.__dbConnectParams[XML_TABLE_TAG],\
+                               self.__metadata)
+        
     # end establishDBTable(self)
 
     # establishDBSession(self)
@@ -307,19 +131,84 @@ class PerfDataHandler():
     def getDBSession(self): return self.__dbSession
 
     def getDBTable(self): return self.__dbTable
-    
+
+    def getInputFileHandler(self): return self.__inputFileHandler
 # end class PerfDataHandler
+
+# class PriceDataHandler
+class PriceDataHandler():
+    __outputFileHandler = None
+    __priceXLSXFilePath = None
+    __priceDataMatrix = None
+
+    # __init__(self, outputFileHandler)
+    def __init__(self, outputFileHandler):
+        self.__outputFileHandler = outputFileHandler
+        self.__priceXLSXFilePath = self.__getPriceXLSXFilePath()
+        self.__priceDataMatrix = self.__getPriceDataMatrix()
+    # end __init__(self, outputFileHandler)
+        
+    # __getPriceXLSXFilePath(self)
+    def __getPriceXLSXFilePath(self):
+        filePath = None
+        xlsxConfirmed = False
+        xmlTree = self.__outputFileHandler.getInputFileHandler().getXMLTree()
+
+        for member in xmlTree.getroot():
+            if member.tag == XML_PRICING_DATA_SOURCE_TAG:
+                for subm in member:
+                    if (subm.tag == XML_SOURCE_TAG) and \
+                       (subm.text == XML_XLSX_TAG):
+                        xlsxConfirmed = True
+
+                    if (subm.tag == XML_FNAME_TAG):
+                        filePath = subm.text
+                break
+            
+        if xlsxConfirmed:
+            return filePath
+
+        return None
+    # end __getPriceXLSXFilePath(self)
+
+    def getPriceXLSXFilePath(self): return self.__priceXLSXFilePath
+
+    # __getPriceDataMatrix(self)
+    def __getPriceDataMatrix(self):
+        priceDataMatrix = []
+
+        priceWorkBook = load_workbook(filename=self.__priceXLSXFilePath,\
+                                      read_only=True)
+
+        priceWs = priceWorkBook[XSLX_PRICES_WS_NAME]
+
+        for row in priceWs.rows:
+            rowList=[]
+            for cell in row:
+                rowList.append( cell.value )
+            priceDataMatrix.append( rowList )
+
+        return priceDataMatrix
+    # end __getPriceDataMatrix(self)
+
+    def getPriceDataMatrix(self): return self.__priceDataMatrix
+    
+# end class PriceDataHandler
 
 # class InputFileHandler
 class InputFileHandler():
+    __argHandler = None
     __filePath = None
     __xmlTree = None
     __xmlTreeRoot = None
     __dbConnectParams = {}
+    __xlsx_report_tree = None
+    __pricing_datasource_tree = None
     
     # __init__ (fname)
-    def __init__(self, fname):
-        self.__filePath = fname
+    def __init__(self, argHandler):
+        self.__argHandler = argHandler
+        self.__filePath = argHandler.getInputFilePath()
 
         if self.__filePath is None: return
         
@@ -327,15 +216,22 @@ class InputFileHandler():
         self.__xmlTreeRoot = self.__xmlTree.getroot()
 
         for member in self.__xmlTreeRoot:
-            if member.tag == XML_DATABASE_TAG:
+            if member.tag == XML_PERF_DATA_SOURCE_TAG:
                 for subm in member:
                     if subm.tag == XML_DB_SERVER_TAG:
                         for subm1 in subm:
                             self.__dbConnectParams[subm1.tag] = subm1.text
-                        break
-                break
+
+            if member.tag == XML_XLSX_DATA_SOURCE_TAG:
+                self.__xlsx_report_tree = member
+
+            if member.tag == XML_PRICING_DATA_SOURCE_TAG:
+                self.__pricing_datasource_tree = member
+                    
             
     # end __init__ (fname)
+
+    def getArgHandler(self): return self.__argHandler
 
     def getFilePath(self): return self.__filePath
 
@@ -345,24 +241,78 @@ class InputFileHandler():
 
     def getDBConnectParams(self): return self.__dbConnectParams
 
+    def getXLSXReportTree(self): return self.__xlsx_report_tree
+
+    def getPricingDataSourceTree(self): return self.__pricing_datasource_tree
 # end class InputHandler
 
 # class OutputFileHandler
 class OutputFileHandler():
+    __argHandler = None
+    __inputFileHandler = None
     __filePath = None
     __workbook = None
+    __perfDataHandler = None
     __rawDataTable = None
     __dbSession = None
+    __xlsx_report_tree = None
     
     # WS formating constants
     __raw_tab_name = "Raw"
     
+    # __init__(self, argHandler, inputFileHandler)
+    def __init__(self, argHandler, inputFileHandler):
+        self.__argHandler = argHandler
+        self.__inputFileHandler = inputFileHandler
+        self.__filePath = argHandler.getOutputFilePath()
+        self.__perfDataHandler = PerfDataHandler(inputFileHandler)
+        self.__initWorkbook(self.__filePath)
 
-    # __init__(self, fname)
-    def __init__(self, fname):
-        self.__filePath = fname
-        self.__workbook = xlsxwriter.Workbook( self.__filePath )
-    # __init__(self, fname)
+        # Removing output file if it exists
+        if os.path.isfile( self.__filePath ):
+            os.remove( self.__filePath )
+            
+        xlsx_report_tree = inputFileHandler.getXLSXReportTree()
+        dbTable = self.__perfDataHandler.getDBTable()
+        dbSession = self.__perfDataHandler.getDBSession()
+
+        if xlsx_report_tree is not None:
+            self.setXLSXReportTree( xlsx_report_tree )
+
+        if dbSession is not None:
+            self.setDBSession( dbSession)
+            
+        if dbTable is not None:
+            self.setRawDataTable( dbTable )
+
+        self.__initWorksheets()
+    # end __init__(self, fname, xlsx_report_tree, dbTable)
+
+    # __initWorkbook(self, fname)
+    def __initWorkbook(self, fname):
+        self.__workbook = xlsxwriter.Workbook( fname )
+    # end __initWorkbook(self, fname)
+
+    # __initWorksheets(self)
+    def __initWorksheets(self):        
+        if self.__workbook is None: return
+
+        if self.__xlsx_report_tree is None: return
+
+        for member in self.__xlsx_report_tree:
+            if member.tag == XML_WORK_SHEET_TAG:
+                for subm in member:
+                    if subm.tag == XML_NAME_TAG:
+                        self.__workbook.add_worksheet(subm.text)
+                        break
+    # end __initWorksheets(self)
+
+    def getArgHandler(self): return self.__argHandler
+
+    def getInputFileHandler(self): return self.__inputFileHandler
+    
+    def setXLSXReportTree(self, xlsx_report_tree):
+        self.__xlsx_report_tree = xlsx_report_tree
 
     def getFilePath(self): return self.__filePath
 
@@ -376,12 +326,16 @@ class OutputFileHandler():
 
     def getDBSession(self): return self.__dbSession
 
+    def getPerfDataHandler(self): return self.__perfDataHandler
+
     # fillRawTab(self)
-    def fillRawTab(self):
-        ws = self.__workbook.add_worksheet(self.__raw_tab_name)
-        
+    def fillRawTab(self):        
         if (self.__rawDataTable is None) or \
            (self.__dbSession is None): return
+        
+        ws = self.__workbook.get_worksheet_by_name(XSLX_RAW_WS_NAME)
+
+        if ws is None: return
 
         c_count = 0
         for col in self.__rawDataTable.columns:
@@ -396,10 +350,32 @@ class OutputFileHandler():
                 c_count += 1
             r_count += 1
     # end fillRawTab(self)
+
+    # fillPricesTab(self)
+    def fillPricesTab(self):
+        ws = self.__workbook.get_worksheet_by_name(XSLX_PRICES_WS_NAME)
+
+        if ws is None: return
+
+        pdh = PriceDataHandler(self)
+
+        pdm = pdh.getPriceDataMatrix()
+
+        if pdm is None: return
+
+        r_count = 0
+        for row in pdm:
+            c_count = 0
+            for elem in row:
+                ws.write(r_count, c_count, elem)
+                c_count += 1
+            r_count+=1
+    # end  fillPricesTab(self)
     
     # commitWorkBook(self):
     def commitWorkBook(self):
         self.__workbook.close()
+        self.__workbook = None
     # end commitWorkBook(self):
         
 # end class OutputFileHandler
@@ -409,15 +385,12 @@ class OutputFileHandler():
 #
 def main():
     argH = ArgHandler()
-    inputHandler = InputFileHandler( argH.getInputFilePath()  )
-    perfDataConn = PerfDataHandler( inputHandler.getDBConnectParams() )
-    table = perfDataConn.getDBTable()
-    session = perfDataConn.getDBSession()
-    outputHandler = OutputFileHandler( argH.getOutputFilePath() )
-    outputHandler.setDBSession(session)
-    outputHandler.setRawDataTable(table)
-    outputHandler.fillRawTab()
-    outputHandler.commitWorkBook()
+    inputH = InputFileHandler( argH )
+    outputH = OutputFileHandler( argH, inputH )
+
+    outputH.fillRawTab()
+    outputH.fillPricesTab()
+    outputH.commitWorkBook()
 # end main block
 
 # main block invocation
