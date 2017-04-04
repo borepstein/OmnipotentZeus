@@ -11,6 +11,9 @@ import argparse
 import shutil
 import socket
 import xlsxwriter
+from decimal import *
+import statistics
+import numpy
 from openpyxl import load_workbook
 import xml.etree.ElementTree as ET
 import sqlalchemy
@@ -36,12 +39,92 @@ XML_TABLE_TAG="table"
 XML_WORK_SHEET_TAG="worksheet"
 XML_NAME_TAG="name"
 MYSQL_DEFAULT_PORT=3306
+
+# XLSX file tabs
 XSLX_SERVERS_WS_NAME="Servers"
 XSLX_PRICES_WS_NAME="Prices"
 XSLX_RAW_WS_NAME="Raw"
+XLSX_OVERALL_WS_NAME="Overall"
 
+# Data table parameters
+DT_UID_COL="uid"
+DT_VM_CLASS_COL="vm_class"
+DT_PROVIDER_COL="provider"
+DT_RUNTIME_COL="runtime"
 
 # end constants
+
+# class GenUtils
+class GenUtils():
+    # getMin(self, inList)
+    def getMin(self, inList):
+        if inList is None: return None
+        if len(inList) == 0: return None
+        myVal = inList[0]
+        
+        for el in inList:
+            if el < myVal: myVal = el
+
+        return myVal
+    # end get Min(self, list)
+
+    # getMax(self, inList)
+    def getMax(self, inList):
+        if inList is None: return None
+        if len(inList) == 0: return None
+        myVal = inList[0]
+        
+        for el in inList:
+            if el > myVal: myVal = el
+
+        return myVal
+    # end get Min(self, list)
+
+    # convertListToDecimals(self, valList)
+    def convertListToDecimals(self, valList):
+        if valList is None: return []
+        
+        decList = []
+        
+        for v in valList:
+            decList.append( Decimal(v) )
+
+        return decList
+    # end convertListToDecimals(self, valList)
+
+    # convertListToFloats(self, valList)
+    def convertListToFloats(self, valList):
+        if valList is None: return []
+        
+        decList = []
+        
+        for v in valList:
+            decList.append( float(v) )
+
+        return decList
+    # end convertListToFloats(self, valList)
+    
+# end class GenUtils
+
+#
+# Logging the messages.
+#
+# class Logger
+class Logger():
+    __logLevel = 0
+    
+    def logMessage(self, logLevel, message):
+        if logLevel >= self.__logLevel:
+            print message
+
+    def setLogLevel(self, logLevel): self.__logLevel = logLevel
+
+    def getLogLevel(self): return self.__logLevel
+# end class Logger
+
+# setting up logger
+scriptLogger = Logger()
+scriptLogger.setLogLevel(3)
 
 # class ArgHandler
 class ArgHandler():
@@ -71,6 +154,163 @@ class ArgHandler():
     
 # end class ArgHandler
 
+# class TableTransaction
+class TableTransaction():
+    __tableData = None
+    __index = None
+
+    def __init__(self, tableData): self.__tableData = tableData
+
+    # getColumn(self, columnName)
+    def getColumn(self, columnName, ascendingIndex=None):
+        fieldInex = None
+        columnValueList = []
+        runningIndex = ascendingIndex
+        dataMatrix = self.__tableData.getTableMatrix()
+        
+        try:
+            fieldIndex = self.__tableData.getColumnList().index( columnName )
+        except:
+            return columnValueList
+
+        if runningIndex is None: runningIndex =\
+           range(0,\
+                 len( self.__tableData.getTableMatrix() ))
+
+        rowCont = None
+        
+        for rowNum in runningIndex:
+            rowCont = dataMatrix[rowNum]
+            
+            columnValueList.append( rowCont[fieldIndex] )
+                
+        return columnValueList
+    # end getColumn(self, columnName)
+
+    # getRowSelectionByIndex(self, index, ascendingFlag=True)
+    def getRowSelectionByIndex(self, index, ascendingFlag=True):
+        columnList = self.__tableData.getColumnList()
+        dataMatrix= self.__tableData.getTableMatrix()
+        selectionDataMatrix = []
+
+        if index is None: return TableData(columnList, selectionDataMatrix)
+
+        row_ref = None
+        running_index = index
+        
+        for i in range(0, len(index)):
+            if ascendingFlag:
+                row_ref = running_index[0]
+                if len(running_index) > 1: running_index = running_index[1:]
+            else:
+                row_ref = running_index[len(running_index)]
+                if len(running_index) > 1: running_index =\
+                   running_index[0:len(running_index)-1]
+        
+            selectionDataMatrix.append(dataMatrix[row_ref])
+            
+        return TableData(columnList, selectionDataMatrix)       
+    # end getRowSelectionByIndex(self, index, ascendingFlag=True)
+
+    # getRowIndexByFieldValue(self, fieldName, fieldValue)
+    def getRowIndexByFieldValue(self, fieldName, fieldValue):
+        selectionDataMatrix = []
+        columnList = self.__tableData.getColumnList()
+        dataMatrix = self.__tableData.getTableMatrix()
+        selectionIndex = []
+
+        try:
+            fieldIndex = columnList.index()
+        except:
+            return selectionIndex
+
+        for i in range(0, len(dataMatrix)):
+            if (dataMatrix[i][fieldIndex] == fieldValue):
+                selectionIndex.append(i)
+
+        return selectionIndex      
+    # getRowIndexByFieldValue(self, fieldName, fieldValue)
+
+    # getSelectionByFieldValue(self, fieldName, fieldValue)
+    def getSelectionByFieldValue(self, fieldName, fieldValue):
+        columnList = self.__tableData.getColumnList()
+        dataMatrix = self.__tableData.getTableMatrix()
+        selectionMatrix = []
+        selectionIndex = []
+
+        try:
+            fieldIndex = columnList.index(fieldName)
+        except:
+            return TableData(columnList, selectionMatrix)
+
+        for i in range(0, len(dataMatrix)):
+            if (dataMatrix[i][fieldIndex] == fieldValue):
+                selectionMatrix.append(dataMatrix[i])
+                
+        return TableData(columnList, selectionMatrix)
+    # end getSelectionByFieldValue(self, fieldName, fieldValue)
+
+    # Appends table to the botom of the core one. Names and number of fields
+    # have to match. Returns summary table.
+    # getAppendedTable(self, table)
+    def getAppendedTable(self, table):
+        columnList = self.__tableData.getColumnList()
+        summaryTableMatrix = []
+        
+        for i in range(0, len(self.__tableData.getTableMatrix())):
+            summaryTableMatrix.append( (self.__tableData.getTableMatrix())[i] )
+
+        for i in range(o, len(table.getTableMatrix()) ):
+            summaryTableMatrix.append( (table.getTableMatrix())[i] )
+
+        return TableData(columnList, summaryTableMatrix)
+    # getAppendedTable(self, table)
+    
+# end class TableTransaction
+
+# class TableData
+class TableData():
+    __tableMatrix = None;
+    __columnList = None
+
+    def __init__(self, columnList, tableMatrix):
+        self.__columnList = columnList
+        self.__tableMatrix = tableMatrix
+
+    def getTableMatrix(self): return self.__tableMatrix
+
+    def getColumnList(self): return self.__columnList
+        
+# end class TableData
+
+# class UIDDecoded
+class UIDDecoded():
+    __provider = None
+    __vmClass = None
+    __fullUID = None
+
+    # __init__(self, uid, provider)
+    def __init__(self, uid, provider):
+        self.__fullUID = uid
+        self.__provider = provider
+    
+        if self.__provider is None: return
+
+        cutUid = uid[len(self.__provider):]
+        
+        if cutUid[0] == "-":
+            cutUid = cutUid[1:]
+            
+        self.__vmClass = str(cutUid).split('-')[0]
+    # end __init__(self, uid, tableData = None)
+
+    def getFullUID(self): return self.__fullUID
+
+    def getVMClass(self): return self.__vmClass
+
+    def getProvider(self): return self.__provider
+# end class UIDDecoded
+
 # class PerfDataHandler
 class PerfDataHandler():
     __dbConnectParams = {}
@@ -79,6 +319,7 @@ class PerfDataHandler():
     __dbTable = None
     __metadata = MetaData()
     __inputFileHandler = None
+    __perfTableData = None
     
     def __init__(self): pass
 
@@ -89,7 +330,53 @@ class PerfDataHandler():
         self.establishDBConnection()
         self.establishDBSession()
         self.establishDBTable()
+        self.__populateDataMatrix()
     # __init__(self, dcConnParams)
+    
+    # __populateDataMatrix()
+    def __populateDataMatrix(self):
+        if self.__dbEngine is None: return
+
+        if self.__metadata is None: return
+
+        if self.__dbTable is None: return
+
+        # Adding "vm_class" after "uid"
+        colName = None
+        columnList = []
+        
+        for col in self.__dbTable.columns:
+            colName = str(col).split('.')[1]
+            columnList.append( colName )
+            if colName == DT_UID_COL: columnList.append(DT_VM_CLASS_COL)
+
+        uidIndex = columnList.index(DT_UID_COL)
+        provIndex = columnList.index(DT_PROVIDER_COL)
+        vmClassIndex = columnList.index(DT_VM_CLASS_COL)
+        tableMatrix = []
+        vmClass = None
+        row_list = None
+        elem_cnt = None
+        
+        for row_cont in self.__dbSession.query(self.__dbTable):
+            row_list = []
+
+            elem_cnt = -1
+            for elem in row_cont:
+                row_list.append(str(elem))
+                elem_cnt += 1
+                
+                if elem_cnt == uidIndex:            
+                    row_list.append( "" )
+
+            row_list[vmClassIndex] = UIDDecoded( row_list[uidIndex],\
+                                                 row_list[provIndex] ).\
+                                                 getVMClass()
+                
+            tableMatrix.append( row_list )
+
+        self.__perfTableData = TableData( columnList, tableMatrix )
+    # end __populateDataMatrix()   
 
     def setDBConnectParams(self, dbConnParams): self.__dbConnectParams = dbConnParams
 
@@ -103,10 +390,15 @@ class PerfDataHandler():
                                     self.__dbConnectParams[XML_HOST_ADDRESS_TAG],
                                     self.__dbConnectParams[XML_PORT_TAG],
                                     self.__dbConnectParams[XML_DB_TAG]))
-
-
     # end establishDBConnection(self)
 
+    # establishDBSession(self)
+    def establishDBSession(self):
+        if self.__dbEngine is None: return
+        
+        self.__dbSession = Session(bind=self.__dbEngine )
+    # end establishDBSession(self)
+    
     # establishDBTable(self)
     def establishDBTable(self):
         if self.__dbEngine is None: return
@@ -115,17 +407,9 @@ class PerfDataHandler():
     
         self.__metadata.reflect(bind=self.__dbEngine)
         self.__dbTable = Table(self.__dbConnectParams[XML_TABLE_TAG],\
-                               self.__metadata)
-        
+                               self.__metadata)    
     # end establishDBTable(self)
-
-    # establishDBSession(self)
-    def establishDBSession(self):
-        if self.__dbEngine is None: return
-        
-        self.__dbSession = Session(bind=self.__dbEngine )
-    # end establishDBSession(self)
-        
+    
     def getDBConnection(self): return self.__dbEngine
 
     def getDBSession(self): return self.__dbSession
@@ -133,6 +417,15 @@ class PerfDataHandler():
     def getDBTable(self): return self.__dbTable
 
     def getInputFileHandler(self): return self.__inputFileHandler
+
+    def getPerfTableData(self): return self.__perfTableData
+
+    def getUniqueSortedFieldValues(self, fieldName):
+        columnValues = TableTransaction(self.__perfTableData).getColumn(fieldName)
+        
+        if columnValues is None: return []
+
+        return sorted( set(columnValues) )
 # end class PerfDataHandler
 
 # class PriceDataHandler
@@ -371,6 +664,118 @@ class OutputFileHandler():
                 c_count += 1
             r_count+=1
     # end  fillPricesTab(self)
+
+    # fillOverallTab(self)
+    def fillOverallTab(self):
+        if self.__perfDataHandler is None: return
+        
+        ws = self.__workbook.get_worksheet_by_name(XLSX_OVERALL_WS_NAME)
+
+        if ws is None: return
+
+        tableData = self.__perfDataHandler.getPerfTableData()
+
+        if tableData is None: return
+
+        columnList = tableData.getColumnList()
+        tableMatrix = tableData.getTableMatrix()
+
+        provIndex = columnList.index( DT_PROVIDER_COL )
+        vmClassIndex = columnList.index( DT_VM_CLASS_COL )
+        runtimeIndex = columnList.index( DT_RUNTIME_COL )
+
+        providerList = sorted(set(TableTransaction(tableData).getColumn(DT_PROVIDER_COL)))
+
+        tableMatrixSel = []
+        vmClass = None
+        vmClassList = None
+        prvDataTable = None
+        runtimeDataList = None
+        intmultiDataList = None
+        memmultiDataList = None
+
+        xlsRowCnt = 1
+
+        ws.write(0, 0, "Provider")
+        ws.write(0, 1, "VM Class")
+        ws.write(0, 2, "Runtime min")
+        ws.write(0, 3, "Runtime max")
+        ws.write(0, 4, "Runtime stdev")
+        ws.write(0, 5, "Runtime 5th percentile")
+        ws.write(0, 6, "Runtime 95th percentile")
+        
+        for prv in providerList:
+            if prv is None: continue
+            
+            prvDataTable = TableTransaction(tableData).\
+                           getSelectionByFieldValue(DT_PROVIDER_COL, prv)
+          
+            vmClassList = sorted(set(TableTransaction(prvDataTable).\
+                                     getColumn(DT_VM_CLASS_COL)))
+
+            
+            for vmClass in vmClassList:
+                if vmClass is None: continue
+                
+                scriptLogger.logMessage(5, prv + " " + vmClass )
+                
+                prvVMClassTable = TableTransaction(prvDataTable).\
+                                  getSelectionByFieldValue(DT_VM_CLASS_COL, vmClass)
+
+                runtimeDataList = TableTransaction(\
+                                                   prvVMClassTable).\
+                                                   getColumn("runtime")
+
+                scriptLogger.logMessage(5, "Runtime list " +\
+                                        str(len(runtimeDataList)) +\
+                                        " elements")
+
+                try:
+                    runtimeDataList = GenUtils().\
+                                      convertListToFloats(runtimeDataList)
+
+                 
+                    intmultiDataList = GenUtils().\
+                                       convertListToFloats(TableTransaction(prvVMClassTable).\
+                                                           getColumn("intmulti"))
+
+                    memmultiDataList = GenUtils().\
+                                       convertListToFloats(TableTransaction(prvVMClassTable).\
+                                                           getColumn("memmulti"))
+                except:
+                    scriptLogger.logMessage(5, "WARNING: bad data")
+                    continue
+                    
+                runtimeMin = GenUtils().getMin(runtimeDataList)
+
+                runtimeMax = GenUtils().getMax(runtimeDataList)
+
+                runtimeMedian = statistics.median(runtimeDataList)
+
+                runtimeMean = statistics.mean(runtimeDataList)
+
+                try:
+                    runtimeStDev = statistics.stdev(runtimeDataList)
+                except:
+                    runtimeStDev = 0
+                    
+                runtime5thPerc = numpy.percentile(runtimeDataList, 5)
+
+                runtime95thPerc = numpy.percentile(runtimeDataList, 95)
+
+                ws.write(xlsRowCnt, 0, prv)
+                ws.write(xlsRowCnt, 1, vmClass)
+                ws.write(xlsRowCnt, 2, runtimeMin)
+                ws.write(xlsRowCnt, 3, runtimeMax)
+                ws.write(xlsRowCnt, 4, runtimeMedian)
+                ws.write(xlsRowCnt, 5, runtimeMean)
+                ws.write(xlsRowCnt, 6, runtimeStDev)
+                ws.write(xlsRowCnt, 7, runtime5thPerc)
+                ws.write(xlsRowCnt, 8, runtime95thPerc)
+
+                xlsRowCnt += 1
+                
+    # end fillOverallTab(self)
     
     # commitWorkBook(self):
     def commitWorkBook(self):
@@ -390,6 +795,7 @@ def main():
 
     outputH.fillRawTab()
     outputH.fillPricesTab()
+    outputH.fillOverallTab()
     outputH.commitWorkBook()
 # end main block
 
