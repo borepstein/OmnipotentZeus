@@ -161,20 +161,12 @@ if spec == 'y':
     csv_results = [int_result_csv, fp_result_csv]
 
 # ================ COLLECT INFORMATION ON THE PROVIDER AND VM ENVIRONMENT =============== #
-provider_input = raw_input("\nPlease enter the provider's name: ")
-provider_input = provider_input.lower()
 provider_region = "N/A"
 
-vmcount_input = raw_input(
-        "\nWhich VM copy is this? (i.e., you need to test 3 of each machine for 24 hours. Is this machine 1, 2, or 3?) ")
 local_input = "0"
 block_input = "0"
 
-if fio == 'y':
-    fio_path = raw_input("\nPlease enter the storage path to run FIO (Eg:- /mnt/): ")
-
 if iperf == 'y':
-    internal_net_ip = raw_input('\nPlease enter the IP address of the iperf server you are trying to connect to: ')
     internal_net_csv = "C"
 
 startdate_input = datetime.now().strftime('%Y%m%d-%H%M')

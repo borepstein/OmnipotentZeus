@@ -1,9 +1,15 @@
 #!/bin/bash
 
 apt-add-repository multiverse
-apt-get update
-apt-get install build-essential
-apt-get install wget python-pip mysql-server libmysqlclient-dev libaio1 python-dev python-lxml --yes
+apt-get update -y
+apt-get install build-essential -y
+apt-get install wget python-pip libmysqlclient-dev libaio1 python-dev python-lxml -y
+
+# mysql-server
+debconf-set-selections <<< 'mysql-server mysql-server/root_password password pass123'
+debconf-set-selections <<< 'mysql-server mysql-server/root_password_again password pass123'
+apt-get install mysql-server -y
+
 pip install mysql-python
 pip install sqlalchemy
 
