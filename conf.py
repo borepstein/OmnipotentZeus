@@ -37,7 +37,7 @@ fio_path = "/tmp" # path for FIO to write files to
 
 # INTERNAL NETWORK INFORMATION
 internal_net_time = '60'  # time (in seconds) that you want iperf to run
-internal_net_ip = 192.168.10.10 # IP of iperf server
+internal_net_ip = "192.168.10.10" # IP of iperf server
 
 # APACHE BENCH
 ab_requests = "200"  # Number of requests to perform
