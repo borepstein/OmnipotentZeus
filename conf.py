@@ -9,6 +9,13 @@ db_name = "DATABASE"
 # PROJECT DETAILS
 project_id = 'c-edgehosting-20161107'  # Start date format is YYYYMMDD (e.g., 20170130 for January 30TH, 2017)
 operating_system = 'ubuntu'  # Please enter the operating system (ubuntu or centos)
+# provider ID (lowercase)
+provider_input = "aws-"
+
+# VM details
+# sequential number of VM
+vmcount_input = 1
+numjobs = 1 # number of threads to run
 
 # TESTS TO RUN
 # Please mark with a y (indicating yes) for each test you want to run
@@ -26,9 +33,11 @@ filesize = '16'  # File size in megabytes
 runtime = '60'  # How long would you like this test to run for (in seconds)
 direct_io = 'y'  # If direct I/O is required (bypass cache), please mark y
 async_io = 'y'  # Set y to enable asynchronous tests
+fio_path = "/tmp" # path for FIO to write files to 
 
 # INTERNAL NETWORK INFORMATION
 internal_net_time = '60'  # time (in seconds) that you want iperf to run
+internal_net_ip = "192.168.10.10" # IP of iperf server
 
 # APACHE BENCH
 ab_requests = "200"  # Number of requests to perform
