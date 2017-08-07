@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<cs_data_source>
+  <perf_datasource>
+    <db_server>
+      <host>1.2.3.4</host>
+      <user>user</user>
+      <password>password</password>
+      <port>3306</port>
+      <db id="0">db</db>
+      <table id="0">olympus</table>
+    </db_server>    
+  </perf_datasource>
+  <pricing_datasource>
+    <source>xml</source> <!-- Types allowed: xml, xlsx  -->
+    <fname>prices.xml</fname>
+  </pricing_datasource>
+  <output>
+    <output_type>XLSX</output_type> 
+    <output_file>out.xlsx</output_file>
+  </output>
+  <xlsx_report>
+    <worksheet>
+      <name>Servers</name>
+    </worksheet>
+    <worksheet>
+      <name>Prices</name>
+    </worksheet>
+    <worksheet>
+      <name>Raw</name>
+    </worksheet>
+    <worksheet>
+      <name>Table_4k</name>
+    </worksheet>
+    <worksheet>
+      <name>Table_128k</name>
+    </worksheet>
+    <worksheet>
+      <name>CPU-Mem</name>
+    </worksheet>
+    <worksheet>
+      <name>Storage_4k</name>
+    </worksheet>
+    <worksheet>
+      <name>Storage_128k</name>
+    </worksheet>
+    <worksheet>
+      <name>Overall</name>
+    </worksheet>
+    <worksheet>
+      <name>Variability</name>
+    </worksheet>
+    <worksheet>
+      <name>Pricing</name>
+    </worksheet>
+    <worksheet>
+      <name>Datacenter Location</name>
+    </worksheet>
+  </xlsx_report>
+</cs_data_source>

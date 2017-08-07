@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<params>
+  <!-- MySQL Database related parameters -->
+  <database>
+    <db_host></db_host>
+    <db_user></db_user>
+    <db_pass></db_pass>
+    <db_name></db_name>
+  </database>
+  <test_selection>
+    <geekbench>y</geekbench>
+    <iperf>n</iperf>
+  </test_selection>
+</params>
