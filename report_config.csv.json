@@ -1,0 +1,6 @@
+{
+    "perf_datasource": { "input_csv_file": "input.csv"
+		       },
+    "report": { "output_xlsx_file": "output.xlsx"
+	      }
+}

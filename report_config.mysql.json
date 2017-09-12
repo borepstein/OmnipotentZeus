@@ -1,0 +1,16 @@
+{
+    "perf_datasource": { "database":
+			 {
+			     "db_server": {
+				 "host": "db.example.com",
+				 "user": "user",
+				 "password": "pass",
+				 "port": "3306",
+				 "db": "db1",
+				 "table": "olympus"			
+			     }
+			 }
+		       },
+    "report": { "output_xlsx_file": "output.xlsx"
+	      }
+}
