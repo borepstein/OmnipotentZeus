@@ -169,10 +169,13 @@ class DataGraph():
         index = np.arange(n_groups)
         
         for i in range(1, len(dataMatrix['values_matrix']) ):
-            values_list = dataMatrix['values_matrix'][i]
-            del values_list[0]
+            values_list = []
+
+            for j in range( 1, len( dataMatrix['values_matrix'][i]) ):
+                values_list.append( dataMatrix['values_matrix'][i][j] )
             
-            plt.bar(index, values_list, dataMatrix['bar_width'],
+            plt.bar(index + dataMatrix['bar_width'] * (i - 1),
+                    values_list, dataMatrix['bar_width'],
                     alpha = dataMatrix['opacity'],
                     color = dataMatrix['color_list'][i-1],
                     label = dataMatrix['values_matrix'][i][0])
@@ -182,6 +185,7 @@ class DataGraph():
         plt.title( dataMatrix['title'] )
         group_list = dataMatrix['values_matrix'][0]
         del group_list[0]
+        
         plt.xticks( index + dataMatrix['bar_width'], group_list )
         plt.legend()
         plt.tight_layout()
@@ -191,6 +195,7 @@ class DataGraph():
 
 # end  DataGraph
 
+""" Sample usage scenario
 # begin main block
 if __name__ == "__main__":
     csvInput = sys.argv[1]
@@ -215,14 +220,14 @@ if __name__ == "__main__":
     
     draw_data_matrix['values_matrix'] = []
 
-    draw_data_matrix['values_matrix'].append( ['Greoupings', 'RAM', 'SSD File', 'SSD Raw'] )
+    draw_data_matrix['values_matrix'].append( ['Groupings', 'RAM', 'SSD File', 'SSD Raw'] )
     
     draw_data_matrix['values_matrix'].append( ['AWS', \
                                                dg.avgWithinSelection('Load-OVERALL-Throughput(ops/sec)', [['provider','aws'],['db_device_type','ram']]), \
                                                dg.avgWithinSelection('Load-OVERALL-Throughput(ops/sec)', [['provider','aws'],['db_device_type','ssdfile']]), \
                                                dg.avgWithinSelection('Load-OVERALL-Throughput(ops/sec)', [['provider','aws'],['db_device_type','ssdraw']]) 
     ] )
-
+ 
     draw_data_matrix['values_matrix'].append( ['Internap', \
                                                dg.avgWithinSelection('Load-OVERALL-Throughput(ops/sec)', [['provider','inap'],['db_device_type','ram']]), \
                                                dg.avgWithinSelection('Load-OVERALL-Throughput(ops/sec)', [['provider','inap'],['db_device_type','ssdfile']]), \
@@ -238,3 +243,5 @@ if __name__ == "__main__":
     dg.drawBarGraph( draw_data_matrix )
         
 # end main block
+
+End sample usage scenario """
