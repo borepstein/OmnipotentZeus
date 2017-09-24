@@ -118,10 +118,10 @@ class DataTable():
 
         # Doing the actual insertion.
         self.__contentMatrix['column_count'] += 1
-        self.__contentMatrix['column_list'].insert( colName ) 
+        self.__contentMatrix['column_list'].append( colName ) 
             
         for i in range(0, self.__contentMatrix['row_count']):
-            self.__contentMatrix['table'][i].insert( columnContent[i] )
+            self.__contentMatrix['table'][i].append( columnContent[i] )
 
     # end insertColumn(self, colPos, colName, columnContent)
 
