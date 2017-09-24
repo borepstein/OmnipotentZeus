@@ -99,6 +99,8 @@ class DataTable():
 
     def getColumnList(self): return self.__contentMatrix['column_list']
 
+    def getDataTable(self): return self.__contentMatrix['table']
+
     def getDataTableContent(self): return self.__contentMatrix['table']
 
     # begin insertColumn(self, colPos, colName, columnContent)
@@ -153,5 +155,15 @@ class DataTable():
 
         return retList
     # end getIndexSingleSelection
+
+    # begin getRowsByIndex(self, selIndex)
+    def getRowsByIndex(self, selIndex):
+        sub_data_table = []
+
+        for i in selIndex:
+            sub_data_table.append( self.__contentMatrix['table'][i] )
+
+        return DataTable(sub_data_table, self.__contentMatrix['column_list'])
+    # end getRowsByIndex
                                 
 # end class DataTable()
