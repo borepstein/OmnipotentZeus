@@ -1,6 +1,7 @@
 import os
 import sys
 import csv
+import numpy
 
 # begin class DataTable()
 class DataTable():
@@ -46,7 +47,7 @@ class DataTable():
 
     # begin importDataFromCSV
     def importDataFromCSV(self, csvFilePath):
-        f_handle = open(self.__dataTable['input_data_file'])
+        f_handle = open( csvFilePath )
         f_csv = csv.reader( f_handle, delimiter=',' )
         content_table = []
         column_list = []
@@ -63,7 +64,24 @@ class DataTable():
         f_handle.close()
 
         self.fillInContent(content_table, column_list)
-    # end importDataFromCSV   
+    # end importDataFromCSV
+
+    # being exportDataToCSV
+    def exportDataToCSV(self, outputFilePath):
+        try:
+            f_handle = open( outputFilePath, "w" )
+        except:
+            return
+
+        f_csv = csv.writer( f_handle, delimiter=',' )
+
+        f_csv.writerow( self.__contentMatrix['column_list'])
+
+        for row in self.__contentMatrix['table']:
+            f_csv.writerow( row )
+        
+        f_handle.close()
+    # end exportDataToCSV
 
     # begin getColumnPosition(self, colName)
     def getColumnPosition(self, colName):
@@ -99,7 +117,7 @@ class DataTable():
 
     def getColumnList(self): return self.__contentMatrix['column_list']
 
-    def getDataTable(self): return self.__contentMatrix['table']
+    def getColumnCount(self): return self.__contentMatrix['column_count']
 
     def getDataTableContent(self): return self.__contentMatrix['table']
 
@@ -118,10 +136,10 @@ class DataTable():
 
         # Doing the actual insertion.
         self.__contentMatrix['column_count'] += 1
-        self.__contentMatrix['column_list'].append( colName ) 
+        self.__contentMatrix['column_list'].insert( colPos, colName ) 
             
         for i in range(0, self.__contentMatrix['row_count']):
-            self.__contentMatrix['table'][i].append( columnContent[i] )
+            self.__contentMatrix['table'][i].insert( colPos, columnContent[i] )
 
     # end insertColumn(self, colPos, colName, columnContent)
 
@@ -165,5 +183,78 @@ class DataTable():
 
         return DataTable(sub_data_table, self.__contentMatrix['column_list'])
     # end getRowsByIndex
+
+    # begin getFloatSum
+    def getFloatSum(self, valList):
+        fl_found = False
+        fl_sum = 0
+
+        for v in valList:
+            try:
+                t_v = float(v)
+                fl_found = True
+                fl_sum += t_v
+            except:
+                continue
+
+        if not fl_found: return None
+        return fl_sum
+    # end getFloatSum
+
+    # begin getFloatAvg
+    def getFloatAvg(self, valList):
+        fl_found = False
+        fl_sum = 0.0
+        fl_cnt = 0
+
+        for v in valList:
+            try:
+                t_v = float(v)
+                fl_found = True
+                fl_sum += t_v
+                fl_cnt += 1
+            except:
+                continue
+
+        if not fl_found: return None
+        return fl_sum / fl_cnt
+    # end getFloatAvg
+
+    # begin getFloatsOnly
+    def getFloatsOnly(self, valLIst):
+        fl_list = []
+
+        for v in valList:
+            try:
+                t_v = float(v)
+                fl_list.append( t_v )
+            except:
+                continue
+
+        return fl_list
+    # end getFloatsOnly
+
+    # begin getListSum
+    def getListSum(self, list1, list2):
+        if len( list1 ) != len( list2 ): return None
+
+        sumList = []
+
+        for i in range(0, len(list1)):
+            try:
+                m_sum = float( list1[i] ) + float( list2[i] )
+                sumList.append( m_sum )
+            except:
+                sumList.append( None )
+
+        return sumList
+    # end getListSum
+
+    # begin getColumnSumByName(self, colName1, colName2)
+    def getColumnSumByName(self, colName1, colName2):
+        colList1 = self.getColumnByName( colName1 )
+        colList2 = self.getColumnByName( colName2 )
+        return self.getListSum( colList1, colList2)
+    # end getColumnSumByName(self, colName1, colName2)
                                 
 # end class DataTable()
