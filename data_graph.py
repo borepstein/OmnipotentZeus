@@ -3,6 +3,7 @@ import csv
 import numpy as np
 
 import matplotlib as mpl
+from data_table_ops import DataTable
 
 # Setting the proper backend.
 mpl.use('Agg')
@@ -169,29 +170,79 @@ class DataGraph():
         index = np.arange(n_groups)
         
         for i in range(1, len(dataMatrix['values_matrix']) ):
-            values_list = []
+            values_list = dataMatrix['values_matrix'][i][1:]
 
-            for j in range( 1, len( dataMatrix['values_matrix'][i]) ):
-                values_list.append( dataMatrix['values_matrix'][i][j] )
-            
-            plt.bar(index + dataMatrix['bar_width'] * (i - 1),
-                    values_list, dataMatrix['bar_width'],
-                    alpha = dataMatrix['opacity'],
-                    color = dataMatrix['color_list'][i-1],
-                    label = dataMatrix['values_matrix'][i][0])
+            try:
+                plt.bar(index + dataMatrix['bar_width'] * (i - 1),
+                        values_list, dataMatrix['bar_width'],
+                        alpha = dataMatrix['opacity'],
+                        color = dataMatrix['color_list'][i-1],
+                        label = dataMatrix['values_matrix'][i][0])
+            except:
+                continue
 
         plt.xlabel( dataMatrix['xlabel'] )
         plt.ylabel( dataMatrix['ylabel'] )
         plt.title( dataMatrix['title'] )
-        group_list = dataMatrix['values_matrix'][0]
-        del group_list[0]
+
+        group_list = []
+
+        for i in range(1, len(dataMatrix['values_matrix'][0]) ):
+            group_list.append( dataMatrix['values_matrix'][0][i] )
         
         plt.xticks( index + dataMatrix['bar_width'], group_list )
         plt.legend()
         plt.tight_layout()
         plt.savefig( dataMatrix['output_file_path'] )
-
+        plt.close()
     # end  drawBarGraph
+
+    # begin drawMulti2DGraph(self, dataMatrix)
+    def drawMulti2DGraph(self, dataMatrix):
+        #
+        # Dictionary schema for dataMatrix
+        # values_matrix: Each row contins two equal length lists,
+        # x-values and y-values and color/graph schema.
+        # Example:
+        # [ \
+        # [[0, 2.5, 5, 7.5, 10], [3, 4, 7, 6, 5.5], 'bo'],
+        # [[0, 2.5, 3, 4], [5.5, 2.5, 10, 12.5], 'ro']
+        # ]
+        #
+        # graph_text: [x-coord, y-coord, text]
+        # Example:
+        # graph_text: [1, 10, "Blue = small VM\nRed = medium VM"]
+        #
+        # title: 'CPU Performance'
+        #
+        # xlabel: 'Machine sizes'
+        #
+        # ylabel: 'Perf count'
+        #
+        # xrange: [x-start, x-end]
+        #
+        # yrange: [y-start, y-end]
+        #
+        # output_file_path: 'cpu_summ.png'
+
+        for row in dataMatrix['values_matrix']:
+            plt.plot( row[0], row[1], row[2] )
+
+        plt.axis( [float( dataMatrix['xrange'][0] ),\
+                   float( dataMatrix['xrange'][1] ),
+                   float( dataMatrix['yrange'][0] ),
+                   float( dataMatrix['yrange'][1] ) ] )
+
+        plt.xlabel( dataMatrix['xlabel'] )
+        plt.ylabel( dataMatrix['ylabel'] )
+
+        plt.text( dataMatrix['graph_text'][0],\
+                  dataMatrix['graph_text'][1],\
+                  dataMatrix['graph_text'][2] )
+        
+        plt.savefig( dataMatrix['output_file_path'] )
+        plt.close()
+    # end drawMulti2DGraph(self, dataMatrix)
 
 # end  DataGraph
 

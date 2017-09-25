@@ -36,12 +36,27 @@ memmulti75 = esxi25sel.getFloatAvg( esxi75sel.getColumnByName("memmulti") )
 esxi100sel = dt1.getRowsByIndex( dt1.getIndexSingleSelection("provider", ["esxi100pct-"]) )
 memmulti100 = esxi100sel.getFloatAvg( esxi25sel.getColumnByName("memmulti") )
 
+vzv7vm25sel = dt1.getRowsByIndex( dt1.getIndexSingleSelection("provider", ["vzv7vm25pct-"]) )
+memmultivz25 = vzv7vm25sel.getFloatAvg( vzv7vm25sel.getColumnByName("memmulti") )
+
+vzv7vm50sel = dt1.getRowsByIndex( dt1.getIndexSingleSelection("provider", ["vzv7vm50pct-"]) )
+memmultivz50 = vzv7vm50sel.getFloatAvg( vzv7vm50sel.getColumnByName("memmulti") )
+
+vzv7vm75sel = dt1.getRowsByIndex( dt1.getIndexSingleSelection("provider", ["vzv7vm75pct-"]) )
+memmultivz75 = vzv7vm75sel.getFloatAvg( vzv7vm75sel.getColumnByName("memmulti") )
+
+vzv7vm100sel = dt1.getRowsByIndex( dt1.getIndexSingleSelection("provider", ["vzv7vm100pct-"]) )
+memmultivz100 = vzv7vm100sel.getFloatAvg( vzv7vm100sel.getColumnByName("memmulti") )
+
+
 dg1 = DataGraph()
 
 dg1.drawBarGraph( {'values_matrix':\
                    [['Groupings', '25%', '50%', '75%', '100%'],\
-                    ['ESXi', memmulti25, memmulti50, memmulti75, memmulti100]],
-                   'color_list' : ['b'],
+                    ['ESXi', memmulti25, memmulti50, memmulti75, memmulti100],\
+                    ['VZV7VM', memmultivz25, memmultivz50, \
+                     memmultivz75, memmultivz100]],
+                   'color_list' : ['b', 'r'],
                    'title' : 'Mem multi',
                    'xlabel' : 'VM Engagement Percentage',
                    'ylabel' : 'Memmulti',
@@ -49,15 +64,19 @@ dg1.drawBarGraph( {'values_matrix':\
                    'bar_width' : 0.05,
                    'opacity' : 0.8} )
 
-mmultiMin = np.min( [memmulti25, memmulti50, memmulti75, memmulti100] )
-mmultiMax = np.max( [memmulti25, memmulti50, memmulti75, memmulti100] )
+mmultiMin = np.min( [memmulti25, memmulti50, memmulti75, memmulti100,\
+                     memmultivz25, memmultivz50, memmultivz75, memmultivz100] )
+mmultiMax = np.max( [memmulti25, memmulti50, memmulti75, memmulti100,\
+                     memmultivz25, memmultivz50, memmultivz75, memmultivz100] )
 range = mmultiMax - mmultiMin
 
 dg1.drawMulti2DGraph( { 'values_matrix' :\
                         [[ [25.0, 50.0, 75.0, 100.0], \
-                           [memmulti25, memmulti50, memmulti75, memmulti100], 'bo' ]],
+                           [memmulti25, memmulti50, memmulti75, memmulti100], 'bo' ],\
+                        [ [25.0, 50.0, 75.0, 100.0], \
+                           [memmultivz25, memmultivz50, memmultivz75, memmultivz100], 'ro' ]],
                         'graph_text' : \
-                        [1, mmultiMax + 10, "Blue = mmulti"],
+                        [1, mmultiMax + 100, "Blue = ESXI\nRed = VZ 7 VM"],
                         'title' : 'Mmulti',
                         'xlabel' : 'Engagement percentage',
                         'ylabel' : 'Mmulti',
