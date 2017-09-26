@@ -221,7 +221,7 @@ class DataTable():
     # end getFloatAvg
 
     # begin getFloatsOnly
-    def getFloatsOnly(self, valLIst):
+    def getFloatsOnly(self, valList):
         fl_list = []
 
         for v in valList:
