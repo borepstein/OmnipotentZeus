@@ -1,0 +1,10 @@
+{
+    "input" : {
+	"type" : "csv_file",
+	"file_path" : "/home/reports/rep1/raw/hw-benchmarking.csv"
+    },
+    "output" : {
+	"file_path" : "/home/reports/rep1/proc/hw-benchmarking-proc.csv"
+	"directory_path" : "/home/reports/images/"
+    }
+}
