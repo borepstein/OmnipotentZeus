@@ -1,10 +1,82 @@
 {
     "input" : {
 	"type" : "csv_file",
-	"file_path" : "/home/reports/rep1/raw/hw-benchmarking.csv"
+	"file_path" : "/home/cloud-spectator/virtuozzo/reports/hw-benchmarking-20170716.csv"
+    },
+    "conversion_data" : {
+	"provider_list" : {
+	    "ESXi" : {
+		"name" : "esxi",
+		"variants" : {
+		    "25%" : "25pct-",
+		    "50%" : "50pct-",
+		    "75%" : "75pct-",
+		    "100%" : "100pct-"
+		},
+		"vm_types" : {
+		    "small" : {
+			"vcpu" : "2"
+		    },
+		    "medium" : {
+			"vcpu" : "4"
+		    }
+		}
+	    },
+	    "KVM" : {
+		"name" : "kvm",
+		"variants" : {
+		    "25%" : "25pctvm-",
+		    "50%" : "50pctvm-",
+		    "75%" : "75pct-",
+		    "100%" : "100pctvm-"
+		},
+		"vm_types" : {
+		    "small" : {
+			"vcpu" : "2"
+		    },
+		    "medium" : {
+			"vcpu" : "4"
+		    }
+		}
+	    },
+	    "Virtuozzo VM" : {
+		"name" : "vzv7vm",
+		"variants" : {
+		    "25%" : "25pct-",
+		    "50%" : "50pct-",
+		    "75%" : "75pct-",
+		    "100%" : "100pct-"
+		},
+		"vm_types" : {
+		    "small" : {
+			"vcpu" : "2"
+		    },
+		    "medium" : {
+			"vcpu" : "4"
+		    }
+		}
+	    },
+	    "Virtuozzo CT" : {
+		"name" : "vzv7ct",
+		"variants" : {
+		    "25%" : "25pct-",
+		    "50%" : "50pct-",
+		    "75%" : "75pct-",
+		    "100%" : "100pct-"
+		},
+		"vm_types" : {
+		    "small" : {
+			"vcpu" : "2"
+		    },
+		    "medium" : {
+			"vcpu" : "4"
+		    }
+		}
+	    }
+	}
     },
     "output" : {
-	"file_path" : "/home/reports/rep1/proc/hw-benchmarking-proc.csv"
-	"directory_path" : "/home/reports/images/"
+	"file_path" : "/home/cloud-spectator/virtuozzo/reports/hw-benchmarking-20170716-enh.csv",
+	"directory_path" : "/home/cloud-spectator/virtuozzo/reports/"
     }
 }
