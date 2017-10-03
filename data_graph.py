@@ -226,11 +226,14 @@ class DataGraph():
         # output_file_path: 'cpu_summ.png'
 
         for row in dataMatrix['values_matrix']:
-            plt.plot( row[0], row[1], row[2] )
+            try:
+                plt.plot( row[0], row[1], row[2] )
+            except:
+                continue
 
         plt.axis( [float( dataMatrix['xrange'][0] ),\
-                   float( dataMatrix['xrange'][1] ),
-                   float( dataMatrix['yrange'][0] ),
+                   float( dataMatrix['xrange'][1] ),\
+                   float( dataMatrix['yrange'][0] ),\
                    float( dataMatrix['yrange'][1] ) ] )
 
         plt.xlabel( dataMatrix['xlabel'] )

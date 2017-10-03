@@ -9,34 +9,8 @@ import numpy as np
 from data_table_ops import DataTable
 from data_graph import DataGraph
 
-# --- begin main body ---- #
-if __name__ != "__main__": exit(0)
-
-try:
-    f_h = open( sys.argv[1], "r")
-except:
-    exit(0)
-
-configData = json.load( f_h )
-f_h.close()
-
-inputCSVFile = configData['input']['file_path']
-outputCSVFile = configData['output']['file_path']
-outputBarCh1 =  configData['output']['directory_path'] + "bgr_mmulti1.png"
-outputMultiCh1 = configData['output']['directory_path'] + "line_mmulti1.png"
-
-dt1 = DataTable()
-dt1.importDataFromCSV( inputCSVFile )
-
-idFields = ["provider", "vcpu", "ram"]
-dataFields = dt1.getColumnList()[15:]
-
-providerList = sorted( set(dt1.getColumnByName("provider")) )
-vcpuList = sorted( set(dt1.getColumnByName("vcpu")) )
-ramList = sorted( set(dt1.getColumnByName("ram")) )
-
-#-------- Begin: Cycling through data; generating CSV files ------------
-for df in dataFields:
+#------- begin: generateMetricSummary
+def generateMetricSummary(df):
     outFpath = configData['output']['directory_path'] + df +".stats.csv"
     outColList = ["provider", "vcpu", "ram", "min", "5th percentile", \
                   "average", "stdev", "95th percentile", "max" ]
@@ -74,77 +48,110 @@ for df in dataFields:
                     pass
 
     DataTable(outDataMatrix, outColList).exportDataToCSV(outFpath)
+#------- end: generateMetricSummary
 
+#------- begin: processGraphs
+def processGraphs(df):
     cData = configData['conversion_data']
-    metricGraphData = [['Groupings', '25%', '50%', '75%', '100%']]
+
     colorSetList = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    colorList = []
+
+    vmtList = sorted( set(cData['provider_list'][cData['provider_list'].keys()[0]]['vm_types'].keys() ) )
+
+    provList = sorted( set( cData['provider_list'].keys() ) )
+
+    mainCycleCnt = 0
+    valueMatrix = []
     
-    for vmt in ["small", "medium"]:
-        metricGraphLbl = vmt + ":" + df
-        metricGraphOutPath =  configData['output']['directory_path'] + \
-                              metricGraphLbl + ".png"
+    for prov in provList:
+        mainCycleCnt += 1
+        colorList.append(\
+                         colorSetList[ (mainCycleCnt-1) % len(colorSetList)
+                         ]  )
 
-        colorList = []
-        matLineCount = 0
+        valRow = [prov]
+        
+        for vmt in vmtList:
+            variList = sorted( set( cData['provider_list'][prov]['variants'].keys() ) )
 
-        # ---- begin: cycling through providers and variants
-        for prov in cData['provider_list'].keys():
-            
-            graphLbl = cData['provider_list'][prov]['name'] + ":" \
-                       + vmt + "--" + df
-            valList = []
-            
-            for vari in ["25%", "50%", "75%", "100%"]:
+            ind = []
+            for vari in variList:
                 prv_full = cData['provider_list'][prov]['name'] + \
                            cData['provider_list'][prov]['variants'][vari]
-                ind = dt1.getIndexSingleSelection("provider", prv_full)
+                ind = sorted(
+                    set( ind +
+                         dt1.getIndexSingleSelection("provider", prv_full) ) )
 
-                ind = dt1.getIndexSingleSelection("vcpu", \
-                                                  str( [cData['provider_list']\
-                                                   [prov]['vm_types']\
-                                                   [vmt]['vcpu']] ),
-                                                  ind)
+            ind = dt1.getIndexSingleSelection("vcpu", \
+                                              str( [cData['provider_list']\
+                                                    [prov]['vm_types']\
+                                                    [vmt]['vcpu']] ),\
+                                              ind)
+            
+            dt_temp = dt1.getRowsByIndex(ind)
+            floatList = dt_temp.getFloatsOnly( dt_temp.getColumnByName(df) )
+            avg = 0
+            
+            if len( floatList ) > 0:
+                avg = np.average( floatList )
                 
-                dt_temp = dt1.getRowsByIndex(ind)
-                avg = dt_temp.getFloatAvg( dt_temp.getColumnByName(df) )
-                
-                if avg is None: avg = 0
-                
-                valList.append( avg )
+            valRow.append( avg )
 
-            outFname = configData['output']['directory_path'] +\
-                    graphLbl + ".png"
+        valueMatrix.append(valRow)
 
-            if np.min( valList ) != 0 or np.max( valList ) != 0:
-                metricGraphData.append( list([prov] + valList ) )
-                colorList.append( \
-                                  colorSetList[\
-                                               matLineCount % \
-                                               len(colorSetList)] )
-                matLineCount += 1
-                
-                DataGraph().drawBarGraph( {
-                    'values_matrix' : \
-                    [ ['Groupings', '25%', '50%', '75%', '100%'],
-                      list([prv_full] + valList)],
-                    'color_list' : 'b',
-                    'title' : graphLbl,
-                    'xlabel' : 'VM Engagement Percentage',
-                    'ylabel' : df,
-                    'output_file_path' : outFname,
-                    'bar_width' : 0.05,
-                    'opacity' : 0.8
-                    } )
-        # ---- begin: cycling through providers and variants
+    graphLbl = df + ":Provider:VM Size"
+    outFname = configData['output']['directory_path'] + \
+               df + ".prov.by-vm.png"
+    
+    
+    
+    dTable = { \
+               'values_matrix' : \
+               [['Groupings'] + vmtList] +
+                 valueMatrix,
+               'color_list' : colorList,
+               'title' : graphLbl,
+               'xlabel' : 'Provider',
+               'ylabel' : df,
+               'output_file_path' : outFname,
+               'bar_width' : 0.05,
+               'opacity' : 0.8
+    }
+    
+    DataGraph().drawBarGraph( dTable )
+#------- end: processGraphs
 
-        DataGraph().drawBarGraph( {
-            'values_matrix' : metricGraphData,
-            'color_list' : colorList,
-            'title' : metricGraphLbl,
-            'xlabel' : 'VM Engagement Percentage',
-            'ylabel' : df,
-            'output_file_path' : metricGraphOutPath,
-            'bar_width' : 0.05,
-            'opacity' : 0.8
-        } )
+# --- begin main body ---- #
+if __name__ != "__main__": exit(0)
+
+try:
+    f_h = open( sys.argv[1], "r")
+except:
+    exit(0)
+
+configData = json.load( f_h )
+f_h.close()
+
+inputCSVFile = configData['input']['file_path']
+outputCSVFile = configData['output']['file_path']
+outputBarCh1 =  configData['output']['directory_path'] + "bgr_mmulti1.png"
+outputMultiCh1 = configData['output']['directory_path'] + "line_mmulti1.png"
+
+dt1 = DataTable()
+dt1.importDataFromCSV( inputCSVFile )
+
+idFields = ["provider", "vcpu", "ram"]
+dataFields = dt1.getColumnList()[15:]
+
+providerList = sorted( set(dt1.getColumnByName("provider")) )
+vcpuList = sorted( set(dt1.getColumnByName("vcpu")) )
+ramList = sorted( set(dt1.getColumnByName("ram")) )
+
+#-------- Begin: Cycling through data; generating CSV files ------------
+for df in dataFields:
+
+    generateMetricSummary(df)
+    
+    processGraphs(df)
 #-------- Begin: Cycling through data; generating CSV files ------------
