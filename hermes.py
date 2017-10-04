@@ -400,7 +400,10 @@ for x in range(iterations):
 
         for fio_op_type in fio_op_types:
             # Run FIO
-            sub.call(fio_command_generator(fio_op_type))
+            fio_cmd = fio_command_generator(fio_op_type)
+            print "fio_op_type = " + str(fio_op_type)
+            print "fio_cmd = " + str(fio_cmd)
+            sub.call(fio_cmd)
 
             # Convert generated JSON output file to required format
             convert_fio_json_result(fio_json_file)
