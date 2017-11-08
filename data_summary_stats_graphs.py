@@ -13,7 +13,7 @@ from data_graph import DataGraph
 def generateMetricSummary(df):
     outFpath = configData['output']['directory_path'] + df +".stats.csv"
     outColList = ["provider", "vcpu", "ram", "min", "5th percentile", \
-                  "average", "stdev", "95th percentile", "max" ]
+                  "median", "average", "stdev", "95th percentile", "max" ]
     outDataMatrix = []
     
     for prov in providerList:
@@ -39,6 +39,7 @@ def generateMetricSummary(df):
                           ram,
                           np.min( dfValList ),
                           np.percentile( dfValList, 5 ),
+                          np.median( dfValList ),
                           np.average( dfValList ),
                           np.std( dfValList ),
                           np.percentile( dfValList, 95 ),
@@ -47,6 +48,9 @@ def generateMetricSummary(df):
                 except:
                     pass
 
+    # Bail out if there is no data.
+    if len(outDataMatrix) <= 1: return
+    
     DataTable(outDataMatrix, outColList).exportDataToCSV(outFpath)
 #------- end: generateMetricSummary
 
@@ -63,6 +67,7 @@ def processGraphs(df):
 
     mainCycleCnt = 0
     valueMatrix = []
+    allZeroFlag = True
     
     for prov in provList:
         mainCycleCnt += 1
@@ -91,21 +96,50 @@ def processGraphs(df):
             
             dt_temp = dt1.getRowsByIndex(ind)
             floatList = dt_temp.getFloatsOnly( dt_temp.getColumnByName(df) )
+            iterNumList = range(0, len(floatList))
             avg = 0
             
             if len( floatList ) > 0:
                 avg = np.average( floatList )
+                if allZeroFlag:
+                    if np.min( floatList ) != 0 or \
+                       np.max( floatList ) != 0:
+                        allZeroFlag = False
                 
             valRow.append( avg )
 
+            # drawing the graph over iterations
+            graphLbl = df + ":" + prov + ":" + vmt
+            xLabel = "Iteration"
+            yLabel= df
+            outFname = configData['output']['directory_path'] + df + "." + prov + \
+                       "." + vmt + \
+                       ".iter.png"
+
+            try:
+                DataGraph().drawMulti2DGraph( {
+                    'values_matrix' : [[iterNumList, floatList, 'bo']],
+                    'graph_text' : [0, 0, ""],
+                    'title' : graphLbl,
+                    'xlabel' : xLabel,
+                    'ylabel': yLabel,
+                    'xrange' : [0, len(floatList) ],
+                    'yrange' : [0, 1.25 * np.max(floatList) ],
+                    'output_file_path' : outFname
+                } )
+            except:
+                print "Error drawing iterations: " + graphLbl
+
         valueMatrix.append(valRow)
 
+    # Exiting if no non zero values
+    if allZeroFlag: return
+    
     graphLbl = df + ":Provider:VM Size"
     outFname = configData['output']['directory_path'] + \
                df + ".prov.by-vm.png"
     
-    
-    
+       
     dTable = { \
                'values_matrix' : \
                [['Groupings'] + vmtList] +
@@ -135,8 +169,6 @@ f_h.close()
 
 inputCSVFile = configData['input']['file_path']
 outputCSVFile = configData['output']['file_path']
-outputBarCh1 =  configData['output']['directory_path'] + "bgr_mmulti1.png"
-outputMultiCh1 = configData['output']['directory_path'] + "line_mmulti1.png"
 
 dt1 = DataTable()
 dt1.importDataFromCSV( inputCSVFile )
